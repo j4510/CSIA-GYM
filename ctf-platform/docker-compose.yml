@@ -1,0 +1,119 @@
+# ========================================
+# Docker Compose Configuration
+#
+# This file makes it easy to run your app with Docker.
+# It handles building the image, running the container,
+# and setting up persistent storage.
+#
+# TO RUN:
+#   docker compose up
+#
+# TO RUN IN BACKGROUND:
+#   docker compose up -d
+#
+# TO STOP:
+#   docker compose down
+#
+# TO REBUILD AFTER CODE CHANGES:
+#   docker compose up --build
+# ========================================
+
+version: '3.8'
+
+services:
+  # Main application service
+  web:
+    # Build from Dockerfile in current directory
+    build: .
+    
+    # Container name
+    container_name: ctf-platform
+    
+    # Port mapping: host:container
+    # Access app at http://localhost:5050
+    ports:
+      - "5050:5050"
+    
+    # Environment variables
+    environment:
+      # Change this secret key in production!
+      - SECRET_KEY=your-secret-key-change-this-in-production
+      
+      # Database URL (using SQLite by default)
+      # TO USE POSTGRESQL: Uncomment lines in 'Advanced Setup' section below
+      - DATABASE_URL=sqlite:////app/instance/ctf.db
+      
+      # Flask environment
+      - FLASK_ENV=development  # Change to 'production' for deployment
+    
+    # Persistent storage for database
+    # This ensures your data isn't lost when container restarts
+    volumes:
+      - ./instance:/app/instance
+      # TO ENABLE HOT-RELOAD DURING DEVELOPMENT: Uncomment line below
+      # - .:/app
+    
+    # Restart policy
+    restart: unless-stopped
+
+
+# ========================================
+# ADVANCED SETUP - PostgreSQL Database
+#
+# For production or larger scale (100+ concurrent users),
+# use PostgreSQL instead of SQLite.
+#
+# TO ENABLE POSTGRESQL:
+# 1. Uncomment the 'db' service below
+# 2. Change DATABASE_URL in 'web' service environment to:
+#    DATABASE_URL=postgresql://ctfuser:ctfpassword@db:5432/ctfdb
+# 3. Uncomment 'depends_on' in web service
+# ========================================
+
+#  db:
+#    image: postgres:15
+#    container_name: ctf-postgres
+#    environment:
+#      POSTGRES_USER: ctfuser
+#      POSTGRES_PASSWORD: ctfpassword
+#      POSTGRES_DB: ctfdb
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#    ports:
+#      - "5432:5432"
+#    restart: unless-stopped
+
+# Uncomment this in 'web' service if using PostgreSQL:
+#    depends_on:
+#      - db
+
+# Uncomment this at the bottom if using PostgreSQL:
+#volumes:
+#  postgres_data:
+
+
+# ========================================
+# ADDITIONAL SERVICES YOU CAN ADD
+# ========================================
+
+# Redis for caching/sessions:
+#  redis:
+#    image: redis:7
+#    container_name: ctf-redis
+#    ports:
+#      - "6379:6379"
+#    restart: unless-stopped
+
+# Nginx reverse proxy (for production):
+#  nginx:
+#    image: nginx:latest
+#    container_name: ctf-nginx
+#    ports:
+#      - "80:80"
+#      - "443:443"
+#    volumes:
+#      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+#      - ./ssl:/etc/ssl:ro
+#    depends_on:
+#      - web
+#    restart: unless-stopped

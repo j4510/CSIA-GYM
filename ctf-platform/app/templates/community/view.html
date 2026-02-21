@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} - Community{% endblock %}
+
+{% block content %}
+<!-- SINGLE POST VIEW PAGE -->
+
+<div class="max-w-4xl mx-auto">
+    <!-- Back Button -->
+    <a href="{{ url_for('community.list') }}" 
+       class="inline-block mb-4 text-blue-600 hover:underline">
+        ← Back to Community
+    </a>
+    
+    <!-- Post Content -->
+    <div class="bg-white rounded-lg shadow-md p-8 mb-6">
+        <!-- Post Header -->
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">
+            {{ post.title }}
+        </h1>
+        
+        <!-- Post Meta -->
+        <div class="flex items-center space-x-4 text-sm text-gray-500 mb-6 pb-6 border-b">
+            <span>👤 {{ post.author.username }}</span>
+            <span>📅 {{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
+        </div>
+        
+        <!-- Post Body -->
+        <div class="prose max-w-none text-gray-700">
+            {{ post.content|safe }}
+            <!-- TO ADD: Use markdown renderer -->
+            <!-- {{ post.content|markdown }} -->
+        </div>
+    </div>
+    
+    <!-- Comments Section -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+            Comments ({{ post.comments|length }})
+        </h2>
+        
+        <!-- Add Comment Form -->
+        <form method="POST" action="{{ url_for('community.add_comment', post_id=post.id) }}" class="mb-8">
+            <div class="mb-4">
+                <label for="content" class="block text-gray-700 font-semibold mb-2">
+                    Add a Comment
+                </label>
+                <textarea id="content" 
+                          name="content" 
+                          required
+                          rows="4"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Share your thoughts..."></textarea>
+            </div>
+            
+            <button type="submit" 
+                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">
+                Post Comment
+            </button>
+        </form>
+        
+        <!-- Comments List -->
+        <div class="space-y-6">
+            {% for comment in post.comments|sort(attribute='created_at') %}
+                <div class="border-l-4 border-blue-500 pl-4 py-2">
+                    <!-- Comment Header -->
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-semibold text-gray-900">
+                                {{ comment.author.username }}
+                            </span>
+                            <span class="text-sm text-gray-500">
+                                {{ comment.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+                            </span>
+                        </div>
+                        
+                        <!-- 
+                        TO ADD: Delete button for comment author
+                        {% if comment.author.id == current_user.id %}
+                        <button class="text-red-600 text-sm hover:underline">Delete</button>
+                        {% endif %}
+                        -->
+                    </div>
+                    
+                    <!-- Comment Content -->
+                    <p class="text-gray-700">
+                        {{ comment.content }}
+                    </p>
+                </div>
+            {% else %}
+                <p class="text-gray-500 text-center py-8">
+                    No comments yet. Be the first to comment!
+                </p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

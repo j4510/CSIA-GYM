@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Scoreboard - CTF Platform{% endblock %}
+
+{% block content %}
+<!-- SCOREBOARD PAGE -->
+
+<div class="mb-8">
+    <h1 class="text-4xl font-bold text-gray-900">Scoreboard</h1>
+    <p class="text-gray-600 mt-2">Top players ranked by total points</p>
+</div>
+
+<!-- Scoreboard Table -->
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <table class="min-w-full">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Rank
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Player
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Score
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Solves
+                </th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for user in leaderboard %}
+                <tr class="{% if user.id == current_user.id %}bg-blue-50{% else %}hover:bg-gray-50{% endif %}">
+                    <!-- Rank -->
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            {% if loop.index == 1 %}
+                                <span class="text-2xl">🥇</span>
+                            {% elif loop.index == 2 %}
+                                <span class="text-2xl">🥈</span>
+                            {% elif loop.index == 3 %}
+                                <span class="text-2xl">🥉</span>
+                            {% else %}
+                                <span class="text-gray-600 font-semibold">{{ loop.index }}</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    
+                    <!-- Player Name -->
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="text-sm font-medium text-gray-900">
+                                {{ user.username }}
+                                {% if user.id == current_user.id %}
+                                    <span class="ml-2 text-blue-600">(You)</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <!-- Score -->
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-bold text-blue-600">
+                            {{ user.get_score() }} pts
+                        </div>
+                    </td>
+                    
+                    <!-- Solves Count -->
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ user.solves|length }} solves
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                        No players yet
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 
+TO ADD: Statistics Cards
+<div class="grid md:grid-cols-3 gap-6 mt-8">
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h3 class="text-gray-500 text-sm font-semibold mb-2">Total Players</h3>
+        <p class="text-3xl font-bold">{{ leaderboard|length }}</p>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h3 class="text-gray-500 text-sm font-semibold mb-2">Your Rank</h3>
+        <p class="text-3xl font-bold">Find rank logic</p>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h3 class="text-gray-500 text-sm font-semibold mb-2">Your Score</h3>
+        <p class="text-3xl font-bold">{{ current_user.get_score() }}</p>
+    </div>
+</div>
+-->
+
+{% endblock %}

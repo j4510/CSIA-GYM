@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Challenges - CTF Platform{% endblock %}
+
+{% block content %}
+<!-- CHALLENGES LIST PAGE -->
+
+<div class="mb-8">
+    <h1 class="text-4xl font-bold text-gray-900">Challenges</h1>
+    <p class="text-gray-600 mt-2">Solve challenges to earn points and climb the leaderboard!</p>
+</div>
+
+<!-- 
+TO ADD: Filter/Search Bar
+<div class="mb-6 flex space-x-4">
+    <select class="px-4 py-2 border rounded-lg">
+        <option>All Categories</option>
+        <option>Web</option>
+        <option>Crypto</option>
+        <option>Pwn</option>
+    </select>
+    
+    <select class="px-4 py-2 border rounded-lg">
+        <option>All Difficulties</option>
+        <option>Easy</option>
+        <option>Medium</option>
+        <option>Hard</option>
+    </select>
+    
+    <input type="text" placeholder="Search challenges..." class="flex-1 px-4 py-2 border rounded-lg">
+</div>
+-->
+
+<!-- Challenges Grid -->
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for challenge in challenges %}
+        <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition p-6">
+            <!-- Challenge Header -->
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold text-gray-900">
+                    {{ challenge.title }}
+                </h3>
+                
+                <!-- Points Badge -->
+                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                    {{ challenge.points }} pts
+                </span>
+            </div>
+            
+            <!-- Challenge Meta Info -->
+            <div class="flex space-x-2 mb-4">
+                <!-- Category Badge -->
+                <span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">
+                    {{ challenge.category }}
+                </span>
+                
+                <!-- Difficulty Badge -->
+                <span class="{% if challenge.difficulty == 'easy' %}bg-green-100 text-green-800{% elif challenge.difficulty == 'medium' %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %} px-2 py-1 rounded text-xs">
+                    {{ challenge.difficulty|capitalize }}
+                </span>
+            </div>
+            
+            <!-- Challenge Description (truncated) -->
+            <p class="text-gray-600 mb-4 line-clamp-3">
+                {{ challenge.description[:100] }}{% if challenge.description|length > 100 %}...{% endif %}
+            </p>
+            
+            <!-- Challenge Footer -->
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-500">
+                    🎯 {{ challenge.solve_count() }} solves
+                </span>
+                
+                <a href="{{ url_for('challenges.detail', challenge_id=challenge.id) }}" 
+                   class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                    View
+                </a>
+            </div>
+        </div>
+    {% else %}
+        <!-- No Challenges Message -->
+        <div class="col-span-full text-center py-12">
+            <p class="text-gray-500 text-lg">No challenges available yet.</p>
+        </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

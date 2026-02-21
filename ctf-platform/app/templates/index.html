@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Home - CTF Platform{% endblock %}
+
+{% block content %}
+<!-- 
+HOMEPAGE / LANDING PAGE
+
+This is the first page users see when not logged in.
+
+TO CUSTOMIZE:
+- Change hero section text
+- Add features section
+- Add statistics
+- Add upcoming events
+-->
+
+<div class="text-center">
+    <!-- Hero Section -->
+    <div class="py-20">
+        <h1 class="text-6xl font-bold text-gray-900 mb-6">
+            Welcome to CTF Platform
+        </h1>
+        
+        <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            Test your cybersecurity skills, solve challenges, and compete with others 
+            in Capture The Flag competitions.
+        </p>
+        
+        <div class="flex justify-center space-x-4">
+            <a href="{{ url_for('auth.register') }}" 
+               class="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition">
+                Get Started
+            </a>
+            
+            <a href="{{ url_for('auth.login') }}" 
+               class="bg-gray-200 text-gray-800 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-300 transition">
+                Login
+            </a>
+        </div>
+    </div>
+    
+    <!-- Features Section -->
+    <!-- TO ADD: Uncomment and customize -->
+    <!--
+    <div class="grid md:grid-cols-3 gap-8 mt-16">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="text-4xl mb-4">🎯</div>
+            <h3 class="text-xl font-bold mb-2">Diverse Challenges</h3>
+            <p class="text-gray-600">
+                Web security, cryptography, reverse engineering, and more
+            </p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="text-4xl mb-4">🏆</div>
+            <h3 class="text-xl font-bold mb-2">Compete & Learn</h3>
+            <p class="text-gray-600">
+                Climb the scoreboard and improve your skills
+            </p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="text-4xl mb-4">💬</div>
+            <h3 class="text-xl font-bold mb-2">Community</h3>
+            <p class="text-gray-600">
+                Share writeups and discuss solutions
+            </p>
+        </div>
+    </div>
+    -->
+</div>
+
+{% endblock %}

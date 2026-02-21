@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}{{ challenge.title }} - CTF Platform{% endblock %}
+
+{% block content %}
+<!-- SINGLE CHALLENGE PAGE -->
+
+<div class="max-w-4xl mx-auto">
+    <!-- Back Button -->
+    <a href="{{ url_for('challenges.list') }}" 
+       class="inline-block mb-4 text-blue-600 hover:underline">
+        ← Back to Challenges
+    </a>
+    
+    <!-- Challenge Card -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <!-- Header -->
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    {{ challenge.title }}
+                </h1>
+                
+                <div class="flex space-x-2">
+                    <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded">
+                        {{ challenge.category }}
+                    </span>
+                    <span class="{% if challenge.difficulty == 'easy' %}bg-green-100 text-green-800{% elif challenge.difficulty == 'medium' %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %} px-3 py-1 rounded">
+                        {{ challenge.difficulty|capitalize }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="text-right">
+                <div class="text-3xl font-bold text-blue-600">
+                    {{ challenge.points }}
+                </div>
+                <div class="text-gray-500 text-sm">points</div>
+            </div>
+        </div>
+        
+        <!-- Description -->
+        <div class="mb-6">
+            <h3 class="font-semibold text-lg mb-2">Description</h3>
+            <div class="prose max-w-none text-gray-700">
+                {{ challenge.description }}
+            </div>
+        </div>
+        
+        <!-- Solve Info -->
+        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+            <p class="text-gray-600">
+                🎯 <strong>{{ challenge.solve_count() }}</strong> solves
+                {% if challenge.solve_count() > 0 %}
+                    <span class="text-gray-400">|</span>
+                    Created by <strong>{{ challenge.author.username }}</strong>
+                {% endif %}
+            </p>
+        </div>
+        
+        {% if already_solved %}
+            <!-- Already Solved Message -->
+            <div class="bg-green-100 border border-green-200 text-green-800 p-4 rounded-lg text-center">
+                <p class="font-semibold">✅ You have already solved this challenge!</p>
+            </div>
+        {% else %}
+            <!-- Flag Submission Form -->
+            <form method="POST" action="{{ url_for('challenges.submit_flag', challenge_id=challenge.id) }}">
+                <div class="mb-4">
+                    <label for="flag" class="block text-gray-700 font-semibold mb-2">
+                        Submit Flag
+                    </label>
+                    <div class="flex space-x-2">
+                        <input type="text" 
+                               id="flag" 
+                               name="flag" 
+                               required
+                               class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="FLAG{...}">
+                        
+                        <button type="submit" 
+                                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">
+                            Submit
+                        </button>
+                    </div>
+                </div>
+            </form>
+        {% endif %}
+        
+        <!-- 
+        TO ADD: Challenge Files
+        {% if challenge.file_path %}
+        <div class="mt-6">
+            <a href="{{ url_for('challenges.download_file', challenge_id=challenge.id, filename=challenge.file_path) }}" 
+               class="inline-block bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">
+                📥 Download Challenge Files
+            </a>
+        </div>
+        {% endif %}
+        -->
+    </div>
+</div>
+
+{% endblock %}
