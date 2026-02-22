@@ -56,6 +56,7 @@ def create_app(config_class=Config):
     from app.routes.submissions import submissions_bp
     from app.routes.community import community_bp
     from app.routes.settings import settings_bp
+    from app.routes.admin import admin_bp
     
     # Register all blueprints
     app.register_blueprint(auth_bp)
@@ -63,6 +64,7 @@ def create_app(config_class=Config):
     app.register_blueprint(submissions_bp)
     app.register_blueprint(community_bp)
     app.register_blueprint(settings_bp)
+    app.register_blueprint(admin_bp)
     
     # TO ADD NEW BLUEPRINT:
     # from app.routes.your_feature import your_feature_bp
@@ -79,7 +81,7 @@ def create_app(config_class=Config):
         from app.models import User
         admin = User.query.filter_by(username='admin').first()
         if not admin:
-            admin = User(username='admin', email='admin@ctf.local')
+            admin = User(username='admin', email='admin@ctf.local', is_admin=True)
             admin.set_password('admin123')  # CHANGE THIS IN PRODUCTION!
             db.session.add(admin)
             db.session.commit()

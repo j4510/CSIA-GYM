@@ -47,12 +47,12 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)  # Admin role flag
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # TO ADD: Additional profile fields
     # bio = db.Column(db.Text, nullable=True)
     # profile_picture = db.Column(db.String(200), nullable=True)
-    # is_admin = db.Column(db.Boolean, default=False)
     
     # Relationships - defines connections to other tables
     challenges = db.relationship('Challenge', backref='author', lazy=True)
@@ -196,6 +196,7 @@ class CommunityPost(db.Model):
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    upvotes = db.Column(db.Integer, default=0)  # Vote counter
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # TO ADD: Enhanced features

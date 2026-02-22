@@ -1,0 +1,268 @@
+/* 
+ * BRUTALIST CTF PLATFORM
+ * Black background, Red accents, White text
+ * Sharp edges, bold typography, aggressive design
+ */
+
+/* ===== BASE STYLES ===== */
+* {
+    border-radius: 0 !important;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Courier New', 'Courier', monospace !important;
+    background: #000000 !important;
+    color: #FFFFFF !important;
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== TYPOGRAPHY ===== */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 900 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    color: #FFFFFF !important;
+}
+
+p, span, div {
+    color: #FFFFFF !important;
+}
+
+/* ===== NAVIGATION ===== */
+nav {
+    background: #000000 !important;
+    border-bottom: 4px solid #FF0000 !important;
+}
+
+nav a {
+    color: #FFFFFF !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    border: 2px solid #FF0000 !important;
+    background: #000000 !important;
+    text-decoration: none !important;
+    letter-spacing: 0.1em !important;
+}
+
+nav a:hover {
+    background: #FF0000 !important;
+    color: #000000 !important;
+}
+
+nav .text-2xl {
+    font-size: 1.5rem !important;
+    font-weight: 900 !important;
+}
+
+/* ===== CONTAINERS & CARDS ===== */
+.bg-white, .card {
+    background: #000000 !important;
+    border: 3px solid #FF0000 !important;
+    box-shadow: 6px 6px 0 #FF0000 !important;
+}
+
+.bg-gray-50, .bg-gray-100 {
+    background: #1a1a1a !important;
+    border: 2px solid #333333 !important;
+}
+
+/* ===== BUTTONS ===== */
+button, .btn, input[type="submit"] {
+    background: #000000 !important;
+    color: #FFFFFF !important;
+    border: 3px solid #FF0000 !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    padding: 0.75rem 1.5rem !important;
+    cursor: pointer !important;
+    transition: all 0.1s ease !important;
+    font-family: 'Courier New', monospace !important;
+}
+
+button:hover, .btn:hover, input[type="submit"]:hover {
+    background: #FF0000 !important;
+    color: #000000 !important;
+    transform: translate(-2px, -2px) !important;
+    box-shadow: 4px 4px 0 #FFFFFF !important;
+}
+
+/* ===== INPUTS & FORMS ===== */
+input, textarea, select {
+    background: #000000 !important;
+    color: #FFFFFF !important;
+    border: 2px solid #FF0000 !important;
+    font-family: 'Courier New', monospace !important;
+    padding: 0.5rem !important;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: 3px solid #FF0000 !important;
+    outline-offset: 2px !important;
+    background: #1a1a1a !important;
+}
+
+input::placeholder, textarea::placeholder {
+    color: #666666 !important;
+}
+
+/* ===== LINKS ===== */
+a {
+    color: #FF0000 !important;
+    text-decoration: none !important;
+    font-weight: bold !important;
+}
+
+a:hover {
+    color: #FFFFFF !important;
+    background: #FF0000 !important;
+    padding: 2px 4px !important;
+}
+
+/* ===== TABLES ===== */
+table {
+    background: #000000 !important;
+    border: 3px solid #FF0000 !important;
+}
+
+th {
+    background: #FF0000 !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    padding: 1rem !important;
+}
+
+td {
+    background: #000000 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #FF0000 !important;
+    padding: 0.75rem !important;
+}
+
+tr:hover td {
+    background: #1a1a1a !important;
+}
+
+/* ===== BADGES & TAGS ===== */
+.bg-blue-100, .bg-green-100, .bg-yellow-100, .bg-red-100,
+.bg-purple-100, .bg-gray-200 {
+    background: #000000 !important;
+    border: 2px solid #FF0000 !important;
+    color: #FFFFFF !important;
+}
+
+span[class*="text-blue"], span[class*="text-green"], 
+span[class*="text-yellow"], span[class*="text-red"] {
+    color: #FF0000 !important;
+    font-weight: bold !important;
+}
+
+/* ===== ALERTS & MESSAGES ===== */
+.alert, [class*="bg-green-"], [class*="bg-red-"], 
+[class*="bg-yellow-"], [class*="bg-blue-"] {
+    background: #000000 !important;
+    border: 3px solid #FF0000 !important;
+    color: #FFFFFF !important;
+    font-weight: bold !important;
+}
+
+/* ===== SHADOWS ===== */
+.shadow-md {
+    box-shadow: 4px 4px 0 #FF0000 !important;
+}
+
+.shadow-lg {
+    box-shadow: 8px 8px 0 #FF0000 !important;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+    width: 16px;
+    background: #000000;
+}
+
+::-webkit-scrollbar-track {
+    background: #000000;
+    border: 2px solid #FF0000;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #FF0000;
+    border: 2px solid #000000;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #FFFFFF;
+}
+
+/* ===== ADMIN STYLES ===== */
+.admin-badge {
+    background: #FF0000 !important;
+    color: #000000 !important;
+    border: 3px solid #FFFFFF !important;
+    animation: pulse-admin 1s ease-in-out infinite;
+}
+
+@keyframes pulse-admin {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* ===== DROPDOWN MENU ===== */
+.bg-white.rounded-md {
+    background: #000000 !important;
+    border: 3px solid #FF0000 !important;
+}
+
+/* ===== SPECIFIC OVERRIDES ===== */
+.text-gray-900, .text-gray-800, .text-gray-700, 
+.text-gray-600, .text-gray-500 {
+    color: #FFFFFF !important;
+}
+
+.bg-blue-600, .bg-green-600, .bg-yellow-600, 
+.bg-purple-600, .bg-red-600 {
+    background: #FF0000 !important;
+    color: #000000 !important;
+    border: 3px solid #000000 !important;
+}
+
+/* ===== HOVER EFFECTS ===== */
+.hover-brutal {
+    transition: all 0.1s ease;
+}
+
+.hover-brutal:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 6px 6px 0 #FF0000;
+}
+
+/* ===== FOOTER ===== */
+footer {
+    background: #000000 !important;
+    border-top: 4px solid #FF0000 !important;
+    color: #FFFFFF !important;
+}
+
+/* ===== TEXT COLORS ===== */
+.text-white {
+    color: #FFFFFF !important;
+}
+
+.text-red-600 {
+    color: #FF0000 !important;
+}
+
+.text-black {
+    color: #000000 !important;
+}
+
+

@@ -14,7 +14,7 @@ TO EXTEND THIS SECTION:
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from app import db
-from app.models import Challenge, UserChallengeSolve
+from app.models import Challenge, UserChallengeSolve, User
 
 # Create blueprint
 challenges_bp = Blueprint('challenges', __name__, template_folder='../templates')
@@ -24,32 +24,54 @@ challenges_bp = Blueprint('challenges', __name__, template_folder='../templates'
 @login_required  # Requires user to be logged in
 def list():
     """
-    Display all challenges.
+    Display all challenges with filtering.
     
-    TO EXTEND:
-    - Add pagination for many challenges
-    - Add filtering: ?category=web or ?difficulty=easy
-    - Add sorting: ?sort=newest, ?sort=points
-    - Add search: ?q=sql
+    Query parameters:
+    - category: Filter by category (e.g., ?category=web)
+    - source: Filter by source (official/community)
+    - search: Search in title/description
     """
     
+    # Start with all challenges
+    query = Challenge.query
+    
+    # Filter by category
+    category = request.args.get('category')
+    if category:
+        query = query.filter_by(category=category)
+    
+    # Filter by source (official = admin, community = non-admin)
+    source = request.args.get('source')
+    if source == 'official':
+        # Get admin user IDs
+        admin_ids = [u.id for u in User.query.filter_by(is_admin=True).all()]
+        query = query.filter(Challenge.author_id.in_(admin_ids))
+    elif source == 'community':
+        # Get non-admin user IDs
+        admin_ids = [u.id for u in User.query.filter_by(is_admin=True).all()]
+        query = query.filter(~Challenge.author_id.in_(admin_ids))
+    
+    # Search in title/description
+    search = request.args.get('search')
+    if search:
+        query = query.filter(
+            (Challenge.title.contains(search)) | 
+            (Challenge.description.contains(search))
+        )
+    
     # Get all challenges ordered by creation date
-    challenges = Challenge.query.order_by(Challenge.created_at.desc()).all()
+    challenges = query.order_by(Challenge.created_at.desc()).all()
     
-    # TO ADD: Filtering example
-    # category = request.args.get('category')
-    # if category:
-    #     challenges = challenges.filter_by(category=category).all()
+    # Get all unique categories for filter dropdown
+    all_categories = db.session.query(Challenge.category).distinct().all()
+    categories = [c[0] for c in all_categories]
     
-    # TO ADD: Search example
-    # search_query = request.args.get('q')
-    # if search_query:
-    #     challenges = Challenge.query.filter(
-    #         Challenge.title.contains(search_query) | 
-    #         Challenge.description.contains(search_query)
-    #     ).all()
-    
-    return render_template('challenges/list.html', challenges=challenges)
+    return render_template('challenges/list.html', 
+                         challenges=challenges, 
+                         categories=categories,
+                         current_category=category,
+                         current_source=source,
+                         current_search=search)
 
 
 @challenges_bp.route('/challenges/<int:challenge_id>')

@@ -213,3 +213,13 @@ def add_comment(post_id):
 #     # Update post.upvotes
 #     
 #     return redirect(url_for('community.view_post', post_id=post_id))
+
+
+@community_bp.route('/community/<int:post_id>/upvote', methods=['POST'])
+@login_required
+def upvote_post(post_id):
+    """Upvote a community post."""
+    post = CommunityPost.query.get_or_404(post_id)
+    post.upvotes += 1
+    db.session.commit()
+    return redirect(url_for('community.view_post', post_id=post_id))

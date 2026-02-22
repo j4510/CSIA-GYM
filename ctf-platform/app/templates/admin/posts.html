@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Posts - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Manage Community Posts</h1>
+            <p class="text-gray-600 mt-1">{{ posts|length }} total posts</p>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300">
+            ← Back to Dashboard
+        </a>
+    </div>
+    
+    <div class="space-y-4">
+        {% for post in posts %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">{{ post.title }}</h3>
+                    <p class="text-gray-600 mb-3">{{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}</p>
+                    <p class="text-sm text-gray-500">
+                        By {{ post.author.username }} • 
+                        {{ post.created_at.strftime('%b %d, %Y') }} • 
+                        {{ post.comments|length }} comments
+                    </p>
+                </div>
+                <div class="flex space-x-2 ml-4">
+                    <a href="{{ url_for('community.view_post', post_id=post.id) }}" 
+                       class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm">
+                        View
+                    </a>
+                    <a href="{{ url_for('admin.edit_post', post_id=post.id) }}" 
+                       class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 text-sm">
+                        Edit
+                    </a>
+                    <form method="POST" action="{{ url_for('admin.delete_post', post_id=post.id) }}" class="inline">
+                        <button type="submit" 
+                                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-sm"
+                                onclick="return confirm('Delete this post and all its comments?')">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-gray-50 p-8 rounded-lg text-center text-gray-500">
+            No community posts yet
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

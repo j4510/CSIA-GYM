@@ -11,6 +11,9 @@
     <!-- Alpine.js for interactive components -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
     <!-- 
     TO USE CUSTOM CSS:
     1. Create app/static/css/custom.css
@@ -31,39 +34,46 @@
     3. Add active state styling if needed
     ======================================== -->
     
-    <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg">
+    <nav class="bg-red-600 text-black shadow-lg border-b-4 border-black">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center py-4">
                 
                 <!-- Logo/Brand -->
-                <a href="{{ url_for('auth.index') }}" class="text-2xl font-bold hover:text-blue-200 transition">
-                    🚩 CTF Platform
+                <a href="{{ url_for('auth.index') }}" class="text-2xl font-black hover:bg-black hover:text-white transition px-3 py-1 border-2 border-black">
+                    🚩 CTF PLATFORM
                 </a>
                 
                 <!-- Navigation Links -->
-                <div class="flex items-center space-x-6">
+                <div class="flex items-center space-x-2">
                     {% if current_user.is_authenticated %}
                         <!-- Logged-in user navigation -->
                         
                         <a href="{{ url_for('challenges.list') }}" 
-                           class="hover:text-blue-200 transition font-medium">
-                            Challenges
+                           class="hover:bg-black hover:text-white transition font-bold px-3 py-2 border-2 border-black uppercase text-sm">
+                            CHALLENGES
                         </a>
                         
                         <a href="{{ url_for('challenges.scoreboard') }}" 
-                           class="hover:text-blue-200 transition font-medium">
-                            Scoreboard
+                           class="hover:bg-black hover:text-white transition font-bold px-3 py-2 border-2 border-black uppercase text-sm">
+                            SCOREBOARD
                         </a>
                         
                         <a href="{{ url_for('submissions.new') }}" 
-                           class="hover:text-blue-200 transition font-medium">
-                            Submit Challenge
+                           class="hover:bg-black hover:text-white transition font-bold px-3 py-2 border-2 border-black uppercase text-sm">
+                            SUBMIT
                         </a>
                         
                         <a href="{{ url_for('community.list') }}" 
-                           class="hover:text-blue-200 transition font-medium">
-                            Community
+                           class="hover:bg-black hover:text-white transition font-bold px-3 py-2 border-2 border-black uppercase text-sm">
+                            COMMUNITY
                         </a>
+                        
+                        {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin.dashboard') }}" 
+                           class="bg-black text-white hover:bg-white hover:text-black transition font-black px-3 py-2 border-2 border-black uppercase text-sm animate-pulse">
+                            ADMIN
+                        </a>
+                        {% endif %}
                         
                         {# 
                         TO ADD NEW NAVIGATION ITEMS:
