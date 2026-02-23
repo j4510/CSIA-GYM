@@ -3,142 +3,259 @@
 {% block title %}CHALLENGES - CTF PLATFORM{% endblock %}
 
 {% block content %}
-<div class="mb-8">
-    <h1 class="text-5xl font-black uppercase tracking-tight">■ CHALLENGES</h1>
-    <p class="mt-2 text-xl">SOLVE TO EARN POINTS AND DOMINATE THE LEADERBOARD</p>
-</div>
-
-<!-- SEARCH AND FILTER BAR -->
-<div class="mb-8 border-4 border-red-600 p-6 bg-black">
-    <form method="GET" action="{{ url_for('challenges.list') }}" class="grid md:grid-cols-4 gap-4">
-        <!-- Category Filter -->
-        <div>
-            <label class="block font-black uppercase text-sm mb-2">CATEGORY</label>
-            <select name="category" class="w-full bg-black border-2 border-red-600 p-2 font-bold uppercase text-sm">
-                <option value="">ALL CATEGORIES</option>
-                {% for cat in categories %}
-                <option value="{{ cat }}" {% if current_category == cat %}selected{% endif %}>{{ cat|upper }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        
-        <!-- Source Filter -->
-        <div>
-            <label class="block font-black uppercase text-sm mb-2">SOURCE</label>
-            <select name="source" class="w-full bg-black border-2 border-red-600 p-2 font-bold uppercase text-sm">
-                <option value="">ALL SOURCES</option>
-                <option value="official" {% if current_source == 'official' %}selected{% endif %}>OFFICIAL</option>
-                <option value="community" {% if current_source == 'community' %}selected{% endif %}>COMMUNITY</option>
-            </select>
-        </div>
-        
-        <!-- Search Box -->
-        <div>
-            <label class="block font-black uppercase text-sm mb-2">SEARCH</label>
-            <input type="text" 
-                   name="search" 
-                   value="{{ current_search or '' }}"
-                   placeholder="SEARCH CHALLENGES..."
-                   class="w-full bg-black border-2 border-red-600 p-2 font-bold uppercase text-sm">
-        </div>
-        
-        <!-- Submit Button -->
-        <div class="flex items-end">
-            <button type="submit" class="w-full bg-red-600 text-black p-2 font-black uppercase text-sm border-2 border-white hover:bg-white">
-                ► FILTER
-            </button>
-        </div>
-    </form>
-    
-    <!-- Clear Filters -->
-    {% if current_category or current_source or current_search %}
-    <div class="mt-4 text-center">
-        <a href="{{ url_for('challenges.list') }}" class="text-red-600 font-bold uppercase text-sm hover:text-white">
-            ✕ CLEAR ALL FILTERS
-        </a>
+<div class="container mx-auto px-4 py-8">
+    <!-- Header Section -->
+    <div class="mb-12 fade-in">
+        <h1 class="text-6xl font-black uppercase tracking-tighter mb-4 relative inline-block">
+            <span class="absolute -inset-2 bg-red-600 -skew-x-12 -z-10"></span>
+            <span class="relative text-black px-6 py-2">CHALLENGES</span>
+        </h1>
+        <p class="text-xl mt-4 font-bold uppercase tracking-wide opacity-80">
+            SOLVE → EARN POINTS → DOMINATE LEADERBOARD
+        </p>
     </div>
-    {% endif %}
-</div>
 
-<!-- Results Count -->
-<div class="mb-4 text-sm font-bold uppercase">
-    SHOWING {{ challenges|length }} CHALLENGE{% if challenges|length != 1 %}S{% endif %}
-</div>
-
-{% set categories_grouped = challenges|groupby('category') %}
-
-{% for category, challs in categories_grouped %}
-<div class="mb-12">
-    <h2 class="text-3xl font-black uppercase mb-6 pb-2 border-b-4 border-red-600">
-        ▓ {{ category|upper }}
-    </h2>
-    
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for challenge in challs %}
-            <div class="bg-black border-3 border-red-600 p-6 hover-brutal shadow-lg">
-                <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-xl font-black uppercase flex-1">
-                        {{ challenge.title }}
-                    </h3>
-                    <span class="bg-red-600 text-black px-3 py-1 font-black text-sm border-2 border-white ml-2">
-                        {{ challenge.points }}
-                    </span>
+    <!-- Filter Bar -->
+    <div class="mb-10 border-4 border-red-600 bg-black relative overflow-hidden">
+        <!-- Decorative corner -->
+        <div class="absolute top-0 right-0 w-16 h-16 bg-red-600 transform rotate-45 translate-x-8 -translate-y-8"></div>
+        
+        <form method="GET" action="{{ url_for('challenges.list') }}" class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <!-- Category Filter -->
+                <div class="relative group">
+                    <label class="block font-black uppercase text-sm mb-2 text-red-600">
+                        ▼ CATEGORY
+                    </label>
+                    <select name="category" 
+                            class="w-full bg-black text-white border-2 border-red-600 p-3 font-bold uppercase text-sm appearance-none cursor-pointer hover:bg-red-600 hover:text-black transition-all focus:outline-none focus:ring-4 focus:ring-red-600">
+                        <option value="">ALL CATEGORIES</option>
+                        <option value="Web" {% if current_category == 'Web' %}selected{% endif %}>WEB EXPLOITATION</option>
+                        <option value="Cryptography" {% if current_category == 'Cryptography' %}selected{% endif %}>CRYPTOGRAPHY</option>
+                        <option value="Binary" {% if current_category == 'Binary' %}selected{% endif %}>BINARY EXPLOITATION</option>
+                        <option value="Reverse Engineering" {% if current_category == 'Reverse Engineering' %}selected{% endif %}>REVERSE ENGINEERING</option>
+                        <option value="Forensics" {% if current_category == 'Forensics' %}selected{% endif %}>FORENSICS</option>
+                        <option value="OSINT" {% if current_category == 'OSINT' %}selected{% endif %}>OSINT</option>
+                        <option value="Steganography" {% if current_category == 'Steganography' %}selected{% endif %}>STEGANOGRAPHY</option>
+                        <option value="Networking" {% if current_category == 'Networking' %}selected{% endif %}>NETWORKING</option>
+                        <option value="Misc" {% if current_category == 'Misc' %}selected{% endif %}>MISCELLANEOUS</option>
+                    </select>
                 </div>
                 
-                <div class="mb-3 flex flex-wrap gap-2">
-                    {% if challenge.author.is_admin %}
-                    <span class="bg-black text-red-600 border-2 border-red-600 px-2 py-1 text-xs font-black uppercase">
-                        [OFFICIAL]
-                    </span>
-                    {% else %}
-                    <span class="bg-black text-white border-2 border-white px-2 py-1 text-xs font-black uppercase">
-                        [COMMUNITY]
-                    </span>
-                    {% endif %}
-                    
-                    {% if challenge.difficulty == 'easy' %}
-                    <span class="border-2 border-green-500 text-green-500 px-2 py-1 text-xs font-black uppercase">
-                        [EASY]
-                    </span>
-                    {% elif challenge.difficulty == 'medium' %}
-                    <span class="border-2 border-yellow-500 text-yellow-500 px-2 py-1 text-xs font-black uppercase">
-                        [MED]
-                    </span>
-                    {% else %}
-                    <span class="border-2 border-red-600 text-red-600 px-2 py-1 text-xs font-black uppercase">
-                        [HARD]
-                    </span>
-                    {% endif %}
+                <!-- Difficulty Filter -->
+                <div class="relative group">
+                    <label class="block font-black uppercase text-sm mb-2 text-red-600">
+                        ▼ DIFFICULTY
+                    </label>
+                    <select name="difficulty" 
+                            class="w-full bg-black text-white border-2 border-red-600 p-3 font-bold uppercase text-sm appearance-none cursor-pointer hover:bg-red-600 hover:text-black transition-all focus:outline-none focus:ring-4 focus:ring-red-600">
+                        <option value="">ALL LEVELS</option>
+                        <option value="easy" {% if current_difficulty == 'easy' %}selected{% endif %}>EASY</option>
+                        <option value="medium" {% if current_difficulty == 'medium' %}selected{% endif %}>MEDIUM</option>
+                        <option value="hard" {% if current_difficulty == 'hard' %}selected{% endif %}>HARD</option>
+                    </select>
                 </div>
                 
-                <p class="text-sm mb-3 opacity-80">BY {{ challenge.author.username|upper }}</p>
+                <!-- Source Filter -->
+                <div class="relative group">
+                    <label class="block font-black uppercase text-sm mb-2 text-red-600">
+                        ▼ SOURCE
+                    </label>
+                    <select name="source" 
+                            class="w-full bg-black text-white border-2 border-red-600 p-3 font-bold uppercase text-sm appearance-none cursor-pointer hover:bg-red-600 hover:text-black transition-all focus:outline-none focus:ring-4 focus:ring-red-600">
+                        <option value="">ALL SOURCES</option>
+                        <option value="official" {% if current_source == 'official' %}selected{% endif %}>OFFICIAL</option>
+                        <option value="community" {% if current_source == 'community' %}selected{% endif %}>COMMUNITY</option>
+                    </select>
+                </div>
                 
-                <p class="mb-4 text-sm leading-relaxed">
-                    {{ challenge.description[:120] }}{% if challenge.description|length > 120 %}...{% endif %}
-                </p>
+                <!-- Search Box -->
+                <div class="relative group">
+                    <label class="block font-black uppercase text-sm mb-2 text-red-600">
+                        ▼ SEARCH
+                    </label>
+                    <input type="text" 
+                           name="search" 
+                           value="{{ current_search or '' }}"
+                           placeholder="TYPE TO SEARCH..."
+                           class="w-full bg-black text-white border-2 border-red-600 p-3 font-bold uppercase text-sm placeholder-gray-600 hover:border-white focus:outline-none focus:ring-4 focus:ring-red-600 transition-all">
+                </div>
                 
-                <div class="flex justify-between items-center border-t-2 border-red-600 pt-4">
-                    <span class="text-sm font-bold">
-                        🎯 {{ challenge.solve_count() }} SOLVES
-                    </span>
-                    
-                    <a href="{{ url_for('challenges.detail', challenge_id=challenge.id) }}" 
-                       class="bg-red-600 text-black px-4 py-2 font-black uppercase text-sm border-2 border-black hover:bg-white hover:text-black">
-                        SOLVE →
-                    </a>
+                <!-- Filter Button -->
+                <div class="flex items-end">
+                    <button type="submit" 
+                            class="w-full bg-red-600 text-black p-3 font-black uppercase text-sm border-4 border-white relative overflow-hidden group transform hover:scale-105 transition-all active:scale-95">
+                        <span class="relative z-10 flex items-center justify-center">
+                            <span class="mr-2">►</span> FILTER
+                        </span>
+                        <div class="absolute inset-0 bg-white transform -skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
+                    </button>
                 </div>
             </div>
-        {% endfor %}
+            
+            <!-- Clear Filters -->
+            {% if current_category or current_difficulty or current_source or current_search %}
+            <div class="mt-6 text-center border-t-2 border-red-600 pt-4">
+                <a href="{{ url_for('challenges.list') }}" 
+                   class="inline-block text-red-600 font-black uppercase text-sm hover:text-white transition-all hover:scale-110 transform">
+                    <span class="text-2xl mr-2">✕</span> CLEAR ALL FILTERS
+                </a>
+            </div>
+            {% endif %}
+        </form>
     </div>
+
+    <!-- Results Stats -->
+    <div class="mb-8 flex justify-between items-center border-l-4 border-red-600 pl-4">
+        <div class="text-lg font-black uppercase">
+            <span class="text-red-600">{{ challenges|length }}</span> 
+            <span class="opacity-80">CHALLENGE{% if challenges|length != 1 %}S{% endif %} FOUND</span>
+        </div>
+        <div class="text-sm font-bold uppercase opacity-60">
+            {{ challenges|length }} RESULTS
+        </div>
+    </div>
+
+    <!-- Challenges Grid by Category -->
+    {% set categories_grouped = challenges|groupby('category') %}
+
+    {% for category, challs in categories_grouped %}
+    <div class="mb-16 fade-in">
+        <!-- Category Header -->
+        <div class="mb-8 relative">
+            <div class="flex items-center">
+                <div class="bg-red-600 px-6 py-3 transform -skew-x-12 inline-block">
+                    <h2 class="text-3xl font-black uppercase text-black transform skew-x-12">
+                        {{ category }}
+                    </h2>
+                </div>
+                <div class="ml-4 border-2 border-red-600 px-4 py-2">
+                    <span class="font-black text-red-600">{{ challs|length }}</span>
+                </div>
+            </div>
+            <div class="h-1 bg-red-600 mt-4"></div>
+        </div>
+        
+        <!-- Challenges Grid -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for challenge in challs %}
+                <div class="challenge-card bg-black border-4 border-red-600 relative overflow-hidden group cursor-pointer transform transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-red-600/50">
+                    <!-- Card accent -->
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-red-600 transform rotate-45 translate-x-10 -translate-y-10 group-hover:translate-x-8 group-hover:-translate-y-8 transition-transform"></div>
+                    
+                    <div class="p-6 relative z-10">
+                        <!-- Header -->
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-xl font-black uppercase flex-1 leading-tight group-hover:text-red-600 transition-colors">
+                                {{ challenge.title }}
+                            </h3>
+                            <div class="ml-4 bg-red-600 text-black px-3 py-1 font-black text-lg border-2 border-white transform group-hover:scale-110 transition-transform">
+                                {{ challenge.points }}
+                            </div>
+                        </div>
+                        
+                        <!-- Badges -->
+                        <div class="mb-4 flex flex-wrap gap-2">
+                            {% if challenge.author.is_admin %}
+                            <span class="bg-red-600 text-black border-2 border-white px-2 py-1 text-xs font-black uppercase">
+                                OFFICIAL
+                            </span>
+                            {% else %}
+                            <span class="bg-black text-white border-2 border-white px-2 py-1 text-xs font-black uppercase">
+                                COMMUNITY
+                            </span>
+                            {% endif %}
+                            
+                            {% if challenge.difficulty == 'easy' %}
+                            <span class="border-2 border-green-500 text-green-500 px-2 py-1 text-xs font-black uppercase">
+                                EASY
+                            </span>
+                            {% elif challenge.difficulty == 'medium' %}
+                            <span class="border-2 border-yellow-500 text-yellow-500 px-2 py-1 text-xs font-black uppercase">
+                                MEDIUM
+                            </span>
+                            {% else %}
+                            <span class="border-2 border-red-600 text-red-600 px-2 py-1 text-xs font-black uppercase">
+                                HARD
+                            </span>
+                            {% endif %}
+                            
+                            {% if challenge.file_attachment %}
+                            <span class="border-2 border-blue-500 text-blue-500 px-2 py-1 text-xs font-black uppercase">
+                                📎 FILE
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Author -->
+                        <p class="text-xs mb-3 opacity-60 uppercase font-bold">
+                            BY {{ challenge.author.username }}
+                        </p>
+                        
+                        <!-- Description -->
+                        <p class="mb-4 text-sm leading-relaxed opacity-90 line-clamp-3">
+                            {{ challenge.description[:150] }}{% if challenge.description|length > 150 %}...{% endif %}
+                        </p>
+                        
+                        <!-- Footer -->
+                        <div class="flex justify-between items-center border-t-2 border-red-600 pt-4">
+                            <span class="text-sm font-bold flex items-center">
+                                <span class="text-red-600 mr-2 text-lg">●</span> 
+                                {{ challenge.solve_count() }} SOLVES
+                            </span>
+                            
+                            <a href="{{ url_for('challenges.detail', challenge_id=challenge.id) }}" 
+                               class="bg-red-600 text-black px-6 py-2 font-black uppercase text-sm border-2 border-black transform group-hover:bg-white group-hover:border-white transition-all">
+                                SOLVE →
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Hover overlay effect -->
+                    <div class="absolute inset-0 border-4 border-red-600 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+        <!-- No Results -->
+        <div class="text-center py-24 border-4 border-red-600 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-red-600"></div>
+            <div class="absolute bottom-0 left-0 w-full h-2 bg-red-600"></div>
+            
+            <div class="relative z-10">
+                <p class="text-6xl font-black uppercase mb-6 animate-pulse">
+                    <span class="text-red-600">⚠</span> NO CHALLENGES FOUND
+                </p>
+                <p class="text-2xl mb-8 opacity-80 uppercase font-bold">
+                    TRY DIFFERENT FILTERS OR SEARCH TERMS
+                </p>
+                <a href="{{ url_for('challenges.list') }}" 
+                   class="inline-block bg-red-600 text-black px-12 py-6 font-black uppercase text-lg border-4 border-white hover:bg-white hover:scale-105 transition-all transform">
+                    ◄ VIEW ALL CHALLENGES
+                </a>
+            </div>
+        </div>
+    {% endfor %}
 </div>
-{% else %}
-    <div class="text-center py-20 border-4 border-red-600">
-        <p class="text-3xl font-black uppercase">NO CHALLENGES FOUND</p>
-        <p class="mt-2">TRY DIFFERENT FILTERS</p>
-        <a href="{{ url_for('challenges.list') }}" class="inline-block mt-4 bg-red-600 text-black px-6 py-3 font-black uppercase hover:bg-white">
-            VIEW ALL CHALLENGES
-        </a>
-    </div>
-{% endfor %}
+
+<style>
+/* Custom select dropdown arrow */
+select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23FF0000'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+/* Line clamp for descriptions */
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>
 
 {% endblock %}

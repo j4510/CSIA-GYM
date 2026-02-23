@@ -100,6 +100,7 @@ class Challenge(db.Model):
     difficulty = db.Column(db.String(20), nullable=False)  # easy, medium, hard
     flag = db.Column(db.String(200), nullable=False)
     points = db.Column(db.Integer, nullable=False)
+    file_attachment = db.Column(db.String(500), nullable=True)  # Path to uploaded file
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     

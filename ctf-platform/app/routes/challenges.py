@@ -28,6 +28,7 @@ def list():
     
     Query parameters:
     - category: Filter by category (e.g., ?category=web)
+    - difficulty: Filter by difficulty (easy/medium/hard)
     - source: Filter by source (official/community)
     - search: Search in title/description
     """
@@ -39,6 +40,11 @@ def list():
     category = request.args.get('category')
     if category:
         query = query.filter_by(category=category)
+    
+    # Filter by difficulty
+    difficulty = request.args.get('difficulty')
+    if difficulty:
+        query = query.filter_by(difficulty=difficulty)
     
     # Filter by source (official = admin, community = non-admin)
     source = request.args.get('source')
@@ -62,7 +68,7 @@ def list():
     # Get all challenges ordered by creation date
     challenges = query.order_by(Challenge.created_at.desc()).all()
     
-    # Get all unique categories for filter dropdown
+    # Get all unique categories and difficulties for filter dropdowns
     all_categories = db.session.query(Challenge.category).distinct().all()
     categories = [c[0] for c in all_categories]
     
@@ -70,6 +76,7 @@ def list():
                          challenges=challenges, 
                          categories=categories,
                          current_category=category,
+                         current_difficulty=difficulty,
                          current_source=source,
                          current_search=search)
 

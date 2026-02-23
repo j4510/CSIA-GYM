@@ -1,80 +1,75 @@
 {% extends "base.html" %}
 
-{% block title %}Community - CTF Platform{% endblock %}
+{% block title %}COMMUNITY - CTF PLATFORM{% endblock %}
 
 {% block content %}
-<!-- COMMUNITY POSTS PAGE -->
+<div class="mb-8 fade-in">
+    <h1 class="text-5xl font-black uppercase tracking-tight">■ COMMUNITY</h1>
+    <p class="mt-2 text-xl opacity-80">DISCUSS CHALLENGES, SHARE WRITEUPS, ASK QUESTIONS</p>
+</div>
 
-<div class="mb-8 flex justify-between items-center">
-    <div>
-        <h1 class="text-4xl font-bold text-gray-900">Community</h1>
-        <p class="text-gray-600 mt-2">Share writeups, ask questions, and discuss CTF challenges</p>
-    </div>
-    
+<!-- New Post Button -->
+<div class="mb-8">
     <a href="{{ url_for('community.new_post') }}" 
-       class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold">
-        + New Post
+       class="inline-block bg-red-600 text-black px-8 py-4 font-black uppercase border-3 border-white hover:bg-white hover:text-black transition-all">
+        + CREATE NEW POST
     </a>
 </div>
 
 <!-- Posts List -->
-<div class="space-y-4">
+<div class="space-y-6">
     {% for post in posts %}
-        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+        <div class="bg-black border-4 border-red-600 p-6 hover-brutal shadow-lg challenge-card">
             <a href="{{ url_for('community.view_post', post_id=post.id) }}" class="block">
                 <!-- Post Header -->
-                <h3 class="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600">
-                    {{ post.title }}
-                </h3>
+                <div class="flex justify-between items-start mb-4">
+                    <h2 class="text-2xl font-black uppercase flex-1 leading-tight hover:text-red-600 transition-colors">
+                        {{ post.title }}
+                    </h2>
+                    
+                    <!-- Upvote Badge -->
+                    <div class="ml-4 bg-red-600 text-black px-4 py-2 font-black border-2 border-white">
+                        <span class="text-2xl">▲</span>
+                        <span class="ml-2">{{ post.upvotes }}</span>
+                    </div>
+                </div>
                 
                 <!-- Post Preview -->
-                <p class="text-gray-600 mb-4 line-clamp-2">
-                    {{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}
+                <p class="mb-4 opacity-80 leading-relaxed">
+                    {{ post.content[:250] }}{% if post.content|length > 250 %}...{% endif %}
                 </p>
                 
-                <!-- Post Meta Info -->
-                <div class="flex justify-between items-center text-sm text-gray-500">
-                    <div class="flex items-center space-x-4">
-                        <span>👤 {{ post.author.username }}</span>
-                        <span>💬 {{ post.comments|length }} comments</span>
-                        <span>📅 {{ post.created_at.strftime('%b %d, %Y') }}</span>
+                <!-- Post Meta -->
+                <div class="flex justify-between items-center text-sm border-t-2 border-red-600 pt-4">
+                    <div class="flex items-center space-x-6 font-bold uppercase">
+                        <span class="flex items-center">
+                            <span class="text-red-600 mr-2">👤</span> {{ post.author.username }}
+                        </span>
+                        <span class="flex items-center">
+                            <span class="text-red-600 mr-2">💬</span> {{ post.comments|length }}
+                        </span>
+                        <span class="flex items-center opacity-60">
+                            <span class="text-red-600 mr-2">📅</span> {{ post.created_at.strftime('%b %d, %Y') }}
+                        </span>
                     </div>
+                    
+                    <span class="text-red-600 font-black uppercase">
+                        READ MORE →
+                    </span>
                 </div>
             </a>
         </div>
     {% else %}
         <!-- No Posts Message -->
-        <div class="bg-white rounded-lg shadow-md p-12 text-center">
-            <p class="text-gray-500 text-lg mb-4">No posts yet. Be the first to start a discussion!</p>
+        <div class="text-center py-20 border-4 border-red-600">
+            <p class="text-4xl font-black uppercase mb-4">NO POSTS YET</p>
+            <p class="text-xl mb-6 opacity-80">BE THE FIRST TO START A DISCUSSION!</p>
             <a href="{{ url_for('community.new_post') }}" 
-               class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
-                Create First Post
+               class="inline-block bg-red-600 text-black px-8 py-4 font-black uppercase hover:bg-white hover:text-black transition-all">
+                CREATE FIRST POST
             </a>
         </div>
     {% endfor %}
 </div>
-
-<!-- 
-TO ADD: Pagination
-{% if posts.has_prev or posts.has_next %}
-<div class="mt-8 flex justify-center space-x-2">
-    {% if posts.has_prev %}
-    <a href="{{ url_for('community.list', page=posts.prev_num) }}" 
-       class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
-        Previous
-    </a>
-    {% endif %}
-    
-    <span class="px-4 py-2">Page {{ posts.page }} of {{ posts.pages }}</span>
-    
-    {% if posts.has_next %}
-    <a href="{{ url_for('community.list', page=posts.next_num) }}" 
-       class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
-        Next
-    </a>
-    {% endif %}
-</div>
-{% endif %}
--->
 
 {% endblock %}

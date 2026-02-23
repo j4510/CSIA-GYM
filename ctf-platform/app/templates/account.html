@@ -1,110 +1,133 @@
 {% extends "base.html" %}
 
-{% block title %}Account - CTF Platform{% endblock %}
+{% block title %}ACCOUNT - CTF PLATFORM{% endblock %}
 
 {% block content %}
-<!-- ACCOUNT PAGE -->
-
-<div class="max-w-4xl mx-auto">
+<div class="max-w-5xl mx-auto fade-in">
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">My Account</h1>
-        <p class="text-gray-600 mt-2">View your profile information and statistics</p>
+        <h1 class="text-4xl font-black uppercase">■ MY ACCOUNT</h1>
+        <p class="mt-2 text-xl opacity-80">VIEW YOUR PROFILE AND STATISTICS</p>
     </div>
     
     <!-- Account Information Card -->
-    <div class="bg-white rounded-lg shadow-md p-8 mb-6">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Profile Information</h2>
+    <div class="bg-black border-4 border-red-600 p-8 mb-6 shadow-lg hover-brutal">
+        <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">
+            PROFILE INFORMATION
+        </h2>
         
-        <div class="space-y-4">
+        <div class="space-y-6">
             <!-- Username -->
-            <div class="flex justify-between items-center py-3 border-b">
+            <div class="flex justify-between items-center py-4 border-b border-red-600">
                 <div>
-                    <p class="text-sm text-gray-500">Username</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ current_user.username }}</p>
+                    <p class="text-sm opacity-60 uppercase font-bold">USERNAME</p>
+                    <p class="text-2xl font-black uppercase">{{ current_user.username }}</p>
                 </div>
             </div>
             
             <!-- Email -->
-            <div class="flex justify-between items-center py-3 border-b">
+            <div class="flex justify-between items-center py-4 border-b border-red-600">
                 <div>
-                    <p class="text-sm text-gray-500">Email</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ current_user.email }}</p>
+                    <p class="text-sm opacity-60 uppercase font-bold">EMAIL</p>
+                    <p class="text-lg font-bold">{{ current_user.email }}</p>
                 </div>
             </div>
             
             <!-- Member Since -->
-            <div class="flex justify-between items-center py-3 border-b">
+            <div class="flex justify-between items-center py-4 border-b border-red-600">
                 <div>
-                    <p class="text-sm text-gray-500">Member Since</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+                    <p class="text-sm opacity-60 uppercase font-bold">MEMBER SINCE</p>
+                    <p class="text-lg font-bold">{{ current_user.created_at.strftime('%B %d, %Y') }}</p>
                 </div>
             </div>
+            
+            <!-- Admin Status -->
+            {% if current_user.is_admin %}
+            <div class="flex justify-between items-center py-4 border-b border-red-600">
+                <div>
+                    <p class="text-sm opacity-60 uppercase font-bold">ROLE</p>
+                    <p class="text-lg font-black text-red-600">ADMINISTRATOR</p>
+                </div>
+            </div>
+            {% endif %}
         </div>
         
         <!-- Edit Profile Button -->
-        <div class="mt-6">
+        <div class="mt-8">
             <a href="{{ url_for('settings.index') }}" 
-               class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold">
-                Edit Profile Settings
+               class="inline-block bg-red-600 text-black px-8 py-4 font-black uppercase border-3 border-white hover:bg-white hover:text-black transition-all">
+                ✎ EDIT PROFILE SETTINGS
             </a>
         </div>
     </div>
     
     <!-- Statistics Card -->
-    <div class="bg-white rounded-lg shadow-md p-8">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Your Statistics</h2>
+    <div class="bg-black border-4 border-red-600 p-8 shadow-lg hover-brutal">
+        <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">
+            YOUR STATISTICS
+        </h2>
         
-        <div class="grid md:grid-cols-3 gap-6">
+        <div class="grid md:grid-cols-3 gap-6 mb-8">
             <!-- Total Points -->
-            <div class="text-center p-6 bg-blue-50 rounded-lg">
-                <div class="text-4xl font-bold text-blue-600 mb-2">
+            <div class="text-center p-6 bg-black border-3 border-red-600 hover-brutal">
+                <div class="text-5xl font-black text-red-600 mb-2">
                     {{ current_user.get_score() }}
                 </div>
-                <div class="text-sm text-gray-600">Total Points</div>
+                <div class="text-sm opacity-80 uppercase font-bold">TOTAL POINTS</div>
             </div>
             
             <!-- Challenges Solved -->
-            <div class="text-center p-6 bg-green-50 rounded-lg">
-                <div class="text-4xl font-bold text-green-600 mb-2">
+            <div class="text-center p-6 bg-black border-3 border-green-500 hover-brutal">
+                <div class="text-5xl font-black text-green-500 mb-2">
                     {{ current_user.solves|length }}
                 </div>
-                <div class="text-sm text-gray-600">Challenges Solved</div>
+                <div class="text-sm opacity-80 uppercase font-bold">CHALLENGES SOLVED</div>
             </div>
             
             <!-- Community Posts -->
-            <div class="text-center p-6 bg-purple-50 rounded-lg">
-                <div class="text-4xl font-bold text-purple-600 mb-2">
+            <div class="text-center p-6 bg-black border-3 border-blue-500 hover-brutal">
+                <div class="text-5xl font-black text-blue-500 mb-2">
                     {{ current_user.posts|length }}
                 </div>
-                <div class="text-sm text-gray-600">Community Posts</div>
+                <div class="text-sm opacity-80 uppercase font-bold">COMMUNITY POSTS</div>
             </div>
         </div>
         
         <!-- Recent Activity -->
         <div class="mt-8">
-            <h3 class="text-xl font-bold text-gray-900 mb-4">Recent Solves</h3>
+            <h3 class="text-xl font-black uppercase mb-4 flex items-center">
+                <span class="text-red-600 mr-2">►</span> RECENT SOLVES
+            </h3>
             
             {% if current_user.solves %}
-                <div class="space-y-2">
-                    {% for solve in current_user.solves|sort(attribute='solved_at', reverse=True)[:5] %}
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <div class="space-y-3">
+                    {% set recent_solves = current_user.solves|list %}
+                    {% for solve in recent_solves|sort(attribute='solved_at', reverse=True) %}
+                        {% if loop.index <= 5 %}
+                        <div class="flex justify-between items-center p-4 bg-black border-2 border-red-600 hover-brutal">
                             <div>
-                                <p class="font-semibold">{{ solve.challenge.title }}</p>
-                                <p class="text-sm text-gray-500">{{ solve.challenge.category }} - {{ solve.challenge.points }} pts</p>
+                                <p class="font-black uppercase">{{ solve.challenge.title }}</p>
+                                <p class="text-sm opacity-60 uppercase">
+                                    {{ solve.challenge.category }} • {{ solve.challenge.points }} PTS
+                                </p>
                             </div>
-                            <p class="text-sm text-gray-500">
+                            <p class="text-sm font-bold opacity-80">
                                 {{ solve.solved_at.strftime('%b %d, %Y') }}
                             </p>
                         </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
             {% else %}
-                <p class="text-gray-500 text-center py-8">
-                    No challenges solved yet. Start solving to see your progress here!
-                </p>
+                <div class="text-center py-12 border-3 border-red-600 opacity-60">
+                    <p class="text-xl font-black uppercase">NO CHALLENGES SOLVED YET</p>
+                    <p class="mt-2">START SOLVING TO SEE YOUR PROGRESS HERE!</p>
+                    <a href="{{ url_for('challenges.list') }}" 
+                       class="inline-block mt-4 bg-red-600 text-black px-6 py-3 font-black uppercase hover:bg-white">
+                        GO TO CHALLENGES →
+                    </a>
+                </div>
             {% endif %}
         </div>
     </div>
 </div>
-
 {% endblock %}
