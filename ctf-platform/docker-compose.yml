@@ -51,7 +51,7 @@ services:
     volumes:
       - ./instance:/app/instance
       # TO ENABLE HOT-RELOAD DURING DEVELOPMENT: Uncomment line below
-      # - .:/app
+      - .:/app
     
     # Restart policy
     restart: unless-stopped
