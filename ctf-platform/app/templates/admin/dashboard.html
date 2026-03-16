@@ -12,9 +12,9 @@
     <!-- Statistics Cards -->
     <div class="grid md:grid-cols-4 gap-6 mb-8">
         <div class="bg-white p-6 rounded-lg shadow-md">
-            <div class="text-3xl font-bold text-blue-600 mb-2">{{ stats.total_users }}</div>
+            <div class="text-3xl font-bold text-red-600 mb-2">{{ stats.total_users }}</div>
             <div class="text-gray-600">Total Users</div>
-            <a href="{{ url_for('admin.users') }}" class="text-sm text-blue-600 hover:underline mt-2 inline-block">Manage →</a>
+            <a href="{{ url_for('admin.users') }}" class="text-sm text-red-600 hover:underline mt-2 inline-block">Manage →</a>
         </div>
         
         <div class="bg-white p-6 rounded-lg shadow-md">
@@ -38,7 +38,7 @@
     
     <!-- Quick Actions -->
     <div class="grid md:grid-cols-3 gap-6 mb-8">
-        <a href="{{ url_for('admin.users') }}" class="bg-blue-600 text-white p-6 rounded-lg hover:bg-blue-700 transition text-center">
+        <a href="{{ url_for('admin.users') }}" class="bg-red-600 text-white p-6 rounded-lg hover:bg-red-700 transition text-center">
             <div class="text-3xl mb-2">👥</div>
             <div class="font-semibold text-lg">Manage Users</div>
             <div class="text-sm opacity-90">View, promote, or remove users</div>

@@ -20,7 +20,7 @@
                        name="title" 
                        value="{{ post.title }}"
                        required
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
             </div>
             
             <div class="mb-6">
@@ -31,12 +31,12 @@
                           name="content" 
                           required
                           rows="12"
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">{{ post.content }}</textarea>
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">{{ post.content }}</textarea>
             </div>
             
             <div class="flex space-x-4">
                 <button type="submit" 
-                        class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
+                        class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 font-semibold">
                     Save Changes
                 </button>
                 <a href="{{ url_for('admin.posts') }}" 
