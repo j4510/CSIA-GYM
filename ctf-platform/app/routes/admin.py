@@ -19,11 +19,30 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from PIL import Image
 import os
+import csv
+from datetime import datetime
 from app import db
 from app.models import User, Challenge, ChallengeSubmission, CommunityPost, Comment, Badge, UserBadge
 
 BADGE_DIR = os.path.join(os.path.dirname(__file__), '..', 'static', 'badges')
 AVATAR_DIR = os.path.join(os.path.dirname(__file__), '..', 'static', 'avatars')
+AUDIT_LOG = os.path.join(os.path.dirname(__file__), '..', '..', 'instance', 'admin_audit.csv')
+
+
+def log_action(action: str, target: str = ''):
+    """Append a line to the admin audit CSV log."""
+    os.makedirs(os.path.dirname(AUDIT_LOG), exist_ok=True)
+    write_header = not os.path.exists(AUDIT_LOG)
+    with open(AUDIT_LOG, 'a', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        if write_header:
+            writer.writerow(['timestamp', 'admin', 'action', 'target'])
+        writer.writerow([
+            datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),
+            current_user.username,
+            action,
+            target,
+        ])
 
 # Create admin blueprint
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin', template_folder='../templates')
@@ -93,6 +112,7 @@ def promote_user(user_id):
     else:
         user.is_admin = True
         db.session.commit()
+        log_action('promote_to_admin', user.username)
         flash(f'{user.username} promoted to admin!', 'success')
     
     return redirect(url_for('admin.users'))
@@ -109,6 +129,7 @@ def demote_user(user_id):
     
     user.is_admin = False
     db.session.commit()
+    log_action('demote_from_admin', user.username)
     flash(f'{user.username} demoted to regular user', 'info')
     
     return redirect(url_for('admin.users'))
@@ -123,6 +144,7 @@ def delete_user(user_id):
         flash('You cannot delete your own account!', 'danger')
         return redirect(url_for('admin.users'))
     
+    log_action('delete_user', user.username)
     db.session.delete(user)
     db.session.commit()
     flash(f'User {user.username} deleted', 'info')
@@ -187,6 +209,7 @@ def edit_user(user_id):
                 db.session.add(UserBadge(user_id=user.id, badge_id=bid))
 
         db.session.commit()
+        log_action('edit_user', user.username)
         flash(f'{user.username} updated successfully', 'success')
         return redirect(url_for('admin.users'))
 
@@ -227,6 +250,7 @@ def create_badge():
     badge = Badge(title=title, description=description, image_filename=filename, is_limited=is_limited)
     db.session.add(badge)
     db.session.commit()
+    log_action('create_badge', title)
     flash(f'Badge "{title}" created!', 'success')
     return redirect(url_for('admin.badges'))
 
@@ -236,6 +260,7 @@ def delete_badge(badge_id):
     badge = Badge.query.get_or_404(badge_id)
     db.session.delete(badge)
     db.session.commit()
+    log_action('delete_badge', badge.title)
     flash(f'Badge "{badge.title}" deleted', 'info')
     return redirect(url_for('admin.badges'))
 
@@ -250,6 +275,7 @@ def hide_from_scoreboard(user_id):
     else:
         user.is_hidden_from_scoreboard = True
         db.session.commit()
+        log_action('hide_from_scoreboard', user.username)
         flash(f'{user.username} is now hidden from scoreboard', 'success')
     
     return redirect(url_for('admin.users'))
@@ -265,9 +291,22 @@ def show_on_scoreboard(user_id):
     else:
         user.is_hidden_from_scoreboard = False
         db.session.commit()
+        log_action('show_on_scoreboard', user.username)
         flash(f'{user.username} is now visible on scoreboard', 'success')
     
     return redirect(url_for('admin.users'))
+
+
+@admin_bp.route('/audit-log')
+def audit_log():
+    """Download the admin audit log as a CSV."""
+    from flask import send_file, Response
+    if os.path.exists(AUDIT_LOG):
+        return send_file(AUDIT_LOG, mimetype='text/csv', as_attachment=True,
+                         download_name=f'admin_audit_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.csv')
+    # Return empty CSV if no actions yet
+    return Response('timestamp,admin,action,target\n', mimetype='text/csv',
+                    headers={'Content-Disposition': 'attachment; filename=admin_audit.csv'})
 
 
 # ========================================
@@ -315,6 +354,7 @@ def approve_challenge(submission_id):
     db.session.add(challenge)
     db.session.commit()
     
+    log_action('approve_challenge', challenge.title)
     flash(f'Challenge "{challenge.title}" approved and published!', 'success')
     return redirect(url_for('admin.challenges'))
 
@@ -326,6 +366,7 @@ def reject_challenge(submission_id):
     submission.status = 'rejected'
     db.session.commit()
     
+    log_action('reject_challenge', submission.title)
     flash(f'Challenge "{submission.title}" rejected', 'info')
     return redirect(url_for('admin.challenges'))
 
@@ -337,6 +378,7 @@ def delete_challenge(challenge_id):
     db.session.delete(challenge)
     db.session.commit()
     
+    log_action('delete_challenge', challenge.title)
     flash(f'Challenge "{challenge.title}" deleted', 'info')
     return redirect(url_for('challenges.list'))
 
@@ -359,6 +401,7 @@ def delete_post(post_id):
     db.session.delete(post)  # Comments are deleted automatically (cascade)
     db.session.commit()
     
+    log_action('delete_post', str(post.id))
     flash('Post deleted', 'info')
     return redirect(url_for('admin.posts'))
 
@@ -373,6 +416,7 @@ def edit_post(post_id):
         post.content = request.form.get('content')
         db.session.commit()
         
+        log_action('edit_post', str(post.id))
         flash('Post updated', 'success')
         return redirect(url_for('admin.posts'))
     

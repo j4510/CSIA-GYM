@@ -30,7 +30,9 @@
             </thead>
             <tbody class="divide-y divide-gray-200">
                 {% for user in users %}
-                <tr class="hover:bg-gray-50 transition">
+                <tr class="transition" style="cursor:default;"
+                    onmouseenter="this.style.background='rgba(139,0,0,0.12)'"
+                    onmouseleave="this.style.background=''">
                     <td class="px-4 py-3">
                         {% if user.profile_picture %}
                         <img src="{{ url_for('static', filename='avatars/' + user.profile_picture) }}"

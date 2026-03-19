@@ -5,7 +5,7 @@
 - User-agent detection instead of resolution for phones. ✅
 - Email verification
 - Media posting enabled on community
-- Identicon
+- Identicon ✅
 - Community-based challenges
 - Competitions
-- Badges
+- Badges ✅
