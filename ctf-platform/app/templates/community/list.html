@@ -42,8 +42,14 @@
                 <!-- Post Meta -->
                 <div class="flex justify-between items-center text-sm border-t-2 border-red-600 pt-4">
                     <div class="flex items-center space-x-6 font-bold uppercase">
-                        <span class="flex items-center">
-                            <span class="text-red-600 mr-2">👤</span> {{ post.author.username }}
+                        <span class="flex items-center gap-2">
+                            {% if post.author.profile_picture %}
+                            <img src="{{ url_for('static', filename='avatars/' + post.author.profile_picture) }}"
+                                 alt="" style="width:22px;height:22px;object-fit:cover;border:1px solid #8b0000;">
+                            {% else %}
+                            <span class="text-red-600">👤</span>
+                            {% endif %}
+                            {{ post.author.username }}
                         </span>
                         <span class="flex items-center">
                             <span class="text-red-600 mr-2">💬</span> {{ post.comments|length }}

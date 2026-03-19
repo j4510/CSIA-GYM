@@ -5,8 +5,8 @@
 {% block content %}
 <div class="max-w-5xl mx-auto fade-in">
     <div class="mb-8">
-        <h1 class="text-4xl font-black uppercase">■ MY ACCOUNT</h1>
-        <p class="mt-2 text-xl opacity-80">VIEW YOUR PROFILE AND STATISTICS</p>
+        <h1 class="text-4xl font-black uppercase" style="color: #000000;">■ MY ACCOUNT</h1>
+        <p class="mt-2 text-xl opacity-80" style="color: #000000;">VIEW YOUR PROFILE AND STATISTICS</p>
     </div>
     
     <!-- Account Information Card -->
@@ -14,39 +14,49 @@
         <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">
             PROFILE INFORMATION
         </h2>
-        
-        <div class="space-y-6">
-            <!-- Username -->
-            <div class="flex justify-between items-center py-4 border-b border-red-600">
-                <div>
-                    <p class="text-sm opacity-60 uppercase font-bold">USERNAME</p>
-                    <p class="text-2xl font-black uppercase">{{ current_user.username }}</p>
-                </div>
+
+        <div class="flex items-center gap-6 mb-6">
+            {% if current_user.profile_picture %}
+            <img src="{{ url_for('static', filename='avatars/' + current_user.profile_picture) }}"
+                 alt="Avatar" style="width:90px;height:90px;object-fit:cover;border:3px solid #8b0000;">
+            {% endif %}
+            <div>
+                <p class="text-2xl font-black uppercase">{{ current_user.username }}</p>
+                {% if current_user.full_name %}<p class="opacity-60 uppercase text-sm">{{ current_user.full_name }}</p>{% endif %}
             </div>
-            
-            <!-- Email -->
-            <div class="flex justify-between items-center py-4 border-b border-red-600">
-                <div>
-                    <p class="text-sm opacity-60 uppercase font-bold">EMAIL</p>
-                    <p class="text-lg font-bold">{{ current_user.email }}</p>
-                </div>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex justify-between items-center py-3 border-b border-red-600">
+                <p class="text-sm opacity-60 uppercase font-bold">EMAIL</p>
+                <p class="font-bold">{{ current_user.email }}</p>
             </div>
-            
-            <!-- Member Since -->
-            <div class="flex justify-between items-center py-4 border-b border-red-600">
-                <div>
-                    <p class="text-sm opacity-60 uppercase font-bold">MEMBER SINCE</p>
-                    <p class="text-lg font-bold">{{ current_user.created_at.strftime('%B %d, %Y') }}</p>
-                </div>
+            {% if current_user.affiliation %}
+            <div class="flex justify-between items-center py-3 border-b border-red-600">
+                <p class="text-sm opacity-60 uppercase font-bold">AFFILIATION</p>
+                <p class="font-bold">{{ current_user.affiliation }}</p>
             </div>
-            
-            <!-- Admin Status -->
+            {% endif %}
+            {% if current_user.age %}
+            <div class="flex justify-between items-center py-3 border-b border-red-600">
+                <p class="text-sm opacity-60 uppercase font-bold">AGE</p>
+                <p class="font-bold">{{ current_user.age }}</p>
+            </div>
+            {% endif %}
+            {% if current_user.gender %}
+            <div class="flex justify-between items-center py-3 border-b border-red-600">
+                <p class="text-sm opacity-60 uppercase font-bold">GENDER</p>
+                <p class="font-bold">{{ current_user.gender }}</p>
+            </div>
+            {% endif %}
+            <div class="flex justify-between items-center py-3 border-b border-red-600">
+                <p class="text-sm opacity-60 uppercase font-bold">MEMBER SINCE</p>
+                <p class="font-bold">{{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+            </div>
             {% if current_user.is_admin %}
-            <div class="flex justify-between items-center py-4 border-b border-red-600">
-                <div>
-                    <p class="text-sm opacity-60 uppercase font-bold">ROLE</p>
-                    <p class="text-lg font-black text-red-600">ADMINISTRATOR</p>
-                </div>
+            <div class="flex justify-between items-center py-3 border-b border-red-600">
+                <p class="text-sm opacity-60 uppercase font-bold">ROLE</p>
+                <p class="text-lg font-black text-red-600">ADMINISTRATOR</p>
             </div>
             {% endif %}
         </div>
@@ -94,6 +104,25 @@
         
         <!-- Recent Activity -->
         <div class="mt-8">
+            <h3 class="text-xl font-black uppercase mb-4 flex items-center">
+                <span class="text-red-600 mr-2">►</span> BADGES EARNED
+            </h3>
+            {% if current_user.badges %}
+            <div class="flex flex-wrap gap-4 mb-8">
+                {% for ub in current_user.badges %}
+                <div class="text-center" style="width:90px;">
+                    <img src="{{ url_for('static', filename='badges/' + ub.badge.image_filename) }}"
+                         alt="{{ ub.badge.title }}" title="{{ ub.badge.description }}"
+                         style="width:80px;height:80px;object-fit:cover;border:2px solid #8b0000;">
+                    <p class="text-xs font-black uppercase mt-1" style="word-break:break-word;">{{ ub.badge.title }}</p>
+                    {% if ub.badge.is_limited %}<p class="text-xs" style="color:#facc15;">LIMITED</p>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="opacity-40 uppercase text-sm mb-8">NO BADGES EARNED YET</p>
+            {% endif %}
+
             <h3 class="text-xl font-black uppercase mb-4 flex items-center">
                 <span class="text-red-600 mr-2">►</span> RECENT SOLVES
             </h3>

@@ -12,9 +12,16 @@ TO EXTEND THIS SECTION:
 - Add API key management
 """
 
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
+from PIL import Image
+import os
 from app import db
+from app.models import User
+
+AVATAR_DIR = os.path.join(os.path.dirname(__file__), '..', 'static', 'avatars')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 # Create blueprint
 settings_bp = Blueprint('settings', __name__, template_folder='../templates')
@@ -23,16 +30,40 @@ settings_bp = Blueprint('settings', __name__, template_folder='../templates')
 @settings_bp.route('/account')
 @login_required
 def account():
-    """
-    User account page - view account information.
-    
-    Displays:
-    - Username
-    - Email
-    - Account statistics
-    - Registration date
-    """
     return render_template('account.html')
+
+
+@settings_bp.route('/user/<int:user_id>')
+def public_profile(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.is_hidden_from_scoreboard:
+        abort(404)
+    return render_template('public_profile.html', user=user)
+
+
+@settings_bp.route('/settings/upload-avatar', methods=['POST'])
+@login_required
+def upload_avatar():
+    if 'avatar' not in request.files:
+        flash('No file selected', 'danger')
+        return redirect(url_for('settings.index'))
+    file = request.files['avatar']
+    if file.filename == '':
+        flash('No file selected', 'danger')
+        return redirect(url_for('settings.index'))
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in ALLOWED_EXTENSIONS:
+        flash('Invalid file type', 'danger')
+        return redirect(url_for('settings.index'))
+    os.makedirs(AVATAR_DIR, exist_ok=True)
+    filename = f'avatar_{current_user.username}.webp'
+    img = Image.open(file).convert('RGB')
+    img = img.resize((500, 500))
+    img.save(os.path.join(AVATAR_DIR, filename), 'WEBP', quality=85)
+    current_user.profile_picture = filename
+    db.session.commit()
+    flash('Profile picture updated!', 'success')
+    return redirect(url_for('settings.index'))
 
 
 @settings_bp.route('/settings', methods=['GET', 'POST'])
@@ -57,6 +88,16 @@ def index():
     if request.method == 'POST':
         updated = False
         
+        # ========================================
+        # Update optional profile fields
+        # ========================================
+        current_user.full_name = request.form.get('full_name', '').strip() or None
+        current_user.affiliation = request.form.get('affiliation', '').strip() or None
+        age_val = request.form.get('age', '').strip()
+        current_user.age = int(age_val) if age_val.isdigit() else None
+        current_user.gender = request.form.get('gender', '').strip() or None
+        updated = True
+
         # ========================================
         # Update Username
         # ========================================

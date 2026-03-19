@@ -3,110 +3,122 @@
 {% block title %}Settings - CSIA GYM{% endblock %}
 
 {% block content %}
-<!-- SETTINGS PAGE -->
-
-<div class="max-w-3xl mx-auto">
+<div class="max-w-3xl mx-auto fade-in">
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Settings</h1>
-        <p class="text-gray-600 mt-2">Update your profile and security settings</p>
+        <h1 class="text-4xl font-black uppercase" style="color: #000000;">■ SETTINGS</h1>
+        <p class="mt-2 text-xl font-bold uppercase" style="color: #000000;">UPDATE YOUR PROFILE AND SECURITY SETTINGS</p>
     </div>
-    
-    <div class="bg-white rounded-lg shadow-md p-8">
-        <form method="POST" action="{{ url_for('settings.index') }}">
-            
-            <!-- Profile Information Section -->
-            <div class="mb-8">
-                <h2 class="text-xl font-bold text-gray-900 mb-4 pb-2 border-b">
-                    Profile Information
-                </h2>
-                
-                <!-- Username -->
-                <div class="mb-4">
-                    <label for="username" class="block text-gray-700 font-semibold mb-2">
-                        Username
-                    </label>
-                    <input type="text" 
-                           id="username" 
-                           name="username" 
-                           value="{{ current_user.username }}"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <p class="text-sm text-gray-500 mt-1">This is your display name on the platform</p>
-                </div>
-                
-                <!-- Email -->
-                <div class="mb-4">
-                    <label for="email" class="block text-gray-700 font-semibold mb-2">
-                        Email
-                    </label>
-                    <input type="email" 
-                           id="email" 
-                           name="email" 
-                           value="{{ current_user.email }}"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
+
+    <!-- Profile Picture -->
+    <div class="bg-black border-4 border-red-600 p-8 mb-6 shadow-lg hover-brutal">
+        <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">PROFILE PICTURE</h2>
+        <div class="flex items-center gap-8 mb-6">
+            {% if current_user.profile_picture %}
+            <img src="{{ url_for('static', filename='avatars/' + current_user.profile_picture) }}"
+                 alt="Avatar" style="width:100px;height:100px;object-fit:cover;border:3px solid #8b0000;">
+            {% endif %}
+            <div>
+                <p class="text-sm opacity-60 uppercase font-bold mb-2">Upload a new picture (PNG, JPG, WEBP)</p>
+                <p class="text-xs opacity-40 uppercase">Will be resized to 500×500 and saved as WebP</p>
             </div>
-            
-            <!-- Change Password Section -->
-            <div class="mb-8">
-                <h2 class="text-xl font-bold text-gray-900 mb-4 pb-2 border-b">
-                    Change Password
-                </h2>
-                
-                <p class="text-sm text-gray-600 mb-4">
-                    Leave these fields blank if you don't want to change your password
-                </p>
-                
-                <!-- Current Password -->
-                <div class="mb-4">
-                    <label for="current_password" class="block text-gray-700 font-semibold mb-2">
-                        Current Password
-                    </label>
-                    <input type="password" 
-                           id="current_password" 
-                           name="current_password"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Enter current password">
-                </div>
-                
-                <!-- New Password -->
-                <div class="mb-4">
-                    <label for="new_password" class="block text-gray-700 font-semibold mb-2">
-                        New Password
-                    </label>
-                    <input type="password" 
-                           id="new_password" 
-                           name="new_password"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Enter new password">
-                </div>
-                
-                <!-- Confirm New Password -->
-                <div class="mb-4">
-                    <label for="confirm_password" class="block text-gray-700 font-semibold mb-2">
-                        Confirm New Password
-                    </label>
-                    <input type="password" 
-                           id="confirm_password" 
-                           name="confirm_password"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Confirm new password">
-                </div>
-            </div>
-            
-            <!-- Save Button -->
-            <div class="flex space-x-4">
-                <button type="submit" 
-                        class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-semibold">
-                    Save Changes
+        </div>
+        <form method="POST" action="{{ url_for('settings.upload_avatar') }}" enctype="multipart/form-data">
+            <div class="flex gap-4 items-center">
+                <input type="file" name="avatar" accept="image/*" class="text-sm">
+                <button type="submit" style="padding: 8px 20px; background: #8b0000; color: #fff; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer;">
+                    UPLOAD
                 </button>
-                
-                <a href="{{ url_for('settings.account') }}" 
-                   class="bg-gray-200 text-gray-800 px-8 py-3 rounded-lg hover:bg-gray-300 transition font-semibold">
-                    Cancel
+            </div>
+        </form>
+    </div>
+
+    <!-- Profile & Password -->
+    <div class="bg-black border-4 border-red-600 p-8 shadow-lg hover-brutal">
+        <form method="POST" action="{{ url_for('settings.index') }}">
+
+            <!-- Profile Information -->
+            <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">PROFILE INFORMATION</h2>
+
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Username</label>
+                    <input type="text" name="username" value="{{ current_user.username }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Full Name</label>
+                    <input type="text" name="full_name" value="{{ current_user.full_name or '' }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm opacity-60 uppercase font-bold mb-1">Email</label>
+                <input type="email" name="email" value="{{ current_user.email }}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+            </div>
+
+            <!-- Optional Fields -->
+            <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2 mt-8">OPTIONAL DETAILS</h2>
+
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Affiliation / School</label>
+                    <input type="text" name="affiliation" value="{{ current_user.affiliation or '' }}"
+                           placeholder="e.g. MIT, Google"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Age</label>
+                    <input type="number" name="age" value="{{ current_user.age or '' }}" min="1" max="120"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <label class="block text-sm opacity-60 uppercase font-bold mb-1">Gender</label>
+                <select name="gender" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <option value="">Prefer not to answer</option>
+                    <option value="Male" {% if current_user.gender == 'Male' %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if current_user.gender == 'Female' %}selected{% endif %}>Female</option>
+                    <option value="Nonbinary or Genderfluid" {% if current_user.gender == 'Nonbinary or Genderfluid' %}selected{% endif %}>Nonbinary or Genderfluid</option>
+                    <option value="Not listed" {% if current_user.gender == 'Not listed' %}selected{% endif %}>Not listed</option>
+                </select>
+            </div>
+
+            <!-- Change Password -->
+            <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">CHANGE PASSWORD</h2>
+            <p class="text-sm opacity-60 uppercase mb-4">Leave blank to keep current password</p>
+
+            <div class="grid md:grid-cols-3 gap-4 mb-8">
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Current Password</label>
+                    <input type="password" name="current_password" placeholder="Current password"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">New Password</label>
+                    <input type="password" name="new_password" placeholder="New password"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Confirm Password</label>
+                    <input type="password" name="confirm_password" placeholder="Confirm new password"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+            </div>
+
+            <div class="flex gap-4">
+                <button type="submit"
+                        style="padding: 12px 32px; background: #8b0000; color: #fff; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer;">
+                    SAVE CHANGES
+                </button>
+                <a href="{{ url_for('settings.account') }}"
+                   style="padding: 12px 32px; background: #222; color: #fff; font-weight: 900; text-transform: uppercase; text-decoration: none; border: 2px solid #8b0000;">
+                    CANCEL
                 </a>
             </div>
         </form>
     </div>
 </div>
-
 {% endblock %}

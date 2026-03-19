@@ -69,14 +69,78 @@ def create_app(config_class=Config):
     # TO ADD NEW BLUEPRINT:
     # from app.routes.your_feature import your_feature_bp
     # app.register_blueprint(your_feature_bp)
-    
+
+    # ========================================
+    # MOBILE BLOCK
+    # ========================================
+
+    import re
+    MOBILE_UA_RE = re.compile(
+        r'(iPhone|Android.*Mobile|Android.*Firefox)',
+        re.IGNORECASE
+    )
+
+    from flask import request, render_template
+
+    @app.before_request
+    def block_mobile():
+        ua = request.headers.get('User-Agent', '')
+        if MOBILE_UA_RE.search(ua):
+            if request.endpoint not in ('static', 'challenges.scoreboard'):
+                return render_template('mobile.html'), 200
+
+    # ========================================
+    # ERROR HANDLERS
+    # ========================================
+
+    @app.errorhandler(400)
+    def bad_request(e):
+        return render_template('error.html', code=400, title='Bad Request', message='The server could not understand your request.'), 400
+
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('error.html', code=403, title='Access Forbidden', message='You do not have permission to access this page.'), 403
+
+    @app.errorhandler(404)
+    def not_found(e):
+        return render_template('error.html', code=404, title='Page Not Found', message='The page you are looking for does not exist or has been moved.'), 404
+
+    @app.errorhandler(405)
+    def method_not_allowed(e):
+        return render_template('error.html', code=405, title='Method Not Allowed', message='This action is not allowed on the requested resource.'), 405
+
+    @app.errorhandler(500)
+    def internal_error(e):
+        return render_template('error.html', code=500, title='Server Error', message='Something went wrong on our end. Please try again later.'), 500
+
     # ========================================
     # CREATE DATABASE TABLES
     # ========================================
     
     with app.app_context():
         db.create_all()
-        
+
+        # ----------------------------------------
+        # INLINE MIGRATIONS
+        # Safely add new columns to existing tables
+        # ----------------------------------------
+        from sqlalchemy import text, inspect
+        inspector = inspect(db.engine)
+
+        existing_user_cols = [c['name'] for c in inspector.get_columns('users')]
+        new_user_cols = {
+            'full_name':   'ALTER TABLE users ADD COLUMN full_name VARCHAR(120)',
+            'affiliation': 'ALTER TABLE users ADD COLUMN affiliation VARCHAR(120)',
+            'age':         'ALTER TABLE users ADD COLUMN age INTEGER',
+            'gender':      'ALTER TABLE users ADD COLUMN gender VARCHAR(40)',
+            'profile_picture': 'ALTER TABLE users ADD COLUMN profile_picture VARCHAR(200)',
+        }
+        with db.engine.connect() as conn:
+            for col, stmt in new_user_cols.items():
+                if col not in existing_user_cols:
+                    conn.execute(text(stmt))
+            conn.commit()
+
         # Create default admin user if it doesn't exist
         from app.models import User
         admin = User.query.filter_by(username='admin').first()

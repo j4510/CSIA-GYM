@@ -16,8 +16,14 @@ decorator - only users with is_admin=True can access them.
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
+from PIL import Image
+import os
 from app import db
-from app.models import User, Challenge, ChallengeSubmission, CommunityPost, Comment
+from app.models import User, Challenge, ChallengeSubmission, CommunityPost, Comment, Badge, UserBadge
+
+BADGE_DIR = os.path.join(os.path.dirname(__file__), '..', 'static', 'badges')
+AVATAR_DIR = os.path.join(os.path.dirname(__file__), '..', 'static', 'avatars')
 
 # Create admin blueprint
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin', template_folder='../templates')
@@ -122,6 +128,116 @@ def delete_user(user_id):
     flash(f'User {user.username} deleted', 'info')
     
     return redirect(url_for('admin.users'))
+
+
+@admin_bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
+def edit_user(user_id):
+    """Edit any user's profile including password."""
+    user = User.query.get_or_404(user_id)
+    all_badges = Badge.query.all()
+    user_badge_ids = {ub.badge_id for ub in user.badges}
+
+    if request.method == 'POST':
+        new_username = request.form.get('username', '').strip()
+        new_email = request.form.get('email', '').strip()
+        new_full_name = request.form.get('full_name', '').strip() or None
+        new_affiliation = request.form.get('affiliation', '').strip() or None
+        age_val = request.form.get('age', '').strip()
+        new_age = int(age_val) if age_val.isdigit() else None
+        new_gender = request.form.get('gender', '').strip() or None
+        new_password = request.form.get('new_password', '').strip()
+
+        if new_username and new_username != user.username:
+            if User.query.filter_by(username=new_username).first():
+                flash('Username already taken', 'danger')
+                return redirect(url_for('admin.edit_user', user_id=user_id))
+            user.username = new_username
+
+        if new_email and new_email != user.email:
+            if User.query.filter_by(email=new_email).first():
+                flash('Email already registered', 'danger')
+                return redirect(url_for('admin.edit_user', user_id=user_id))
+            user.email = new_email
+
+        user.full_name = new_full_name
+        user.affiliation = new_affiliation
+        user.age = new_age
+        user.gender = new_gender
+
+        if new_password:
+            user.set_password(new_password)
+
+        # Handle profile picture upload
+        if 'avatar' in request.files and request.files['avatar'].filename:
+            file = request.files['avatar']
+            os.makedirs(AVATAR_DIR, exist_ok=True)
+            filename = f'avatar_{user.username}.webp'
+            img = Image.open(file).convert('RGB')
+            img = img.resize((500, 500))
+            img.save(os.path.join(AVATAR_DIR, filename), 'WEBP', quality=85)
+            user.profile_picture = filename
+
+        # Handle badge assignments
+        selected_badge_ids = set(int(x) for x in request.form.getlist('badges'))
+        for ub in list(user.badges):
+            if ub.badge_id not in selected_badge_ids:
+                db.session.delete(ub)
+        for bid in selected_badge_ids:
+            if bid not in user_badge_ids:
+                db.session.add(UserBadge(user_id=user.id, badge_id=bid))
+
+        db.session.commit()
+        flash(f'{user.username} updated successfully', 'success')
+        return redirect(url_for('admin.users'))
+
+    return render_template('admin/edit_user.html', user=user, all_badges=all_badges, user_badge_ids=user_badge_ids)
+
+
+# ========================================
+# BADGE MANAGEMENT
+# ========================================
+
+@admin_bp.route('/badges')
+def badges():
+    all_badges = Badge.query.order_by(Badge.created_at.desc()).all()
+    return render_template('admin/badges.html', badges=all_badges)
+
+
+@admin_bp.route('/badges/create', methods=['POST'])
+def create_badge():
+    title = request.form.get('title', '').strip()
+    description = request.form.get('description', '').strip()
+    is_limited = 'is_limited' in request.form
+
+    if not title or not description or 'image' not in request.files:
+        flash('Title, description, and image are required', 'danger')
+        return redirect(url_for('admin.badges'))
+
+    file = request.files['image']
+    if not file.filename:
+        flash('No image selected', 'danger')
+        return redirect(url_for('admin.badges'))
+
+    os.makedirs(BADGE_DIR, exist_ok=True)
+    filename = secure_filename(f'badge_{title.lower().replace(" ", "_")}.webp')
+    img = Image.open(file).convert('RGBA')
+    img = img.resize((500, 500))
+    img.save(os.path.join(BADGE_DIR, filename), 'WEBP', quality=85)
+
+    badge = Badge(title=title, description=description, image_filename=filename, is_limited=is_limited)
+    db.session.add(badge)
+    db.session.commit()
+    flash(f'Badge "{title}" created!', 'success')
+    return redirect(url_for('admin.badges'))
+
+
+@admin_bp.route('/badges/<int:badge_id>/delete', methods=['POST'])
+def delete_badge(badge_id):
+    badge = Badge.query.get_or_404(badge_id)
+    db.session.delete(badge)
+    db.session.commit()
+    flash(f'Badge "{badge.title}" deleted', 'info')
+    return redirect(url_for('admin.badges'))
 
 
 @admin_bp.route('/users/<int:user_id>/hide', methods=['POST'])

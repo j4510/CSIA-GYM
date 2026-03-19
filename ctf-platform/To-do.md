@@ -1,5 +1,11 @@
-- User profiles on public
+- User profiles on public ✅
 - More administrator actions on user
     - Filtering of user table
-- Better favicon
-- Web-agent detection instead of resolution for phones.
+- Better favicon 
+- User-agent detection instead of resolution for phones. ✅
+- Email verification
+- Media posting enabled on community
+- Identicon
+- Community-based challenges
+- Competitions
+- Badges

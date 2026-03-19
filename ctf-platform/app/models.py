@@ -47,20 +47,24 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    is_admin = db.Column(db.Boolean, default=False)  # Admin role flag
-    is_hidden_from_scoreboard = db.Column(db.Boolean, default=False)  # Hide from leaderboard
+    is_admin = db.Column(db.Boolean, default=False)
+    is_hidden_from_scoreboard = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Profile fields
+    full_name = db.Column(db.String(120), nullable=True)
+    affiliation = db.Column(db.String(120), nullable=True)
+    age = db.Column(db.Integer, nullable=True)
+    gender = db.Column(db.String(40), nullable=True)
+    profile_picture = db.Column(db.String(200), nullable=True)
     
-    # TO ADD: Additional profile fields
-    # bio = db.Column(db.Text, nullable=True)
-    # profile_picture = db.Column(db.String(200), nullable=True)
-    
-    # Relationships - defines connections to other tables
+    # Relationships
     challenges = db.relationship('Challenge', backref='author', lazy=True)
     solves = db.relationship('UserChallengeSolve', backref='user', lazy=True)
     submissions = db.relationship('ChallengeSubmission', backref='author', lazy=True)
     posts = db.relationship('CommunityPost', backref='author', lazy=True)
     comments = db.relationship('Comment', backref='author', lazy=True)
+    badges = db.relationship('UserBadge', backref='user', lazy=True)
     
     def set_password(self, password):
         """Hash and store password securely."""
@@ -241,6 +245,38 @@ class Comment(db.Model):
     
     def __repr__(self):
         return f'<Comment on Post {self.post_id}>'
+
+
+# ========================================
+# BADGE MODELS
+# ========================================
+
+class Badge(db.Model):
+    __tablename__ = 'badges'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(300), nullable=False)
+    image_filename = db.Column(db.String(200), nullable=False)
+    is_limited = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    recipients = db.relationship('UserBadge', backref='badge', lazy=True, cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<Badge {self.title}>'
+
+
+class UserBadge(db.Model):
+    __tablename__ = 'user_badges'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    badge_id = db.Column(db.Integer, db.ForeignKey('badges.id'), nullable=False)
+    awarded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<UserBadge user={self.user_id} badge={self.badge_id}>'
 
 
 # ========================================

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Badges - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Manage Badges</h1>
+            <p class="text-gray-600 mt-1">{{ badges|length }} badges created</p>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Create Badge -->
+    <div class="bg-black border-4 border-red-600 p-8 mb-8 shadow-lg">
+        <h2 class="text-xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">CREATE NEW BADGE</h2>
+        <form method="POST" action="{{ url_for('admin.create_badge') }}" enctype="multipart/form-data">
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Title</label>
+                    <input type="text" name="title" required placeholder="Badge title"
+                           class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Image (500×500 recommended)</label>
+                    <input type="file" name="image" accept="image/*" required class="text-sm text-white w-full py-2">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm opacity-60 uppercase font-bold mb-1">Description</label>
+                <input type="text" name="description" required placeholder="Short description"
+                       class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">
+            </div>
+            <div class="mb-6 flex items-center gap-3">
+                <input type="checkbox" name="is_limited" id="is_limited" style="accent-color:#8b0000; width:16px; height:16px;">
+                <label for="is_limited" class="text-sm font-bold uppercase opacity-80">Limited Edition</label>
+            </div>
+            <button type="submit"
+                    style="padding:10px 28px; background:#8b0000; color:#fff; font-weight:900; text-transform:uppercase; border:none; cursor:pointer;">
+                CREATE BADGE
+            </button>
+        </form>
+    </div>
+
+    <!-- Badge List -->
+    {% if badges %}
+    <div class="grid md:grid-cols-4 gap-6">
+        {% for badge in badges %}
+        <div class="bg-black border-2 border-red-600 p-4 shadow-lg text-center">
+            <img src="{{ url_for('static', filename='badges/' + badge.image_filename) }}"
+                 alt="{{ badge.title }}" style="width:100%;max-width:120px;height:120px;object-fit:cover;margin:0 auto 12px;">
+            <p class="font-black uppercase text-sm mb-1">{{ badge.title }}</p>
+            {% if badge.is_limited %}
+            <p class="text-xs font-bold mb-1" style="color:#facc15;">★ LIMITED EDITION</p>
+            {% endif %}
+            <p class="text-xs opacity-60 mb-4">{{ badge.description }}</p>
+            <p class="text-xs opacity-40 mb-4">{{ badge.recipients|length }} holder(s)</p>
+            <form method="POST" action="{{ url_for('admin.delete_badge', badge_id=badge.id) }}" onsubmit="return confirm('Delete this badge?');">
+                <button type="submit" style="padding:6px 16px; background:#7f1d1d; color:#fff; font-size:11px; font-weight:700; text-transform:uppercase; border:none; cursor:pointer;">
+                    DELETE
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-16 border-4 border-red-600">
+        <p class="text-2xl font-black uppercase opacity-60">NO BADGES YET</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

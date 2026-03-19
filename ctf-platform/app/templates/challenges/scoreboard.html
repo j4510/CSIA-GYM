@@ -49,9 +49,15 @@
                     
                     <!-- Player Name -->
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
+                        <div class="flex items-center gap-3">
+                            {% if user.profile_picture %}
+                            <img src="{{ url_for('static', filename='avatars/' + user.profile_picture) }}"
+                                 alt="" style="width:32px;height:32px;object-fit:cover;border:2px solid #8b0000;border-radius:2px;">
+                            {% endif %}
                             <div class="text-sm font-medium text-gray-900">
-                                {{ user.username }}
+                                <a href="{{ url_for('settings.public_profile', user_id=user.id) }}" class="hover:text-red-600 transition-colors">
+                                    {{ user.username }}
+                                </a>
                                 {% if current_user.is_authenticated and user.id == current_user.id %}
                                     <span class="ml-2 text-blue-600">(You)</span>
                                 {% endif %}

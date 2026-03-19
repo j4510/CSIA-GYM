@@ -18,6 +18,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, current_user
 from app import db
 from app.models import User
+from app.identicon import generate_identicon
 
 # Create blueprint
 # First argument is the blueprint name (used in url_for)
@@ -60,22 +61,18 @@ def register():
         # Get form data
         username = request.form.get('username', '').strip()
         email = request.form.get('email', '').strip()
+        full_name = request.form.get('full_name', '').strip()
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
         
         # Validation
-        if not username or not email or not password:
+        if not username or not email or not full_name or not password:
             flash('All fields are required', 'danger')
             return redirect(url_for('auth.register'))
         
         if password != confirm_password:
             flash('Passwords do not match', 'danger')
             return redirect(url_for('auth.register'))
-        
-        # TO ADD: Password strength validation
-        # if len(password) < 8:
-        #     flash('Password must be at least 8 characters', 'danger')
-        #     return redirect(url_for('auth.register'))
         
         # Check if user exists
         if User.query.filter_by(username=username).first():
@@ -87,8 +84,9 @@ def register():
             return redirect(url_for('auth.register'))
         
         # Create new user
-        user = User(username=username, email=email)
+        user = User(username=username, email=email, full_name=full_name)
         user.set_password(password)
+        user.profile_picture = generate_identicon(username)
         db.session.add(user)
         db.session.commit()
         

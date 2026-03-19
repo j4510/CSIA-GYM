@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.username }} - CSIA GYM{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto fade-in">
+    <div class="mb-8">
+        <h1 class="text-4xl font-black uppercase" style="color: #000000;">■ {{ user.username }}</h1>
+        <p class="mt-2 text-xl uppercase font-bold" style="color: #000000;">PLAYER PROFILE</p>
+    </div>
+
+    <div class="bg-black border-4 border-red-600 p-8 mb-6 shadow-lg hover-brutal">
+        <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">PROFILE</h2>
+
+        <div class="flex items-center gap-6 mb-6">
+            {% if user.profile_picture %}
+            <img src="{{ url_for('static', filename='avatars/' + user.profile_picture) }}"
+                 alt="Avatar" style="width:90px;height:90px;object-fit:cover;border:3px solid #8b0000;">
+            {% endif %}
+            <div>
+                <p class="text-2xl font-black uppercase">{{ user.username }}</p>
+                {% if user.full_name %}<p class="opacity-60 uppercase text-sm">{{ user.full_name }}</p>{% endif %}
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            {% if user.affiliation %}
+            <div class="flex justify-between items-center py-3 border-b border-red-600">
+                <p class="text-sm opacity-60 uppercase font-bold">AFFILIATION</p>
+                <p class="font-bold">{{ user.affiliation }}</p>
+            </div>
+            {% endif %}
+            <div class="flex justify-between items-center py-3 border-b border-red-600">
+                <p class="text-sm opacity-60 uppercase font-bold">MEMBER SINCE</p>
+                <p class="font-bold">{{ user.created_at.strftime('%B %d, %Y') }}</p>
+            </div>
+            {% if user.is_admin %}
+            <div class="flex justify-between items-center py-3 border-b border-red-600">
+                <p class="text-sm opacity-60 uppercase font-bold">ROLE</p>
+                <p class="font-black text-red-600">ADMINISTRATOR</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="bg-black border-4 border-red-600 p-8 shadow-lg hover-brutal">
+        <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">STATISTICS</h2>
+
+        <div class="grid md:grid-cols-3 gap-6 mb-8">
+            <div class="text-center p-6 bg-black border-3 border-red-600 hover-brutal">
+                <div class="text-5xl font-black text-red-600 mb-2">{{ user.get_score() }}</div>
+                <div class="text-sm opacity-80 uppercase font-bold">TOTAL POINTS</div>
+            </div>
+            <div class="text-center p-6 bg-black border-3 border-green-500 hover-brutal">
+                <div class="text-5xl font-black text-green-500 mb-2">{{ user.solves|length }}</div>
+                <div class="text-sm opacity-80 uppercase font-bold">CHALLENGES SOLVED</div>
+            </div>
+            <div class="text-center p-6 bg-black border-3 border-red-500 hover-brutal">
+                <div class="text-5xl font-black text-red-500 mb-2">{{ user.posts|length }}</div>
+                <div class="text-sm opacity-80 uppercase font-bold">COMMUNITY POSTS</div>
+            </div>
+        </div>
+
+        <!-- Badges -->
+        <div class="mt-8">
+            <h3 class="text-xl font-black uppercase mb-4 flex items-center">
+                <span class="text-red-600 mr-2">►</span> BADGES EARNED
+            </h3>
+            {% if user.badges %}
+            <div class="flex flex-wrap gap-4 mb-8">
+                {% for ub in user.badges %}
+                <div class="text-center" style="width:90px;">
+                    <img src="{{ url_for('static', filename='badges/' + ub.badge.image_filename) }}"
+                         alt="{{ ub.badge.title }}" title="{{ ub.badge.description }}"
+                         style="width:80px;height:80px;object-fit:cover;border:2px solid #8b0000;">
+                    <p class="text-xs font-black uppercase mt-1" style="word-break:break-word;">{{ ub.badge.title }}</p>
+                    {% if ub.badge.is_limited %}<p class="text-xs" style="color:#facc15;">LIMITED</p>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="opacity-40 uppercase text-sm mb-8">NO BADGES EARNED YET</p>
+            {% endif %}
+
+            <h3 class="text-xl font-black uppercase mb-4 flex items-center">
+                <span class="text-red-600 mr-2">►</span> RECENT SOLVES
+            </h3>
+            {% if user.solves %}
+                <div class="space-y-3">
+                    {% for solve in user.solves|sort(attribute='solved_at', reverse=True) %}
+                        {% if loop.index <= 5 %}
+                        <div class="flex justify-between items-center p-4 bg-black border-2 border-red-600 hover-brutal">
+                            <div>
+                                <p class="font-black uppercase">{{ solve.challenge.title }}</p>
+                                <p class="text-sm opacity-60 uppercase">{{ solve.challenge.category }} • {{ solve.challenge.points }} PTS</p>
+                            </div>
+                            <p class="text-sm font-bold opacity-80">{{ solve.solved_at.strftime('%b %d, %Y') }}</p>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12 border-3 border-red-600 opacity-60">
+                    <p class="text-xl font-black uppercase">NO CHALLENGES SOLVED YET</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
