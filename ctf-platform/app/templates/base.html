@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}CTF Platform{% endblock %}</title>
+    <title>{% block title %}CSIA GYM{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/images.ico') }}">
     
     <!-- Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,8 +25,38 @@
     -->
     
     {% block extra_css %}{% endblock %}
+    
+    <script>
+        // Mobile detection and redirect
+        function isMobileDevice() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
+            return mobileRegex.test(userAgent.toLowerCase());
+        }
+        
+        function isSmallScreen() {
+            return window.innerWidth < 768; // md breakpoint
+        }
+        
+        // Check on load and on resize
+        function checkMobileAccess() {
+            const currentPath = window.location.pathname;
+            const isScoreboard = currentPath.includes('/scoreboard');
+            
+            if ((isMobileDevice() || isSmallScreen()) && !isScoreboard) {
+                // Redirect to scoreboard or show message
+                window.location.href = '{{ url_for("challenges.scoreboard") }}';
+            }
+        }
+        
+        window.addEventListener('load', checkMobileAccess);
+        window.addEventListener('resize', checkMobileAccess);
+    </script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
+    
+    <!-- Particles.js background -->
+    <div id="particles-js"></div>
     
     <!-- ========================================
     NAVIGATION BAR
@@ -40,7 +73,7 @@
                 
                 <!-- Logo/Brand -->
                 <a href="{{ url_for('auth.index') }}" class="text-2xl font-black hover:text-white transition px-3 py-1">
-                    🚩 CTF PLATFORM
+                    CSIA GYM
                 </a>
                 
                 <!-- Navigation Links -->
@@ -178,7 +211,7 @@
     <footer class="bg-gray-800 text-gray-300 mt-auto">
         <div class="container mx-auto px-4 py-6">
             <div class="flex justify-between items-center">
-                <p>&copy; 2024 CTF Platform. Built for your department.</p>
+                <p>&copy; 2026 CSIA GYM. Built with ❤️ by v4mp & ssecca.</p>
                 
                 <div class="flex space-x-4">
                     <!-- 
@@ -194,6 +227,115 @@
     
     <!-- Interactive Background Script -->
     <script src="{{ url_for('static', filename='js/background.js') }}"></script>
+    
+    <!-- Particles.js Library -->
+    <script src="{{ url_for('static', filename='js/particles.js') }}"></script>
+    
+    <!-- Initialize Particles.js Background -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            particlesJS('particles-js', {
+                particles: {
+                    number: {
+                        value: 80,
+                        density: {
+                            enable: true,
+                            value_area: 800
+                        }
+                    },
+                    color: {
+                        value: '#8b0000'
+                    },
+                    shape: {
+                        type: 'circle',
+                        stroke: {
+                            width: 0,
+                            color: '#000000'
+                        }
+                    },
+                    opacity: {
+                        value: 0.5,
+                        random: false,
+                        anim: {
+                            enable: false,
+                            speed: 1,
+                            opacity_min: 0.1,
+                            sync: false
+                        }
+                    },
+                    size: {
+                        value: 3,
+                        random: true,
+                        anim: {
+                            enable: false,
+                            speed: 40,
+                            size_min: 0.1,
+                            sync: false
+                        }
+                    },
+                    line_linked: {
+                        enable: true,
+                        distance: 150,
+                        color: '#8b0000',
+                        opacity: 0.4,
+                        width: 1
+                    },
+                    move: {
+                        enable: true,
+                        speed: 2,
+                        direction: 'none',
+                        random: false,
+                        straight: false,
+                        out_mode: 'out',
+                        bounce: false,
+                        attract: {
+                            enable: false,
+                            rotateX: 600,
+                            rotateY: 1200
+                        }
+                    }
+                },
+                interactivity: {
+                    detect_on: 'window',
+                    events: {
+                        onhover: {
+                            enable: true,
+                            mode: 'grab'
+                        },
+                        onclick: {
+                            enable: false,
+                            mode: 'push'
+                        },
+                        resize: true
+                    },
+                    modes: {
+                        grab: {
+                            distance: 140,
+                            line_linked: {
+                                opacity: 1
+                            }
+                        },
+                        bubble: {
+                            distance: 200,
+                            size: 40,
+                            duration: 0.4
+                        },
+                        repulse: {
+                            distance: 200,
+                            duration: 0.4
+                        },
+                        push: {
+                            particles_nb: 4
+                        },
+                        remove: {
+                            particles_nb: 2
+                        }
+                    }
+                },
+                retina_detect: true
+            });
+        });
+    </script>
     
     <!-- 
     TO ADD CUSTOM JAVASCRIPT:

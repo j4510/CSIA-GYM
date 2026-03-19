@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}CHALLENGES - CTF PLATFORM{% endblock %}
+{% block title %}CHALLENGES - CSIA GYM{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <!-- Header Section -->
     <div class="mb-12 fade-in">
-        <h1 class="text-5xl font-bold uppercase tracking-tight mb-2" style="color: #f5f5f5;">
+        <h1 class="text-5xl font-bold uppercase tracking-tight mb-2" style="color: #000000;">
             CHALLENGES
         </h1>
-        <p class="text-lg font-medium uppercase tracking-wide challenges-subtitle" style="color: #d5d5d5;">
+        <p class="text-lg font-medium uppercase tracking-wide challenges-subtitle" style="color: #000000;">
             SOLVE → EARN POINTS → DOMINATE LEADERBOARD
         </p>
     </div>
@@ -76,7 +76,10 @@
                 </div>
                 
                 <!-- Filter Button -->
-                <div class="flex items-end">
+                <div>
+                    <label class="block text-xs font-semibold uppercase mb-2 invisible">
+                        Filter
+                    </label>
                     <button type="submit" class="btn-filter w-full">
                         Filter
                     </button>
@@ -97,7 +100,7 @@
     <!-- Results Stats -->
     <div class="results-counter mb-10" style="color: #d5d5d5; font-weight: 600;">
         <span class="count-number" style="color: rgba(139, 0, 0, 0.9); font-weight: 700;">{{ challenges|length }}</span>
-        <span>challenge{% if challenges|length != 1 %}s{% endif %} found</span>
+        <span style="color: rgba(139, 0, 0, 0.9);">challenge{% if challenges|length != 1 %}s{% endif %} found</span>
     </div>
 
     <!-- Challenges Grid by Category -->

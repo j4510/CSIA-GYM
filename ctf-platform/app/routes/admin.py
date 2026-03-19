@@ -124,6 +124,36 @@ def delete_user(user_id):
     return redirect(url_for('admin.users'))
 
 
+@admin_bp.route('/users/<int:user_id>/hide', methods=['POST'])
+def hide_from_scoreboard(user_id):
+    """Hide a user from appearing on the scoreboard."""
+    user = User.query.get_or_404(user_id)
+    
+    if user.is_hidden_from_scoreboard:
+        flash(f'{user.username} is already hidden from scoreboard', 'info')
+    else:
+        user.is_hidden_from_scoreboard = True
+        db.session.commit()
+        flash(f'{user.username} is now hidden from scoreboard', 'success')
+    
+    return redirect(url_for('admin.users'))
+
+
+@admin_bp.route('/users/<int:user_id>/show', methods=['POST'])
+def show_on_scoreboard(user_id):
+    """Show a user on the scoreboard again."""
+    user = User.query.get_or_404(user_id)
+    
+    if not user.is_hidden_from_scoreboard:
+        flash(f'{user.username} is already visible on scoreboard', 'info')
+    else:
+        user.is_hidden_from_scoreboard = False
+        db.session.commit()
+        flash(f'{user.username} is now visible on scoreboard', 'success')
+    
+    return redirect(url_for('admin.users'))
+
+
 # ========================================
 # CHALLENGE MANAGEMENT
 # ========================================

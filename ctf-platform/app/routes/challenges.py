@@ -169,10 +169,10 @@ def submit_flag(challenge_id):
 
 
 @challenges_bp.route('/scoreboard')
-@login_required
 def scoreboard():
     """
     Display leaderboard of all users sorted by score.
+    Accessible without login. Excludes hidden users.
     
     TO EXTEND:
     - Add team scores
@@ -183,8 +183,8 @@ def scoreboard():
     
     from app.models import User
     
-    # Get all users
-    users = User.query.all()
+    # Get all visible users (not hidden from scoreboard)
+    users = User.query.filter_by(is_hidden_from_scoreboard=False).all()
     
     # Sort by score (calculated from solved challenges)
     leaderboard = sorted(users, key=lambda u: u.get_score(), reverse=True)

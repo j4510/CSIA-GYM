@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Scoreboard - CTF Platform{% endblock %}
+{% block title %}Scoreboard - CSIA GYM{% endblock %}
 
 {% block content %}
 <!-- SCOREBOARD PAGE -->
@@ -31,7 +31,7 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
             {% for user in leaderboard %}
-                <tr class="{% if user.id == current_user.id %}bg-blue-50{% else %}hover:bg-gray-50{% endif %}">
+                <tr class="{% if current_user.is_authenticated and user.id == current_user.id %}bg-blue-50{% else %}hover:bg-gray-50{% endif %}">
                     <!-- Rank -->
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
@@ -52,7 +52,7 @@
                         <div class="flex items-center">
                             <div class="text-sm font-medium text-gray-900">
                                 {{ user.username }}
-                                {% if user.id == current_user.id %}
+                                {% if current_user.is_authenticated and user.id == current_user.id %}
                                     <span class="ml-2 text-blue-600">(You)</span>
                                 {% endif %}
                             </div>
@@ -97,7 +97,11 @@ TO ADD: Statistics Cards
     
     <div class="bg-white p-6 rounded-lg shadow-md">
         <h3 class="text-gray-500 text-sm font-semibold mb-2">Your Score</h3>
-        <p class="text-3xl font-bold">{{ current_user.get_score() }}</p>
+        {% if current_user.is_authenticated %}
+            <p class="text-3xl font-bold">{{ current_user.get_score() }}</p>
+        {% else %}
+            <p class="text-3xl font-bold">-</p>
+        {% endif %}
     </div>
 </div>
 -->

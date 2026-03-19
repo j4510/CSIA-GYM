@@ -164,15 +164,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Prevent button glitching by disabling pointer events during animations
-document.addEventListener('mousedown', (e) => {
-    if (e.target.matches('button, .btn, input[type="submit"], a.bg-red-600')) {
-        e.target.style.pointerEvents = 'none';
-        setTimeout(() => {
-            e.target.style.pointerEvents = 'auto';
-        }, 300);
-    }
-});
 
 // Smooth focus management
 document.addEventListener('focusin', (e) => {

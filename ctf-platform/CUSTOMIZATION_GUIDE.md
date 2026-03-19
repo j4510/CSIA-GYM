@@ -62,7 +62,7 @@ Create `app/templates/resources/list.html`:
 ```html
 {% extends "base.html" %}
 
-{% block title %}Resources - CTF Platform{% endblock %}
+{% block title %}Resources - CSIA GYM{% endblock %}
 
 {% block content %}
 <h1 class="text-3xl font-bold mb-6">Learning Resources</h1>

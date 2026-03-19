@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}COMMUNITY - CTF PLATFORM{% endblock %}
+{% block title %}COMMUNITY - CSIA GYM{% endblock %}
 
 {% block content %}
 <div class="mb-8 fade-in">
-    <h1 class="text-5xl font-black uppercase tracking-tight community-header" style="color: #f5f5f5;">■ COMMUNITY</h1>
-    <p class="mt-2 text-xl community-subtitle" style="color: #d5d5d5;">DISCUSS CHALLENGES, SHARE WRITEUPS, ASK QUESTIONS</p>
+    <h1 class="text-5xl font-black uppercase tracking-tight community-header" style="color: #000000;">■ COMMUNITY</h1>
+    <p class="mt-2 text-xl community-subtitle" style="color: #000000;">DISCUSS CHALLENGES, SHARE WRITEUPS, ASK QUESTIONS</p>
 </div>
 
 <!-- New Post Button -->
@@ -62,8 +62,8 @@
     {% else %}
         <!-- No Posts Message -->
         <div class="text-center py-20 border-4 border-red-600 no-posts-message">
-            <p class="text-4xl font-black uppercase mb-4" style="color: #f5f5f5;">NO POSTS YET</p>
-            <p class="text-xl mb-6" style="color: #d5d5d5;">BE THE FIRST TO START A DISCUSSION!</p>
+            <p class="text-4xl font-black uppercase mb-4" style="color: #000000;">NO POSTS YET</p>
+            <p class="text-xl mb-6" style="color: #000000;">BE THE FIRST TO START A DISCUSSION!</p>
             <a href="{{ url_for('community.new_post') }}" 
                class="inline-block bg-red-600 text-black px-8 py-4 font-black uppercase hover:bg-white hover:text-black transition-all">
                 CREATE FIRST POST

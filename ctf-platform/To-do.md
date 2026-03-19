@@ -1,1 +1,5 @@
-- 
+- User profiles on public
+- More administrator actions on user
+    - Filtering of user table
+- Better favicon
+- Web-agent detection instead of resolution for phones.
