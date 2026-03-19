@@ -9,7 +9,7 @@
         <h1 class="text-5xl font-bold uppercase tracking-tight mb-2" style="color: #f5f5f5;">
             CHALLENGES
         </h1>
-        <p class="text-lg font-medium uppercase tracking-wide" style="color: #d5d5d5;">
+        <p class="text-lg font-medium uppercase tracking-wide challenges-subtitle" style="color: #d5d5d5;">
             SOLVE → EARN POINTS → DOMINATE LEADERBOARD
         </p>
     </div>
@@ -43,7 +43,7 @@
                     <label class="block text-xs font-semibold uppercase mb-2" style="color: #a0a0a0; letter-spacing: 0.05em;">
                         Difficulty
                     </label>
-                    <select name="difficulty">
+                    <select name="difficulty" class="w-full">
                         <option value="">All Levels</option>
                         <option value="easy" {% if current_difficulty == 'easy' %}selected{% endif %}>Easy</option>
                         <option value="medium" {% if current_difficulty == 'medium' %}selected{% endif %}>Medium</option>
@@ -56,7 +56,7 @@
                     <label class="block text-xs font-semibold uppercase mb-2" style="color: #a0a0a0; letter-spacing: 0.05em;">
                         Source
                     </label>
-                    <select name="source">
+                    <select name="source" class="w-full">
                         <option value="">All Sources</option>
                         <option value="official" {% if current_source == 'official' %}selected{% endif %}>Official</option>
                         <option value="community" {% if current_source == 'community' %}selected{% endif %}>Community</option>
@@ -71,7 +71,8 @@
                     <input type="text" 
                            name="search" 
                            value="{{ current_search or '' }}"
-                           placeholder="Search challenges...">
+                           placeholder="Search challenges..."
+                           class="w-full">
                 </div>
                 
                 <!-- Filter Button -->
@@ -94,8 +95,8 @@
     </div>
 
     <!-- Results Stats -->
-    <div class="results-counter mb-10">
-        <span class="count-number">{{ challenges|length }}</span>
+    <div class="results-counter mb-10" style="color: #d5d5d5; font-weight: 600;">
+        <span class="count-number" style="color: rgba(139, 0, 0, 0.9); font-weight: 700;">{{ challenges|length }}</span>
         <span>challenge{% if challenges|length != 1 %}s{% endif %} found</span>
     </div>
 

@@ -756,3 +756,109 @@ pre {
 .btn-clear-filters:hover {
     color: #f5f5f5;
 }
+
+/* ===== ALERT / TOAST NOTIFICATIONS ===== */
+.alert {
+    padding: 1rem 1.5rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-weight: 500;
+    border-left: 4px solid;
+    animation: slideIn 0.3s ease-out;
+}
+
+.alert-success {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: #4caf50;
+    color: #4caf50;
+}
+
+.alert-error,
+.alert-danger {
+    background: rgba(244, 67, 54, 0.15);
+    border-color: #f44336;
+    color: #ff9999;
+}
+
+.alert-warning {
+    background: rgba(255, 152, 0, 0.15);
+    border-color: #ff9800;
+    color: #ffb74d;
+}
+
+.alert-info {
+    background: rgba(33, 150, 243, 0.15);
+    border-color: #2196f3;
+    color: #64b5f6;
+}
+
+/* ===== LOGIN/REGISTER PAGE IMPROVEMENTS ===== */
+.bg-white h2 {
+    color: #f5f5f5 !important;
+    font-weight: 700;
+}
+
+/* Ensure all form labels are readable */
+.bg-white label {
+    color: #e0e0e0 !important;
+}
+
+/* ===== COMMUNITY PAGE TEXT IMPROVEMENTS ===== */
+.community-header h1 {
+    color: #f5f5f5 !important;
+}
+
+.community-subtitle {
+    color: #d5d5d5 !important;
+    opacity: 1 !important;
+}
+
+.no-posts-message {
+    color: #f5f5f5 !important;
+}
+
+.no-posts-message p:first-child {
+    color: #f5f5f5 !important;
+}
+
+.no-posts-message p:last-child {
+    color: #d5d5d5 !important;
+}
+
+/* ===== CHALLENGES PAGE TEXT IMPROVEMENTS ===== */
+.challenges-subtitle {
+    color: #d5d5d5 !important;
+}
+
+.results-counter {
+    color: #d5d5d5 !important;
+    font-weight: 600;
+}
+
+.results-counter .count-number {
+    color: rgba(139, 0, 0, 0.9);
+    font-weight: 700;
+}
+
+/* ===== DROPDOWN WIDTH CONSISTENCY ===== */
+.filter-bar select {
+    width: 100%;
+    display: block;
+    min-width: 0;
+}
+
+.filter-bar input {
+    width: 100%;
+    display: block;
+}
+
+.filter-bar .grid > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-bar .grid > div select,
+.filter-bar .grid > div input {
+    flex: 1;
+    min-width: 0;
+}
