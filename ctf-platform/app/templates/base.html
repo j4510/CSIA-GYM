@@ -187,14 +187,8 @@
         <div class="container mx-auto px-4 py-6">
             <div class="flex justify-between items-center">
                 <p>&copy; 2026 CSIA GYM. Built with ❤️ by v4mp & ssecca.</p>
-                
-                <div class="flex space-x-4">
-                    <!-- 
-                    TO ADD FOOTER LINKS:
-                    <a href="#" class="hover:text-white">About</a>
-                    <a href="#" class="hover:text-white">Rules</a>
-                    <a href="#" class="hover:text-white">Contact</a>
-                    -->
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('auth.whats_new') }}" class="hover:text-white text-sm font-mono" style="color: #9ca3af;">{{ app_version }}</a>
                 </div>
             </div>
         </div>

@@ -22,10 +22,10 @@
                 </h1>
                 
                 <div class="flex space-x-2">
-                    <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded">
+                    <span class="bg-gray-200 px-3 py-1 rounded" style="color:#111111;">
                         {{ challenge.category }}
                     </span>
-                    <span class="{% if challenge.difficulty == 'easy' %}bg-green-100 text-green-800{% elif challenge.difficulty == 'medium' %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %} px-3 py-1 rounded">
+                    <span style="color:#111111;" class="{% if challenge.difficulty == 'easy' %}bg-green-100{% elif challenge.difficulty == 'medium' %}bg-yellow-100{% else %}bg-red-100{% endif %} px-3 py-1 rounded">
                         {{ challenge.difficulty|capitalize }}
                     </span>
                 </div>
@@ -41,7 +41,7 @@
         
         <!-- Description -->
         <div class="mb-6">
-            <h3 class="font-semibold text-lg mb-2">Description</h3>
+            <h3 class="font-semibold text-lg mb-2" style="color:#111111;">Description</h3>
             <div class="prose max-w-none" style="color: #111111;">
                 {{ challenge.description }}
             </div>

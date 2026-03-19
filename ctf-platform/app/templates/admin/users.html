@@ -14,8 +14,9 @@
         </a>
     </div>
 
-    <div class="bg-white rounded-lg shadow-md overflow-x-auto">
-        <table class="min-w-full table-auto">
+    <div class="bg-white rounded-lg shadow-md" style="overflow: visible;">
+        <div style="overflow-x: auto;">
+        <table class="min-w-full table-auto" style="overflow: visible;">
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avatar</th>
@@ -64,13 +65,13 @@
                     </td>
                     <td class="px-4 py-3">
                         <!-- Dropdown -->
-                        <div class="relative" x-data="{ open: false }">
-                            <button @click="open = !open" @click.outside="open = false"
+                        <div class="relative">
+                            <button onclick="toggleDropdown(this)"
                                     style="padding: 6px 14px; background: #8b0000; color: #fff; font-weight: 700; font-size: 12px; border: none; cursor: pointer; text-transform: uppercase;">
                                 ACTIONS ▾
                             </button>
-                            <div x-show="open" x-transition
-                                 style="display:none; position:absolute; right:0; z-index:50; min-width:160px; background:#111; border:2px solid #8b0000; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
+                            <div class="admin-dropdown"
+                                 style="display:none; position:fixed; z-index:9999; min-width:160px; background:#111; border:2px solid #8b0000; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
 
                                 <!-- Edit -->
                                 <a href="{{ url_for('admin.edit_user', user_id=user.id) }}"
@@ -123,6 +124,30 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleDropdown(btn) {
+    var menu = btn.nextElementSibling;
+    var allMenus = document.querySelectorAll('.admin-dropdown');
+    allMenus.forEach(function(m) { if (m !== menu) m.style.display = 'none'; });
+    if (menu.style.display === 'none' || menu.style.display === '') {
+        var rect = btn.getBoundingClientRect();
+        menu.style.top = (rect.bottom + window.scrollY) + 'px';
+        menu.style.left = (rect.right - 160 + window.scrollX) + 'px';
+        menu.style.display = 'block';
+    } else {
+        menu.style.display = 'none';
+    }
+}
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.relative')) {
+        document.querySelectorAll('.admin-dropdown').forEach(function(m) { m.style.display = 'none'; });
+    }
+});
+</script>
 {% endblock %}

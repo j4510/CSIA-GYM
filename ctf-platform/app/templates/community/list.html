@@ -28,7 +28,7 @@
                     </h2>
                     
                     <!-- Upvote Badge -->
-                    <div class="ml-4 bg-red-600 text-black px-4 py-2 font-black border-2 border-white">
+                    <div class="ml-4 bg-red-600 px-4 py-2 font-black border-2 border-white" style="color:#ffffff;">
                         <span class="text-2xl">▲</span>
                         <span class="ml-2">{{ post.upvotes }}</span>
                     </div>
@@ -41,27 +41,24 @@
                 
                 <!-- Post Meta -->
                 <div class="flex justify-between items-center text-sm border-t-2 border-red-600 pt-4">
-                    <div class="flex items-center space-x-6 font-bold uppercase">
+                    <div class="flex items-center space-x-6 font-bold uppercase" style="color:#e0e0e0;">
                         <span class="flex items-center gap-2">
                             {% if post.author.profile_picture %}
                             <img src="{{ url_for('static', filename='avatars/' + post.author.profile_picture) }}"
                                  alt="" style="width:22px;height:22px;object-fit:cover;border:1px solid #8b0000;">
                             {% else %}
-                            <span class="text-red-600">👤</span>
+                            <span style="color:#8b0000;">👤</span>
                             {% endif %}
                             {{ post.author.username }}
                         </span>
-                        <span class="flex items-center">
-                            <span class="text-red-600 mr-2">💬</span> {{ post.comments|length }}
+                        <span class="flex items-center" style="color:#e0e0e0;">
+                            <span style="color:#8b0000; margin-right:0.5rem;">💬</span> {{ post.comments|length }}
                         </span>
-                        <span class="flex items-center opacity-60">
-                            <span class="text-red-600 mr-2">📅</span> {{ post.created_at.strftime('%b %d, %Y') }}
+                        <span class="flex items-center" style="color:#a0a0a0;">
+                            <span style="color:#8b0000; margin-right:0.5rem;">📅</span> {{ post.created_at.strftime('%b %d, %Y') }}
                         </span>
                     </div>
-                    
-                    <span class="font-black uppercase" style="color: #ffffff;">
-                        READ MORE →
-                    </span>
+                    <span class="font-black uppercase" style="color:#ffffff;">READ MORE →</span>
                 </div>
             </a>
         </div>

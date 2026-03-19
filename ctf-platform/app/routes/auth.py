@@ -16,14 +16,38 @@ TO ADD NEW AUTH FEATURES:
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, current_user
+import os, re
 from app import db
 from app.models import User
 from app.identicon import generate_identicon
+
+WHATS_NEW_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'WHATS-NEW.md')
+
+
+def get_version():
+    try:
+        with open(WHATS_NEW_PATH, encoding='utf-8') as f:
+            first_line = f.readline()
+        match = re.search(r'v[\d.]+', first_line)
+        return match.group(0) if match else 'v?'
+    except Exception:
+        return 'v?'
 
 # Create blueprint
 # First argument is the blueprint name (used in url_for)
 # template_folder is relative to this file's location
 auth_bp = Blueprint('auth', __name__, template_folder='../templates')
+
+
+@auth_bp.route('/whats-new')
+def whats_new():
+    try:
+        with open(WHATS_NEW_PATH, encoding='utf-8') as f:
+            content = f.read()
+    except Exception:
+        content = 'Could not load changelog.'
+    version = get_version()
+    return render_template('whats_new.html', content=content, version=version)
 
 
 @auth_bp.route('/')

@@ -71,6 +71,23 @@ def create_app(config_class=Config):
     # app.register_blueprint(your_feature_bp)
 
     # ========================================
+    # TEMPLATE CONTEXT
+    # ========================================
+
+    @app.context_processor
+    def inject_version():
+        import os, re
+        md_path = os.path.join(app.root_path, '..', 'WHATS-NEW.md')
+        try:
+            with open(md_path, encoding='utf-8') as f:
+                first_line = f.readline()
+            match = re.search(r'v[\d.]+', first_line)
+            version = match.group(0) if match else 'v?'
+        except Exception:
+            version = 'v?'
+        return {'app_version': version}
+
+    # ========================================
     # MOBILE BLOCK
     # ========================================
 

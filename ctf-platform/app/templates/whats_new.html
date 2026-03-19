@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}What's New - {{ version }} - CSIA GYM{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto fade-in">
+    <div class="mb-8">
+        <h1 class="text-4xl font-black uppercase" style="color: #000000;">■ WHAT'S NEW</h1>
+        <p class="mt-2 text-xl font-bold uppercase" style="color: #000000;">CHANGELOG &amp; RELEASE NOTES</p>
+    </div>
+
+    <div class="bg-black border-4 border-red-600 p-8 shadow-lg hover-brutal">
+        <div class="flex items-center gap-4 mb-6 border-b-2 border-red-600 pb-4">
+            <span style="font-size:2.5rem; font-weight:900; color:#8b0000; font-family:monospace;">{{ version }}</span>
+            <span class="text-sm font-bold uppercase opacity-60">CURRENT VERSION</span>
+        </div>
+
+        <div id="changelog" style="color: #e0e0e0; line-height: 1.8; font-family: inherit;">
+            {% for line in content.splitlines() %}
+                {% set stripped = line.strip() %}
+                {% if stripped.startswith('## ') %}
+                    <h2 style="font-size:1.4rem; font-weight:900; text-transform:uppercase; color:#f5f5f5; margin: 1.5rem 0 0.75rem; border-bottom: 2px solid #8b0000; padding-bottom: 0.4rem;">
+                        {{ stripped[3:] }}
+                    </h2>
+                {% elif stripped.startswith('### ') %}
+                    <h3 style="font-size:1.1rem; font-weight:900; text-transform:uppercase; color:#a0a0a0; margin: 1.25rem 0 0.5rem; letter-spacing:0.05em;">
+                        {{ stripped[4:] }}
+                    </h3>
+                {% elif stripped.startswith('* v') or stripped.startswith('- v') %}
+                    <p style="font-weight:900; color:#8b0000; margin: 1rem 0 0.25rem; font-size:1rem; font-family:monospace;">
+                        {{ stripped[2:] }}
+                    </p>
+                {% elif stripped.startswith('- ') %}
+                    <p style="margin: 0.2rem 0 0.2rem 1.5rem; color:#d0d0d0;">
+                        <span style="color:#8b0000; margin-right:0.5rem;">▸</span>{{ stripped[2:] }}
+                    </p>
+                {% elif stripped == '---' %}
+                    <hr style="border: none; border-top: 1px solid rgba(139,0,0,0.3); margin: 1.5rem 0;">
+                {% elif stripped %}
+                    <p style="margin: 0.3rem 0; color:#c0c0c0;">{{ stripped }}</p>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
