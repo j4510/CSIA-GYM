@@ -1,5 +1,11 @@
-## Here's what's new with our current version: v1.4
+## Here's what's new with our current version: v1.5
 
+* v1.5 (March 20, 2026)
+    - Ready for server deployment
+    - Start of Beta Testing
+
+---
+### Older versions:
 * v1.4
     - Revamped scoreboard
     - Fixed administrator table
@@ -10,8 +16,6 @@
     - Added a "biography" for users
     - Changed font colors of some texts to black to make it more readable.
 
----
-### Older versions:
 * v1.3.2
     - Stil made some texts readable
     - Updates on the administrator functions

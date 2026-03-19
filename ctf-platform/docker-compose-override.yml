@@ -1,0 +1,10 @@
+services:
+  web:
+    env_file:
+      - .env
+    ports:
+      - "5050:5050"
+    environment:
+      - FLASK_ENV=development
+    volumes:
+      - .:/app
