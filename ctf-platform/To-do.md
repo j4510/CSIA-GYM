@@ -5,7 +5,10 @@
 - User-agent detection instead of resolution for phones. ✅
 - Email verification
 - Media posting enabled on community
+    - Previews (Thumbnails) - WebP
+    - Making this md
 - Identicon ✅
-- Community-based challenges
+- Community-based challenges ✅
 - Competitions
 - Badges ✅
+

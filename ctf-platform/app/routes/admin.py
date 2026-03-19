@@ -319,11 +319,13 @@ def challenges():
     pending = ChallengeSubmission.query.filter_by(status='pending').all()
     approved = ChallengeSubmission.query.filter_by(status='approved').all()
     rejected = ChallengeSubmission.query.filter_by(status='rejected').all()
-    
-    return render_template('admin/challenges.html', 
-                         pending=pending, 
-                         approved=approved, 
-                         rejected=rejected)
+    live = Challenge.query.order_by(Challenge.created_at.desc()).all()
+
+    return render_template('admin/challenges.html',
+                         pending=pending,
+                         approved=approved,
+                         rejected=rejected,
+                         live=live)
 
 
 @admin_bp.route('/challenges/<int:submission_id>/approve', methods=['POST'])
@@ -375,12 +377,47 @@ def reject_challenge(submission_id):
 def delete_challenge(challenge_id):
     """Delete a live challenge."""
     challenge = Challenge.query.get_or_404(challenge_id)
+    title = challenge.title
     db.session.delete(challenge)
     db.session.commit()
-    
-    log_action('delete_challenge', challenge.title)
-    flash(f'Challenge "{challenge.title}" deleted', 'info')
-    return redirect(url_for('challenges.list'))
+    log_action('delete_challenge', title)
+    flash(f'Challenge "{title}" deleted', 'info')
+    return redirect(url_for('admin.challenges'))
+
+
+@admin_bp.route('/challenges/<int:challenge_id>/edit', methods=['GET', 'POST'])
+def edit_challenge(challenge_id):
+    """Edit a live challenge."""
+    challenge = Challenge.query.get_or_404(challenge_id)
+    if request.method == 'POST':
+        challenge.title = request.form.get('title', '').strip()
+        challenge.description = request.form.get('description', '').strip()
+        challenge.category = request.form.get('category', '').strip()
+        challenge.difficulty = request.form.get('difficulty', '').strip()
+        challenge.flag = request.form.get('flag', '').strip()
+        points_val = request.form.get('points', '').strip()
+        if points_val.isdigit():
+            challenge.points = int(points_val)
+        db.session.commit()
+        log_action('edit_challenge', challenge.title)
+        flash(f'Challenge "{challenge.title}" updated', 'success')
+        return redirect(url_for('admin.challenges'))
+    return render_template('admin/edit_challenge.html', challenge=challenge)
+
+
+@admin_bp.route('/challenges/<int:challenge_id>/unofficial', methods=['POST'])
+def mark_unofficial(challenge_id):
+    """Mark a challenge as unofficial/community by reassigning to original submitter."""
+    challenge = Challenge.query.get_or_404(challenge_id)
+    submission = ChallengeSubmission.query.filter_by(title=challenge.title, status='approved').first()
+    if submission:
+        challenge.author_id = submission.author_id
+        db.session.commit()
+        log_action('mark_unofficial', challenge.title)
+        flash(f'"{challenge.title}" marked as unofficial/community', 'info')
+    else:
+        flash('Could not find original submission to reassign author', 'danger')
+    return redirect(url_for('admin.challenges'))
 
 
 # ========================================

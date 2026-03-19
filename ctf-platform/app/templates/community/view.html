@@ -20,17 +20,21 @@
         </h1>
         
         <!-- Post Meta -->
-        <div class="flex items-center justify-between space-x-4 text-sm text-gray-500 mb-6 pb-6 border-b">
+        <div class="flex items-center justify-between space-x-4 text-sm mb-6 pb-6 border-b" style="color:#111111;">
             <div class="flex items-center space-x-4">
-                <span>👤 {{ post.author.username }}</span>
-                <span>📅 {{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
+                {% if post.author.profile_picture %}
+                <img src="{{ url_for('static', filename='avatars/' + post.author.profile_picture) }}"
+                     alt="" style="width:28px;height:28px;object-fit:cover;border:2px solid #8b0000;">
+                {% endif %}
+                <span style="color:#111111; font-weight:600;">{{ post.author.username }}</span>
+                <span style="color:#444444;">📅 {{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
             </div>
             
             <!-- Upvote Button -->
             <form method="POST" action="{{ url_for('community.upvote_post', post_id=post.id) }}" class="inline">
-                <button type="submit" class="flex items-center space-x-2 px-4 py-2">
-                    <span class="text-2xl">▲</span>
-                    <span class="font-bold">{{ post.upvotes }}</span>
+                <button type="submit" class="flex items-center space-x-2 px-4 py-2" style="background:#8b0000; color:#fff; border:none; cursor:pointer; font-weight:700;">
+                    <span>▲</span>
+                    <span>{{ post.upvotes }}</span>
                 </button>
             </form>
         </div>

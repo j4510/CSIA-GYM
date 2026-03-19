@@ -147,6 +147,10 @@ def submit_flag(challenge_id):
         return redirect(url_for('challenges.detail', challenge_id=challenge_id))
     
     # Validate flag
+    if not submitted_flag.startswith('CSIA{') or not submitted_flag.endswith('}'):
+        flash('Invalid flag format. Flags must be in the format CSIA{...}', 'danger')
+        return redirect(url_for('challenges.detail', challenge_id=challenge_id))
+
     if submitted_flag == challenge.flag:
         # Correct flag - record solve
         solve = UserChallengeSolve(user_id=current_user.id, challenge_id=challenge_id)

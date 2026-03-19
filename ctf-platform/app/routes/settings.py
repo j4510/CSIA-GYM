@@ -96,6 +96,12 @@ def index():
         age_val = request.form.get('age', '').strip()
         current_user.age = int(age_val) if age_val.isdigit() else None
         current_user.gender = request.form.get('gender', '').strip() or None
+        current_user.bio = request.form.get('bio', '').strip() or None
+        current_user.github = request.form.get('github', '').strip() or None
+        current_user.linkedin = request.form.get('linkedin', '').strip() or None
+        current_user.facebook = request.form.get('facebook', '').strip() or None
+        current_user.contact_number = request.form.get('contact_number', '').strip() or None
+        current_user.discord = request.form.get('discord', '').strip() or None
         updated = True
 
         # ========================================

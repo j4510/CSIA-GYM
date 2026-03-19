@@ -2,114 +2,466 @@
 
 {% block title %}Scoreboard - CSIA GYM{% endblock %}
 
+{% block extra_css %}
+<style>
+    .sb-page { max-width: 860px; margin: 0 auto; padding: 0 1rem; }
+
+    /* ── HEADER ── */
+    .sb-header { text-align: center; margin-bottom: 2.5rem; }
+    .sb-header h1 {
+        font-size: clamp(2rem, 6vw, 3.5rem);
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #ffffff;
+        line-height: 1;
+    }
+    .sb-header h1 span { color: #cc0000; }
+    .sb-subtitle {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: #888;
+    }
+
+    /* ── STAT PILLS ── */
+    .sb-stats {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2.5rem;
+    }
+    .sb-stat {
+        background: rgba(139,0,0,0.15);
+        border: 1px solid rgba(139,0,0,0.35);
+        padding: 0.5rem 1.25rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #000000;
+    }
+    .sb-stat strong { color: #cc0000; }
+
+    /* ── PODIUM ── */
+    .sb-podium {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 0.75rem;
+        margin-bottom: 2.5rem;
+    }
+    .podium-slot { flex: 1; max-width: 240px; text-align: center; }
+
+    .podium-card {
+        position: relative;
+        padding: 1.25rem 0.75rem 1rem;
+        border: 2px solid;
+        background: rgba(10,10,10,0.85);
+        transition: transform 0.2s ease;
+    }
+    .podium-card:hover { transform: translateY(-4px); }
+
+    /* heights */
+    .podium-slot.rank-1 .podium-card { border-color: #ffd700; box-shadow: 0 0 24px rgba(255,215,0,0.25); }
+    .podium-slot.rank-2 .podium-card { border-color: #c0c0c0; box-shadow: 0 0 16px rgba(192,192,192,0.15); }
+    .podium-slot.rank-3 .podium-card { border-color: #cd7f32; box-shadow: 0 0 16px rgba(205,127,50,0.15); }
+
+    .podium-crown {
+        font-size: clamp(1.5rem, 4vw, 2.2rem);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    .podium-avatar {
+        width: clamp(52px, 10vw, 72px);
+        height: clamp(52px, 10vw, 72px);
+        object-fit: cover;
+        margin: 0 auto 0.6rem;
+        display: block;
+    }
+    .podium-avatar-placeholder {
+        width: clamp(52px, 10vw, 72px);
+        height: clamp(52px, 10vw, 72px);
+        background: #1a1a1a;
+        margin: 0 auto 0.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        font-weight: 900;
+        color: #555;
+        border: 2px solid #333;
+    }
+    .podium-username {
+        font-size: clamp(0.75rem, 2.5vw, 0.95rem);
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #fff;
+        word-break: break-all;
+        margin-bottom: 0.35rem;
+    }
+    .podium-username a { color: inherit; text-decoration: none; }
+    .podium-username a:hover { color: #ff4444; }
+    .podium-score {
+        font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+        font-weight: 900;
+        line-height: 1;
+    }
+    .rank-1 .podium-score { color: #ffd700; }
+    .rank-2 .podium-score { color: #c0c0c0; }
+    .rank-3 .podium-score { color: #cd7f32; }
+    .podium-pts {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #666;
+        margin-top: 0.1rem;
+    }
+    .podium-solves {
+        font-size: 0.7rem;
+        color: #666;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-top: 0.4rem;
+    }
+    .podium-you {
+        display: inline-block;
+        margin-top: 0.4rem;
+        font-size: 0.65rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        background: #cc0000;
+        color: #fff;
+        padding: 2px 8px;
+    }
+
+    /* podium base bars */
+    .podium-base {
+        height: 0;
+        background: linear-gradient(180deg, rgba(139,0,0,0.3), rgba(139,0,0,0.05));
+        border-left: 2px solid rgba(139,0,0,0.3);
+        border-right: 2px solid rgba(139,0,0,0.3);
+        border-bottom: 2px solid rgba(139,0,0,0.3);
+    }
+    .rank-1 .podium-base { height: 48px; }
+    .rank-2 .podium-base { height: 28px; }
+    .rank-3 .podium-base { height: 12px; }
+
+    /* ── REST OF LEADERBOARD ── */
+    .sb-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .sb-row {
+        display: grid;
+        grid-template-columns: 48px 1fr auto;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.85rem 1rem;
+        background: rgba(15,15,15,0.8);
+        border: 1px solid rgba(139,0,0,0.15);
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .sb-row::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 3px;
+        background: rgba(139,0,0,0.4);
+        transition: width 0.2s ease;
+    }
+    .sb-row:hover { border-color: rgba(139,0,0,0.4); transform: translateX(4px); }
+    .sb-row:hover::before { width: 5px; background: #cc0000; }
+    .sb-row.is-you {
+        border-color: rgba(204,0,0,0.5);
+        background: rgba(139,0,0,0.12);
+    }
+    .sb-row.is-you::before { background: #cc0000; width: 4px; }
+
+    .sb-rank-num {
+        font-size: 1rem;
+        font-weight: 900;
+        color: #555;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .sb-player {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        min-width: 0;
+    }
+    .sb-player-avatar {
+        width: 34px;
+        height: 34px;
+        object-fit: cover;
+        border: 1px solid #8b0000;
+        flex-shrink: 0;
+    }
+    .sb-player-avatar-placeholder {
+        width: 34px;
+        height: 34px;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 900;
+        color: #555;
+        flex-shrink: 0;
+    }
+    .sb-player-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #eee;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .sb-player-name a { color: inherit; text-decoration: none; }
+    .sb-player-name a:hover { color: #ff4444; }
+    .sb-player-sub {
+        font-size: 0.7rem;
+        color: #555;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-top: 1px;
+    }
+    .sb-you-tag {
+        display: inline-block;
+        font-size: 0.6rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        background: #cc0000;
+        color: #fff;
+        padding: 1px 6px;
+        margin-left: 6px;
+        vertical-align: middle;
+    }
+
+    .sb-score-col { text-align: right; flex-shrink: 0; }
+    .sb-score-val {
+        font-size: 1rem;
+        font-weight: 900;
+        color: #cc0000;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    .sb-score-sub {
+        font-size: 0.65rem;
+        color: #555;
+        font-weight: 600;
+        text-transform: uppercase;
+        text-align: right;
+    }
+
+    /* ── EMPTY STATE ── */
+    .sb-empty {
+        text-align: center;
+        padding: 4rem 1rem;
+        border: 2px dashed rgba(139,0,0,0.3);
+        color: #555;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    /* ── DIVIDER ── */
+    .sb-divider {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 1.5rem 0;
+        color: #444;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+    }
+    .sb-divider::before, .sb-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(139,0,0,0.2);
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 480px) {
+        .sb-podium { gap: 0.4rem; }
+        .podium-card { padding: 0.9rem 0.4rem 0.75rem; }
+        .sb-row { grid-template-columns: 36px 1fr auto; gap: 0.5rem; padding: 0.75rem 0.75rem; }
+        .sb-player-avatar, .sb-player-avatar-placeholder { width: 28px; height: 28px; }
+        .sb-player-name { font-size: 0.8rem; }
+        .sb-score-val { font-size: 0.9rem; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<!-- SCOREBOARD PAGE -->
+<div class="sb-page fade-in">
 
-<div class="mb-8">
-    <h1 class="text-4xl font-bold text-gray-900">Scoreboard</h1>
-    <p class="text-gray-600 mt-2">Top players ranked by total points</p>
-</div>
-
-<!-- Scoreboard Table -->
-<div class="bg-white rounded-lg shadow-md overflow-hidden">
-    <table class="min-w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rank
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Player
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Score
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Solves
-                </th>
-            </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-            {% for user in leaderboard %}
-                <tr class="{% if current_user.is_authenticated and user.id == current_user.id %}bg-blue-50{% else %}hover:bg-gray-50{% endif %}">
-                    <!-- Rank -->
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            {% if loop.index == 1 %}
-                                <span class="text-2xl">🥇</span>
-                            {% elif loop.index == 2 %}
-                                <span class="text-2xl">🥈</span>
-                            {% elif loop.index == 3 %}
-                                <span class="text-2xl">🥉</span>
-                            {% else %}
-                                <span class="text-gray-600 font-semibold">{{ loop.index }}</span>
-                            {% endif %}
-                        </div>
-                    </td>
-                    
-                    <!-- Player Name -->
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center gap-3">
-                            {% if user.profile_picture %}
-                            <img src="{{ url_for('static', filename='avatars/' + user.profile_picture) }}"
-                                 alt="" style="width:32px;height:32px;object-fit:cover;border:2px solid #8b0000;border-radius:2px;">
-                            {% endif %}
-                            <div class="text-sm font-medium text-gray-900">
-                                <a href="{{ url_for('settings.public_profile', user_id=user.id) }}" class="hover:text-red-600 transition-colors">
-                                    {{ user.username }}
-                                </a>
-                                {% if current_user.is_authenticated and user.id == current_user.id %}
-                                    <span class="ml-2 text-blue-600">(You)</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </td>
-                    
-                    <!-- Score -->
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-bold text-blue-600">
-                            {{ user.get_score() }} pts
-                        </div>
-                    </td>
-                    
-                    <!-- Solves Count -->
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ user.solves|length }} solves
-                    </td>
-                </tr>
-            {% else %}
-                <tr>
-                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">
-                        No players yet
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<!-- 
-TO ADD: Statistics Cards
-<div class="grid md:grid-cols-3 gap-6 mt-8">
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <h3 class="text-gray-500 text-sm font-semibold mb-2">Total Players</h3>
-        <p class="text-3xl font-bold">{{ leaderboard|length }}</p>
+    <!-- Header -->
+    <div class="sb-header">
+        <h1>LEADER<span>BOARD</span></h1>
+        <p class="sb-subtitle">CSIA GYM &mdash; Hall of Fame</p>
     </div>
-    
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <h3 class="text-gray-500 text-sm font-semibold mb-2">Your Rank</h3>
-        <p class="text-3xl font-bold">Find rank logic</p>
-    </div>
-    
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <h3 class="text-gray-500 text-sm font-semibold mb-2">Your Score</h3>
+
+    <!-- Stat pills -->
+    <div class="sb-stats">
+        <div class="sb-stat">Players <strong>{{ leaderboard|length }}</strong></div>
+        {% if leaderboard %}
+        <div class="sb-stat">Top Score <strong>{{ leaderboard[0].get_score() }} pts</strong></div>
+        {% endif %}
         {% if current_user.is_authenticated %}
-            <p class="text-3xl font-bold">{{ current_user.get_score() }}</p>
-        {% else %}
-            <p class="text-3xl font-bold">-</p>
+            {% set ns = namespace(rank=0) %}
+            {% for u in leaderboard %}{% if u.id == current_user.id %}{% set ns.rank = loop.index %}{% endif %}{% endfor %}
+            {% if ns.rank > 0 %}
+            <div class="sb-stat">Your Rank <strong>#{{ ns.rank }}</strong></div>
+            <div class="sb-stat">Your Score <strong>{{ current_user.get_score() }} pts</strong></div>
+            {% endif %}
         {% endif %}
     </div>
-</div>
--->
 
+    {% if leaderboard %}
+
+    <!-- ── PODIUM (top 3) ── -->
+    {% if leaderboard|length >= 1 %}
+    <div class="sb-podium">
+
+        <!-- 2nd place (left) -->
+        {% if leaderboard|length >= 2 %}
+        {% set p2 = leaderboard[1] %}
+        <div class="podium-slot rank-2">
+            <div class="podium-card">
+                <div class="podium-crown">🥈</div>
+                {% if p2.profile_picture %}
+                <img src="{{ url_for('static', filename='avatars/' + p2.profile_picture) }}"
+                     alt="" class="podium-avatar" style="border:2px solid #c0c0c0;">
+                {% else %}
+                <div class="podium-avatar-placeholder">{{ p2.username[0]|upper }}</div>
+                {% endif %}
+                <div class="podium-username">
+                    <a href="{{ url_for('settings.public_profile', user_id=p2.id) }}">{{ p2.username }}</a>
+                </div>
+                <div class="podium-score">{{ p2.get_score() }}</div>
+                <div class="podium-pts">points</div>
+                <div class="podium-solves">{{ p2.solves|length }} solves</div>
+                {% if current_user.is_authenticated and p2.id == current_user.id %}
+                <div class="podium-you">YOU</div>
+                {% endif %}
+            </div>
+            <div class="podium-base"></div>
+        </div>
+        {% endif %}
+
+        <!-- 1st place (center, tallest) -->
+        {% set p1 = leaderboard[0] %}
+        <div class="podium-slot rank-1">
+            <div class="podium-card">
+                <div class="podium-crown">🥇</div>
+                {% if p1.profile_picture %}
+                <img src="{{ url_for('static', filename='avatars/' + p1.profile_picture) }}"
+                     alt="" class="podium-avatar" style="border:2px solid #ffd700;">
+                {% else %}
+                <div class="podium-avatar-placeholder">{{ p1.username[0]|upper }}</div>
+                {% endif %}
+                <div class="podium-username">
+                    <a href="{{ url_for('settings.public_profile', user_id=p1.id) }}">{{ p1.username }}</a>
+                </div>
+                <div class="podium-score">{{ p1.get_score() }}</div>
+                <div class="podium-pts">points</div>
+                <div class="podium-solves">{{ p1.solves|length }} solves</div>
+                {% if current_user.is_authenticated and p1.id == current_user.id %}
+                <div class="podium-you">YOU</div>
+                {% endif %}
+            </div>
+            <div class="podium-base"></div>
+        </div>
+
+        <!-- 3rd place (right) -->
+        {% if leaderboard|length >= 3 %}
+        {% set p3 = leaderboard[2] %}
+        <div class="podium-slot rank-3">
+            <div class="podium-card">
+                <div class="podium-crown">🥉</div>
+                {% if p3.profile_picture %}
+                <img src="{{ url_for('static', filename='avatars/' + p3.profile_picture) }}"
+                     alt="" class="podium-avatar" style="border:2px solid #cd7f32;">
+                {% else %}
+                <div class="podium-avatar-placeholder">{{ p3.username[0]|upper }}</div>
+                {% endif %}
+                <div class="podium-username">
+                    <a href="{{ url_for('settings.public_profile', user_id=p3.id) }}">{{ p3.username }}</a>
+                </div>
+                <div class="podium-score">{{ p3.get_score() }}</div>
+                <div class="podium-pts">points</div>
+                <div class="podium-solves">{{ p3.solves|length }} solves</div>
+                {% if current_user.is_authenticated and p3.id == current_user.id %}
+                <div class="podium-you">YOU</div>
+                {% endif %}
+            </div>
+            <div class="podium-base"></div>
+        </div>
+        {% endif %}
+
+    </div>
+    {% endif %}
+
+    <!-- ── REST OF RANKINGS ── -->
+    {% if leaderboard|length > 3 %}
+    <div class="sb-divider">Remaining Rankings</div>
+    <div class="sb-list">
+        {% for user in leaderboard %}
+        {% if loop.index > 3 %}
+        <div class="sb-row {% if current_user.is_authenticated and user.id == current_user.id %}is-you{% endif %}">
+
+            <!-- Rank number -->
+            <div class="sb-rank-num">#{{ loop.index }}</div>
+
+            <!-- Player -->
+            <div class="sb-player">
+                {% if user.profile_picture %}
+                <img src="{{ url_for('static', filename='avatars/' + user.profile_picture) }}"
+                     alt="" class="sb-player-avatar">
+                {% else %}
+                <div class="sb-player-avatar-placeholder">{{ user.username[0]|upper }}</div>
+                {% endif %}
+                <div>
+                    <div class="sb-player-name">
+                        <a href="{{ url_for('settings.public_profile', user_id=user.id) }}">{{ user.username }}</a>
+                        {% if current_user.is_authenticated and user.id == current_user.id %}
+                        <span class="sb-you-tag">YOU</span>
+                        {% endif %}
+                    </div>
+                    <div class="sb-player-sub">{{ user.solves|length }} solve{% if user.solves|length != 1 %}s{% endif %}</div>
+                </div>
+            </div>
+
+            <!-- Score -->
+            <div class="sb-score-col">
+                <div class="sb-score-val">{{ user.get_score() }}</div>
+                <div class="sb-score-sub">pts</div>
+            </div>
+
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="sb-empty">No players on the board yet. Be the first!</div>
+    {% endif %}
+
+</div>
 {% endblock %}

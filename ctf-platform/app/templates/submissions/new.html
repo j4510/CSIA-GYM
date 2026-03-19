@@ -81,18 +81,16 @@
             
             <!-- Flag -->
             <div class="mb-4">
-                <label for="flag" class="block text-gray-700 font-semibold mb-2">
-                    Flag *
-                </label>
-                <input type="text" 
-                       id="flag" 
-                       name="flag" 
+                <label for="flag" class="block text-gray-700 font-semibold mb-2">Flag *</label>
+                <input type="text"
+                       id="flag"
+                       name="flag"
                        required
+                       pattern="CSIA\{.+\}"
+                       title="Flag must be in the format CSIA{...}"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       placeholder="FLAG{your_flag_here}">
-                <p class="text-sm text-gray-500 mt-1">
-                    The correct answer users must submit
-                </p>
+                       placeholder="CSIA{your_flag_here}">
+                <p class="text-sm text-gray-500 mt-1">Must be in the format <code>CSIA{...}</code></p>
             </div>
             
             <!-- Points -->

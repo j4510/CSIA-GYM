@@ -71,7 +71,7 @@
                                 ACTIONS ▾
                             </button>
                             <div class="admin-dropdown"
-                                 style="display:none; position:fixed; z-index:9999; min-width:160px; background:#111; border:2px solid #8b0000; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
+                                 style="display:none; position:absolute; top:100%; right:0; z-index:9999; min-width:160px; background:#111; border:2px solid #8b0000; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
 
                                 <!-- Edit -->
                                 <a href="{{ url_for('admin.edit_user', user_id=user.id) }}"
@@ -136,9 +136,6 @@ function toggleDropdown(btn) {
     var allMenus = document.querySelectorAll('.admin-dropdown');
     allMenus.forEach(function(m) { if (m !== menu) m.style.display = 'none'; });
     if (menu.style.display === 'none' || menu.style.display === '') {
-        var rect = btn.getBoundingClientRect();
-        menu.style.top = (rect.bottom + window.scrollY) + 'px';
-        menu.style.left = (rect.right - 160 + window.scrollX) + 'px';
         menu.style.display = 'block';
     } else {
         menu.style.display = 'none';

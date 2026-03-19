@@ -753,28 +753,28 @@ pre {
 }
 
 .alert-success {
-    background: rgba(76, 175, 80, 0.15);
+    background: rgba(76, 175, 80, 0.25);
     border-color: #4caf50;
-    color: #4caf50;
+    color: #000000;
 }
 
 .alert-error,
 .alert-danger {
-    background: rgba(244, 67, 54, 0.15);
+    background: rgba(244, 67, 54, 0.25);
     border-color: #f44336;
-    color: #ff9999;
+    color: #000000;
 }
 
 .alert-warning {
-    background: rgba(255, 152, 0, 0.15);
+    background: rgba(255, 152, 0, 0.25);
     border-color: #ff9800;
-    color: #ffb74d;
+    color: #000000;
 }
 
 .alert-info {
-    background: rgba(33, 150, 243, 0.15);
+    background: rgba(33, 150, 243, 0.25);
     border-color: #2196f3;
-    color: #64b5f6;
+    color: #000000;
 }
 
 /* ===== LOGIN/REGISTER PAGE IMPROVEMENTS ===== */

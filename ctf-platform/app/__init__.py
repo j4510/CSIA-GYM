@@ -146,11 +146,17 @@ def create_app(config_class=Config):
 
         existing_user_cols = [c['name'] for c in inspector.get_columns('users')]
         new_user_cols = {
-            'full_name':   'ALTER TABLE users ADD COLUMN full_name VARCHAR(120)',
-            'affiliation': 'ALTER TABLE users ADD COLUMN affiliation VARCHAR(120)',
-            'age':         'ALTER TABLE users ADD COLUMN age INTEGER',
-            'gender':      'ALTER TABLE users ADD COLUMN gender VARCHAR(40)',
-            'profile_picture': 'ALTER TABLE users ADD COLUMN profile_picture VARCHAR(200)',
+            'full_name':      'ALTER TABLE users ADD COLUMN full_name VARCHAR(120)',
+            'affiliation':    'ALTER TABLE users ADD COLUMN affiliation VARCHAR(120)',
+            'age':            'ALTER TABLE users ADD COLUMN age INTEGER',
+            'gender':         'ALTER TABLE users ADD COLUMN gender VARCHAR(40)',
+            'profile_picture':'ALTER TABLE users ADD COLUMN profile_picture VARCHAR(200)',
+            'bio':            'ALTER TABLE users ADD COLUMN bio TEXT',
+            'github':         'ALTER TABLE users ADD COLUMN github VARCHAR(200)',
+            'linkedin':       'ALTER TABLE users ADD COLUMN linkedin VARCHAR(200)',
+            'facebook':       'ALTER TABLE users ADD COLUMN facebook VARCHAR(200)',
+            'contact_number': 'ALTER TABLE users ADD COLUMN contact_number VARCHAR(30)',
+            'discord':        'ALTER TABLE users ADD COLUMN discord VARCHAR(100)',
         }
         with db.engine.connect() as conn:
             for col, stmt in new_user_cols.items():

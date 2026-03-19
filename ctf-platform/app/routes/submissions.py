@@ -52,11 +52,10 @@ def new():
         if points < 0:
             flash('Points must be positive', 'danger')
             return redirect(url_for('submissions.new'))
-        
-        # TO ADD: Additional validation
-        # - Check flag format (e.g., must start with FLAG{})
-        # - Validate points range (e.g., 50-500)
-        # - Check description length
+
+        if not flag.startswith('CSIA{') or not flag.endswith('}'):
+            flash('Flag must be in the format CSIA{...}', 'danger')
+            return redirect(url_for('submissions.new'))
         
         # Create submission
         submission = ChallengeSubmission(

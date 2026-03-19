@@ -86,6 +86,53 @@
                 </select>
             </div>
 
+            <!-- Bio -->
+            <h2 class="text-2xl font-black uppercase mb-2 border-b-2 border-red-600 pb-2 mt-8">BIO</h2>
+            <div class="mb-2 p-3 border-l-4 border-yellow-400" style="background:#1a1a00;">
+                <p class="text-xs font-bold uppercase" style="color:#facc15;">⚠ PUBLIC WARNING — Everything you write in your bio will be visible to anyone who views your profile.</p>
+            </div>
+            <div class="mb-8">
+                <textarea name="bio" rows="4" maxlength="500"
+                          placeholder="Tell others about yourself... (max 500 characters)"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">{{ current_user.bio or '' }}</textarea>
+                <p class="text-xs opacity-40 uppercase mt-1">Max 500 characters</p>
+            </div>
+
+            <!-- Social Media -->
+            <h2 class="text-2xl font-black uppercase mb-2 border-b-2 border-red-600 pb-2 mt-8">SOCIAL MEDIA <span class="text-sm font-normal opacity-50">(ALL OPTIONAL — SHOWN PUBLICLY)</span></h2>
+            <div class="grid md:grid-cols-2 gap-4 mb-8">
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">GitHub URL</label>
+                    <input type="url" name="github" value="{{ current_user.github or '' }}"
+                           placeholder="https://github.com/username"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">LinkedIn URL</label>
+                    <input type="url" name="linkedin" value="{{ current_user.linkedin or '' }}"
+                           placeholder="https://linkedin.com/in/username"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Facebook URL</label>
+                    <input type="url" name="facebook" value="{{ current_user.facebook or '' }}"
+                           placeholder="https://facebook.com/username"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Contact Number</label>
+                    <input type="tel" name="contact_number" value="{{ current_user.contact_number or '' }}"
+                           placeholder="+1 234 567 8900"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Discord Username</label>
+                    <input type="text" name="discord" value="{{ current_user.discord or '' }}"
+                           placeholder="username#0000 or username"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+            </div>
+
             <!-- Change Password -->
             <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">CHANGE PASSWORD</h2>
             <p class="text-sm opacity-60 uppercase mb-4">Leave blank to keep current password</p>

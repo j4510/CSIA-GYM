@@ -57,6 +57,14 @@ class User(UserMixin, db.Model):
     age = db.Column(db.Integer, nullable=True)
     gender = db.Column(db.String(40), nullable=True)
     profile_picture = db.Column(db.String(200), nullable=True)
+    bio = db.Column(db.Text, nullable=True)
+
+    # Social media
+    github = db.Column(db.String(200), nullable=True)
+    linkedin = db.Column(db.String(200), nullable=True)
+    facebook = db.Column(db.String(200), nullable=True)
+    contact_number = db.Column(db.String(30), nullable=True)
+    discord = db.Column(db.String(100), nullable=True)
     
     # Relationships
     challenges = db.relationship('Challenge', backref='author', lazy=True)
