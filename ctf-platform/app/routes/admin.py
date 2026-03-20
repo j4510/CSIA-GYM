@@ -512,6 +512,7 @@ def approve_challenge(submission_id):
     )
     submission.status = 'approved'
     db.session.add(challenge)
+    db.session.commit()  # commit first to get challenge.id
     if getattr(submission, 'web_archive_path', None):
         db.session.add(WebChallenge(challenge_id=challenge.id, archive_path=submission.web_archive_path))
     if getattr(submission, 'nc_binary_path', None):
