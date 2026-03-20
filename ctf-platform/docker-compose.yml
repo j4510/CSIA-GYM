@@ -8,10 +8,7 @@ services:
       - "5050:5050"
       - "10000-10099:10000-10099"
       - "11000-11099:11000-11099"
-    cap_add:
-      - SYS_PTRACE
-      - SYS_ADMIN
-      - NET_ADMIN
+    privileged: true
     security_opt:
       - seccomp:unconfined
     env_file:

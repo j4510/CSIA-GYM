@@ -81,27 +81,10 @@ def _sandbox_preexec(serve_dir: str):
 
 def _sandboxed_cmd(server_cmd: list[str], serve_dir: str) -> tuple[list[str], callable]:
     """
-    Wrap server_cmd in unshare to create new user+mount+pid namespaces.
-    Returns (full_argv, preexec_fn).
-
-    unshare --user  : new user namespace — process thinks it's root inside
-                      but maps to ctf-sandbox on the host
-    unshare --mount : new mount namespace — mounts don't propagate out
-    unshare --pid   : new PID namespace — can't signal host processes
-    --fork          : required with --pid
-    --map-user/group: map uid 0 inside namespace → _SANDBOX_UID on host
+    Run server_cmd directly with privilege drop and rlimits via preexec_fn.
+    Namespace isolation is provided by the privileged Docker container + nsjail.
     """
-    cmd = [
-        'unshare',
-        '--user',
-        '--mount',
-        '--pid',
-        '--fork',
-        f'--map-user={_SANDBOX_UID}',
-        f'--map-group={_SANDBOX_GID}',
-        '--',
-    ] + server_cmd
-    return cmd, lambda: _sandbox_preexec(serve_dir)
+    return server_cmd, lambda: _sandbox_preexec(serve_dir)
 
 
 # ── Port helpers ──────────────────────────────────────────────────────────────
