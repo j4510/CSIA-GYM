@@ -18,3 +18,9 @@ class Config:
     REMEMBER_COOKIE_DURATION = timedelta(days=7)
 
     MAX_CONTENT_LENGTH = 300 * 1024 * 1024  # 300 MB hard cap on request body
+
+    # Hostnames shown to players for challenge instances.
+    # Set these to DNS-only (unproxied) subdomains so raw TCP/HTTP works.
+    CHALLENGE_HOST = os.environ.get('CHALLENGE_HOST') or None       # fallback for both
+    NC_CHALLENGE_HOST = os.environ.get('NC_CHALLENGE_HOST') or None  # nc/RE challenges
+    WEB_CHALLENGE_HOST = os.environ.get('WEB_CHALLENGE_HOST') or None  # web challenges

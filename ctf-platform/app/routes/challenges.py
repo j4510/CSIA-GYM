@@ -12,6 +12,21 @@ from app.notifs import notify_challenge_solve, notify_challenge_subscribers, not
 challenges_bp = Blueprint('challenges', __name__, template_folder='../templates')
 
 
+def _challenge_host() -> str:
+    from flask import current_app
+    return current_app.config.get('CHALLENGE_HOST') or request.host.split(':')[0]
+
+
+def _nc_host() -> str:
+    from flask import current_app
+    return current_app.config.get('NC_CHALLENGE_HOST') or _challenge_host()
+
+
+def _web_host() -> str:
+    from flask import current_app
+    return current_app.config.get('WEB_CHALLENGE_HOST') or _challenge_host()
+
+
 def _upsert_dynamic_flag(challenge_id: int, user_id: int, flag: str):
     row = DynamicFlag.query.filter_by(challenge_id=challenge_id, user_id=user_id).first()
     if row:
@@ -321,7 +336,7 @@ def launch_nc(challenge_id):
         port, expires_at, dynamic_flag = start_nc_server(challenge_id, current_user.id, nc.binary_path)
         if dynamic_flag:
             _upsert_dynamic_flag(challenge_id, current_user.id, dynamic_flag)
-        host = request.host.split(':')[0]
+        host = _nc_host()
         log_event(actor=current_user.username, action='instance_launch_nc', target=challenge.title, category='challenge')
         return jsonify(ok=True, port=port, host=host, expires_at=expires_at, has_dynamic_flag=bool(dynamic_flag))
     except Exception as e:
@@ -353,7 +368,7 @@ def nc_status(challenge_id):
     from app.nc_runner import nc_server_status
     status = nc_server_status(challenge_id, current_user.id)
     if status['running']:
-        status['host'] = request.host.split(':')[0]
+        status['host'] = _nc_host()
         dyn = DynamicFlag.query.filter_by(challenge_id=challenge_id, user_id=current_user.id).first()
         status['has_dynamic_flag'] = bool(dyn)
         status.pop('dynamic_flag', None)
@@ -374,7 +389,7 @@ def launch_web(challenge_id):
         port, expires_at, dynamic_flag = start_server(challenge_id, current_user.id, wc.archive_path)
         if dynamic_flag:
             _upsert_dynamic_flag(challenge_id, current_user.id, dynamic_flag)
-        host = request.host.split(':')[0]
+        host = _web_host()
         log_event(actor=current_user.username, action='instance_launch_web', target=challenge.title, category='challenge')
         return jsonify(ok=True, port=port, url=f'http://{host}:{port}/', expires_at=expires_at, has_dynamic_flag=bool(dynamic_flag))
     except Exception as e:
@@ -406,7 +421,7 @@ def web_status(challenge_id):
     from app.web_runner import server_status
     status = server_status(challenge_id, current_user.id)
     if status['running']:
-        host = request.host.split(':')[0]
+        host = _web_host()
         status['url'] = f"http://{host}:{status['port']}/"
         dyn = DynamicFlag.query.filter_by(challenge_id=challenge_id, user_id=current_user.id).first()
         status['has_dynamic_flag'] = bool(dyn)
