@@ -2,7 +2,7 @@ import hashlib
 import os
 from PIL import Image, ImageDraw
 
-AVATAR_DIR = os.path.join(os.path.dirname(__file__), 'static', 'avatars')
+AVATAR_DIR = os.path.join(os.path.dirname(__file__), '..', 'instance', 'avatars')
 GRID = 5
 SIZE = 500
 CELL = SIZE // GRID

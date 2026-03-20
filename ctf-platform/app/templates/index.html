@@ -1,74 +1,701 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSIA GYM — Train. Hack. Dominate.</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/images.ico') }}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-{% block title %}Home - CSIA GYM{% endblock %}
+    :root {
+      --red:    #cc0000;
+      --red-dk: #8b0000;
+      --red-lt: rgba(204,0,0,0.15);
+      --border: rgba(139,0,0,0.35);
+      --bg:     #000;
+      --bg2:    #0a0a0a;
+      --bg3:    #111;
+      --txt:    #e5e5e5;
+      --muted:  #666;
+      --dim:    #333;
+    }
 
-{% block content %}
-<!-- 
-HOMEPAGE / LANDING PAGE
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--txt); font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
 
-This is the first page users see when not logged in.
+    /* ── Scanline overlay ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    }
 
-TO CUSTOMIZE:
-- Change hero section text
-- Add features section
-- Add statistics
-- Add upcoming events
--->
+    /* ── Noise texture ── */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
 
-<div class="text-center">
-    <!-- Hero Section -->
-    <div class="py-20">
-        <h1 class="text-6xl font-bold text-gray-900 mb-6">
-            Welcome to CSIA GYM!
-        </h1>
-        
-        <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Test your cybersecurity skills, solve challenges, and compete with others 
-            in Capture The Flag competitions.
-        </p>
-        
-        <div class="flex justify-center space-x-4">
-            <a href="{{ url_for('auth.register') }}" 
-               class="bg-red-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-red-700 transition">
-                Get Started
-            </a>
-            
-            <a href="{{ url_for('auth.login') }}" 
-               class="bg-gray-700 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-800 transition">
-                Login
-            </a>
-        </div>
-    </div>
-    
-    <!-- Features Section -->
-    <!-- TO ADD: Uncomment and customize -->
-    <!--
-    <div class="grid md:grid-cols-3 gap-8 mt-16">
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <div class="text-4xl mb-4">🎯</div>
-            <h3 class="text-xl font-bold mb-2">Diverse Challenges</h3>
-            <p class="text-gray-600">
-                Web security, cryptography, reverse engineering, and more
-            </p>
-        </div>
-        
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <div class="text-4xl mb-4">🏆</div>
-            <h3 class="text-xl font-bold mb-2">Compete & Learn</h3>
-            <p class="text-gray-600">
-                Climb the scoreboard and improve your skills
-            </p>
-        </div>
-        
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <div class="text-4xl mb-4">💬</div>
-            <h3 class="text-xl font-bold mb-2">Community</h3>
-            <p class="text-gray-600">
-                Share writeups and discuss solutions
-            </p>
-        </div>
-    </div>
-    -->
+    section { position: relative; z-index: 1; }
+
+    /* ── NAV ── */
+    .lp-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem; height: 60px;
+      background: rgba(0,0,0,0.85);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+    }
+    .lp-nav-logo {
+      font-size: 1.15rem; font-weight: 900; text-transform: uppercase;
+      letter-spacing: 0.12em; color: #fff; text-decoration: none;
+    }
+    .lp-nav-logo span { color: var(--red); }
+    .lp-nav-links { display: flex; align-items: center; gap: 0.5rem; }
+    .lp-nav-link {
+      padding: 0.4rem 1rem; font-size: 0.78rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: #aaa; text-decoration: none; border: 1px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .lp-nav-link:hover { color: #fff; border-color: var(--dim); }
+    .lp-nav-cta {
+      padding: 0.45rem 1.2rem; font-size: 0.78rem; font-weight: 900;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      background: var(--red); color: #fff; text-decoration: none;
+      border: 2px solid var(--red); transition: all 0.15s;
+    }
+    .lp-nav-cta:hover { background: transparent; color: var(--red); }
+
+    /* ── NAV MOBILE ── */
+    .lp-nav-hamburger {
+      display: none; flex-direction: column; justify-content: center; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 0.4rem; margin-left: auto;
+    }
+    .lp-nav-hamburger span { display: block; width: 22px; height: 2px; background: #aaa; transition: all 0.2s; }
+    .lp-nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); background: #fff; }
+    .lp-nav-hamburger.open span:nth-child(2) { opacity: 0; }
+    .lp-nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); background: #fff; }
+    @media (max-width: 768px) {
+      .lp-nav { padding: 0 1rem; }
+      .lp-nav-hamburger { display: flex; }
+      .lp-nav-links { display: none; }
+      .lp-nav-links.open {
+        display: flex; flex-direction: column;
+        position: fixed; top: 60px; left: 0; right: 0;
+        background: rgba(0,0,0,0.97); border-bottom: 1px solid rgba(139,0,0,0.4);
+        padding: 0.75rem 0; z-index: 99; gap: 0;
+      }
+      .lp-nav-links.open .lp-nav-link,
+      .lp-nav-links.open .lp-nav-cta {
+        padding: 0.85rem 1.5rem; font-size: 0.85rem;
+        border: none; border-bottom: 1px solid rgba(139,0,0,0.1); width: 100%;
+      }
+      .hero-title { font-size: clamp(2.4rem, 14vw, 5rem); }
+      .hero-sub { font-size: 0.85rem; }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .stat-cell:nth-child(2) { border-right: none; }
+      .features-grid { grid-template-columns: 1fr; }
+      .rank-grid { grid-template-columns: 1fr 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .comm-cards { grid-template-columns: 1fr; }
+      .lp-section { padding: 3.5rem 1rem; }
+      .hero-ctas { flex-direction: column; align-items: center; }
+      .btn-primary, .btn-ghost { width: 100%; text-align: center; }
+    }
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 6rem 1.5rem 4rem;
+      position: relative; overflow: hidden;
+    }
+    .hero-grid-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(139,0,0,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(139,0,0,0.07) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 100%);
+    }
+    .hero-glow {
+      position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 300px;
+      background: radial-gradient(ellipse, rgba(139,0,0,0.18) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em;
+      color: var(--red); border: 1px solid var(--border);
+      padding: 0.3rem 0.9rem; margin-bottom: 1.8rem;
+      position: relative; z-index: 1;
+    }
+    .hero-eyebrow::before { content: ''; width: 6px; height: 6px; background: var(--red); border-radius: 50%; animation: blink 1.2s steps(1) infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    .hero-title {
+      font-size: clamp(3rem, 10vw, 7.5rem);
+      font-weight: 900; text-transform: uppercase; letter-spacing: -0.02em;
+      line-height: 0.92; color: #fff;
+      position: relative; z-index: 1; margin-bottom: 0.5rem;
+    }
+    .hero-title .accent { color: var(--red); }
+    .hero-title .stroke {
+      -webkit-text-stroke: 2px rgba(255,255,255,0.15);
+      color: transparent;
+    }
+    .hero-sub {
+      font-size: clamp(0.9rem, 2vw, 1.15rem); font-weight: 600;
+      color: #888; letter-spacing: 0.08em; text-transform: uppercase;
+      margin: 1.5rem 0 2.5rem; position: relative; z-index: 1;
+      max-width: 560px;
+    }
+    .hero-sub strong { color: #ccc; }
+    .hero-ctas { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+    .btn-primary {
+      padding: 0.85rem 2.4rem; font-size: 0.9rem; font-weight: 900;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      background: var(--red); color: #fff; text-decoration: none;
+      border: 2px solid var(--red); transition: all 0.15s;
+    }
+    .btn-primary:hover { background: transparent; color: var(--red); }
+    .btn-ghost {
+      padding: 0.85rem 2.4rem; font-size: 0.9rem; font-weight: 900;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      background: transparent; color: #aaa; text-decoration: none;
+      border: 2px solid var(--dim); transition: all 0.15s;
+    }
+    .btn-ghost:hover { border-color: #aaa; color: #fff; }
+
+    .hero-scroll {
+      position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+      font-size: 0.62rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.15em; color: var(--muted); z-index: 1;
+      animation: scrollBounce 2s ease-in-out infinite;
+    }
+    @keyframes scrollBounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)} }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      display: grid; grid-template-columns: repeat(4, 1fr);
+    }
+    .stat-cell {
+      padding: 1.8rem 1rem; text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat-cell:last-child { border-right: none; }
+    .stat-num {
+      font-size: clamp(2rem, 4vw, 3rem); font-weight: 900;
+      color: #fff; letter-spacing: -0.02em; line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-num span { color: var(--red); }
+    .stat-label {
+      font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.15em; color: var(--muted); margin-top: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="lp-nav">
+  <a href="#" class="lp-nav-logo">CSIA <span>GYM</span></a>
+  <button class="lp-nav-hamburger" id="lp-hamburger" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="lp-nav-links" id="lp-nav-links">
+    <a href="#features" class="lp-nav-link">Features</a>
+    <a href="#ranks" class="lp-nav-link">Ranks</a>
+    <a href="#community" class="lp-nav-link">Community</a>
+    <a href="{{ url_for('auth.login') }}" class="lp-nav-link">Login</a>
+    <a href="{{ url_for('auth.register') }}" class="lp-nav-cta">Join Free</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-glow"></div>
+
+  <div class="hero-eyebrow">Live Platform · CTF Training</div>
+
+  <h1 class="hero-title">
+    Train.<br>
+    <span class="accent">Hack.</span><br>
+    <span class="stroke">Dominate.</span>
+  </h1>
+
+  <p class="hero-sub">
+    The <strong>competitive cybersecurity arena</strong> built for students who want to go beyond theory —
+    solve real challenges, climb the ranks, and prove your skills.
+  </p>
+
+  <div class="hero-ctas">
+    <a href="{{ url_for('auth.register') }}" class="btn-primary">Enter the Arena →</a>
+    <a href="{{ url_for('auth.login') }}" class="btn-ghost">Sign In</a>
+  </div>
+
+  <div class="hero-scroll">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 11L2 5h12z"/></svg>
+    Scroll
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-cell">
+    <div class="stat-num" id="cnt-challenges">{{ stats.challenges }}<span>+</span></div>
+    <div class="stat-label">Challenges</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-num" id="cnt-users">{{ stats.users }}<span>+</span></div>
+    <div class="stat-label">Hackers Registered</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-num" id="cnt-solves">{{ stats.solves }}<span>+</span></div>
+    <div class="stat-label">Flags Captured</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-num" id="cnt-posts">{{ stats.posts }}<span>+</span></div>
+    <div class="stat-label">Community Posts</div>
+  </div>
 </div>
 
-{% endblock %}
+<style>
+  /* ── SECTION SHARED ── */
+  .lp-section { padding: 6rem 2rem; max-width: 1200px; margin: 0 auto; }
+  .section-label {
+    font-size: 0.65rem; font-weight: 900; text-transform: uppercase;
+    letter-spacing: 0.2em; color: var(--red); margin-bottom: 0.6rem;
+  }
+  .section-title {
+    font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 900;
+    text-transform: uppercase; color: #fff; letter-spacing: -0.01em;
+    line-height: 1.05; margin-bottom: 0.75rem;
+  }
+  .section-desc {
+    font-size: 0.95rem; color: #777; max-width: 520px; line-height: 1.7;
+  }
+
+  /* ── FEATURES ── */
+  #features { border-top: 1px solid var(--border); background: var(--bg); }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1px; margin-top: 3.5rem;
+    border: 1px solid var(--border);
+  }
+  .feat-card {
+    padding: 2rem 1.8rem; background: var(--bg2);
+    border: none; position: relative; overflow: hidden;
+    transition: background 0.2s;
+  }
+  .feat-card::after {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--red-dk); transition: width 0.2s, background 0.2s;
+  }
+  .feat-card:hover { background: rgba(139,0,0,0.06); }
+  .feat-card:hover::after { width: 5px; background: var(--red); }
+  .feat-icon {
+    font-size: 1.8rem; margin-bottom: 1rem; display: block;
+    filter: grayscale(0.3);
+  }
+  .feat-title {
+    font-size: 0.9rem; font-weight: 900; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #fff; margin-bottom: 0.5rem;
+  }
+  .feat-desc { font-size: 0.82rem; color: #666; line-height: 1.65; }
+  .feat-tag {
+    display: inline-block; margin-top: 1rem;
+    font-size: 0.62rem; font-weight: 900; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--red);
+    border: 1px solid var(--border); padding: 0.2rem 0.6rem;
+  }
+
+  /* ── CATEGORIES ── */
+  #categories { border-top: 1px solid var(--border); background: var(--bg2); }
+  .cat-grid {
+    display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2.5rem;
+  }
+  .cat-pill {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
+    border: 1px solid var(--border); color: #aaa; background: var(--bg3);
+    transition: all 0.15s; cursor: default;
+  }
+  .cat-pill:hover { border-color: var(--red); color: #fff; background: rgba(139,0,0,0.1); }
+  .cat-pill .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+</style>
+
+<!-- FEATURES -->
+<section id="features" style="border-top:1px solid var(--border);background:var(--bg);padding:6rem 2rem;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div class="section-label">Platform Features</div>
+    <h2 class="section-title">Everything you need<br>to level up.</h2>
+    <p class="section-desc">From isolated challenge instances to a ranked community — CSIA GYM is built for serious learners.</p>
+
+    <div class="features-grid">
+
+      <div class="feat-card">
+        <span class="feat-icon">🎯</span>
+        <div class="feat-title">Multi-Category Challenges</div>
+        <div class="feat-desc">Web exploitation, cryptography, reverse engineering, forensics, OSINT, binary exploitation, steganography, and more — curated by admins and the community alike.</div>
+        <span class="feat-tag">Official + Community</span>
+      </div>
+
+      <div class="feat-card">
+        <span class="feat-icon">⚡</span>
+        <div class="feat-title">Live Isolated Instances</div>
+        <div class="feat-desc">Web and netcat challenges spin up your own sandboxed container on demand. Dynamic per-user flags. 15-minute sessions, extendable up to 60 minutes. No shared state.</div>
+        <span class="feat-tag">Docker · nsjail · socat</span>
+      </div>
+
+      <div class="feat-card">
+        <span class="feat-icon">🏆</span>
+        <div class="feat-title">Percentile-Based Ranking</div>
+        <div class="feat-desc">Your rank is computed from solve rarity, difficulty weights, blood bonuses, community contributions, and more. Ten tiers from Neo Initiate to Master of the Nexus.</div>
+        <span class="feat-tag">10 Rank Tiers</span>
+      </div>
+
+      <div class="feat-card">
+        <span class="feat-icon">🩸</span>
+        <div class="feat-title">First Blood System</div>
+        <div class="feat-desc">Be the first to solve a challenge and claim First Blood. Gold, silver, and bronze positions are tracked per challenge and displayed on the solver leaderboard.</div>
+        <span class="feat-tag">🥇 🥈 🥉 Tracked</span>
+      </div>
+
+      <div class="feat-card">
+        <span class="feat-icon">🏅</span>
+        <div class="feat-title">Badge & Achievement System</div>
+        <div class="feat-desc">Earn badges through auto-triggered rules, claimable links, or admin grants. Limited-edition drops, event badges, and legendary ranks for the elite.</div>
+        <span class="feat-tag">Auto-Give · Claimable · Limited</span>
+      </div>
+
+      <div class="feat-card">
+        <span class="feat-icon">💬</span>
+        <div class="feat-title">Community Hub</div>
+        <div class="feat-desc">Post writeups, ask questions, share tutorials. Flair system, upvotes, comments, reactions, pinned posts, and a hot/new/top feed — all in one place.</div>
+        <span class="feat-tag">Writeups · Discussions · Help</span>
+      </div>
+
+      <div class="feat-card">
+        <span class="feat-icon">📬</span>
+        <div class="feat-title">Submit Your Own Challenges</div>
+        <div class="feat-desc">Build and submit challenges for admin review. Attach files, web archives, or RE binaries. Get notified on approval. Your challenge goes live to the whole platform.</div>
+        <span class="feat-tag">Pending → Approved → Live</span>
+      </div>
+
+      <div class="feat-card">
+        <span class="feat-icon">🔔</span>
+        <div class="feat-title">Smart Notifications</div>
+        <div class="feat-desc">Subscribe to challenges and posts. Get notified on first blood, badge awards, submission results, and platform announcements — all controllable per preference.</div>
+        <span class="feat-tag">Granular Preferences</span>
+      </div>
+
+      <div class="feat-card">
+        <span class="feat-icon">📊</span>
+        <div class="feat-title">Live Scoreboard</div>
+        <div class="feat-desc">Real-time leaderboard sorted by total points. See solve counts, rank titles, and avatar borders. Admins can hide users from the board without deleting accounts.</div>
+        <span class="feat-tag">Real-Time · Ranked</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CATEGORIES -->
+<section id="categories" style="border-top:1px solid var(--border);background:var(--bg2);padding:5rem 2rem;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div class="section-label">Challenge Categories</div>
+    <h2 class="section-title">Every domain.<br>One platform.</h2>
+    <div class="cat-grid">
+      <div class="cat-pill"><span class="dot" style="background:#60a5fa;"></span>Web Exploitation</div>
+      <div class="cat-pill"><span class="dot" style="background:#a78bfa;"></span>Cryptography</div>
+      <div class="cat-pill"><span class="dot" style="background:#f87171;"></span>Binary Exploitation</div>
+      <div class="cat-pill"><span class="dot" style="background:#fb923c;"></span>Reverse Engineering</div>
+      <div class="cat-pill"><span class="dot" style="background:#4ade80;"></span>Forensics</div>
+      <div class="cat-pill"><span class="dot" style="background:#facc15;"></span>OSINT</div>
+      <div class="cat-pill"><span class="dot" style="background:#e879f9;"></span>Steganography</div>
+      <div class="cat-pill"><span class="dot" style="background:#34d399;"></span>Networking</div>
+      <div class="cat-pill"><span class="dot" style="background:#94a3b8;"></span>Miscellaneous</div>
+    </div>
+    <p style="margin-top:1.5rem;font-size:0.8rem;color:var(--muted);">
+      Challenges range from <span style="color:#4ade80;font-weight:700;">Easy</span> warm-ups to
+      <span style="color:#f87171;font-weight:700;">Hard</span> multi-step exploits.
+      Difficulty weights affect your ranking score — harder solves count more.
+    </p>
+  </div>
+</section>
+
+<style>
+  /* ── RANKS ── */
+  #ranks { border-top: 1px solid var(--border); background: var(--bg); }
+  .rank-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1px; margin-top: 3rem; border: 1px solid var(--border);
+  }
+  .rank-cell {
+    padding: 1.2rem 1.4rem; background: var(--bg2);
+    display: flex; align-items: center; gap: 0.75rem;
+    transition: background 0.15s;
+  }
+  .rank-cell:hover { background: rgba(139,0,0,0.07); }
+  .rank-pct {
+    font-size: 0.6rem; font-weight: 900; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--muted); white-space: nowrap;
+    min-width: 44px;
+  }
+  .rank-name {
+    font-size: 0.78rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── HOW IT WORKS ── */
+  #how { border-top: 1px solid var(--border); background: var(--bg2); }
+  .steps { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2rem; margin-top: 3rem; }
+  .step { position: relative; padding-left: 1rem; border-left: 2px solid var(--border); }
+  .step-num {
+    font-size: 2.5rem; font-weight: 900; color: rgba(139,0,0,0.2);
+    line-height: 1; margin-bottom: 0.5rem; font-variant-numeric: tabular-nums;
+  }
+  .step-title { font-size: 0.85rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.07em; color: #fff; margin-bottom: 0.4rem; }
+  .step-desc { font-size: 0.8rem; color: #666; line-height: 1.6; }
+
+  /* ── COMMUNITY ── */
+  #community { border-top: 1px solid var(--border); background: var(--bg); }
+  .comm-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-top: 3rem; }
+  .comm-card {
+    padding: 1.6rem; background: var(--bg2); border: 1px solid var(--border);
+    position: relative; overflow: hidden; transition: border-color 0.15s;
+  }
+  .comm-card:hover { border-color: rgba(204,0,0,0.5); }
+  .comm-card-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+  .comm-card-title { font-size: 0.82rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.07em; color: #fff; margin-bottom: 0.4rem; }
+  .comm-card-desc { font-size: 0.78rem; color: #666; line-height: 1.6; }
+</style>
+
+<!-- RANK TIERS -->
+<section id="ranks" style="border-top:1px solid var(--border);background:var(--bg);padding:6rem 2rem;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div class="section-label">Ranking System</div>
+    <h2 class="section-title">Prove your place<br>in the Omninet.</h2>
+    <p class="section-desc">Your rank is calculated from a composite score — not just points. Rarity, speed, breadth, and community impact all count.</p>
+
+    <div class="rank-grid">
+      <div class="rank-cell">
+        <span class="rank-pct">Top 0.1%</span>
+        <span class="rank-name" style="background:linear-gradient(90deg,#b8860b,#ffd700,#fffacd,#ffd700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Master of the Nexus</span>
+      </div>
+      <div class="rank-cell">
+        <span class="rank-pct">Top 1%</span>
+        <span class="rank-name" style="background:linear-gradient(90deg,#ff0000,#ff7700,#ffff00,#00ff00,#0000ff,#8b00ff,#ff0000);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Digital Overlord</span>
+      </div>
+      <div class="rank-cell">
+        <span class="rank-pct">Top 3%</span>
+        <span class="rank-name" style="color:#9b30ff;">Grid Phantom</span>
+      </div>
+      <div class="rank-cell">
+        <span class="rank-pct">Top 6%</span>
+        <span class="rank-name" style="color:#00c853;">System Sage</span>
+      </div>
+      <div class="rank-cell">
+        <span class="rank-pct">Top 10%</span>
+        <span class="rank-name" style="color:#cc0000;">Quantum Hacker</span>
+      </div>
+      <div class="rank-cell">
+        <span class="rank-pct">Top 20%</span>
+        <span class="rank-name" style="color:#00aaff;">Cipher Hunter</span>
+      </div>
+      <div class="rank-cell">
+        <span class="rank-pct">Top 35%</span>
+        <span class="rank-name" style="color:#e8e8e8;">Scriptblade</span>
+      </div>
+      <div class="rank-cell">
+        <span class="rank-pct">Top 50%</span>
+        <span class="rank-name" style="color:#ff4500;">Packet Rogue</span>
+      </div>
+      <div class="rank-cell">
+        <span class="rank-pct">Top 75%</span>
+        <span class="rank-name" style="color:#ff2222;">Firewall Adept</span>
+      </div>
+      <div class="rank-cell">
+        <span class="rank-pct">All</span>
+        <span class="rank-name" style="color:#c0c0c0;">Neo Initiate</span>
+      </div>
+    </div>
+
+    <p style="margin-top:1.5rem;font-size:0.78rem;color:var(--muted);">
+      ✦ Legendary ranks (Omninet Ambassador, Omninet Sovereign, Ghost in the Core, Zero-Day Deity, Singularity Architect) are granted outside the percentile system — by admins or hidden discovery.
+    </p>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" style="border-top:1px solid var(--border);background:var(--bg2);padding:6rem 2rem;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div class="section-label">Getting Started</div>
+    <h2 class="section-title">Zero to hacker<br>in four steps.</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Create Your Account</div>
+        <div class="step-desc">Register in seconds. Your identicon avatar is auto-generated. No email verification required — just pick a username and start.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Pick a Challenge</div>
+        <div class="step-desc">Browse by category, difficulty, or source. Filter out solved challenges. Save ones you want to return to. Subscribe for solve notifications.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Hack & Submit</div>
+        <div class="step-desc">Launch your isolated instance, exploit the vulnerability, capture the flag in <code style="color:#cc0000;font-size:0.85em;">CSIA{...}</code> format, and submit. First blood is tracked.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-title">Climb the Ranks</div>
+        <div class="step-desc">Your composite score updates in real time. Earn badges, post writeups, vote on challenges, and watch your rank title evolve as you improve.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMUNITY -->
+<section id="community" style="border-top:1px solid var(--border);background:var(--bg);padding:6rem 2rem;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div class="section-label">Community</div>
+    <h2 class="section-title">More than a<br>challenge platform.</h2>
+    <p class="section-desc">CSIA GYM is a living community of hackers, learners, and builders. Share knowledge, get help, and grow together.</p>
+
+    <div class="comm-cards">
+      <div class="comm-card">
+        <div class="comm-card-icon">📝</div>
+        <div class="comm-card-title">Writeups & Tutorials</div>
+        <div class="comm-card-desc">Post detailed writeups after solving challenges. Help others learn your approach. Earn upvotes and community recognition.</div>
+      </div>
+      <div class="comm-card">
+        <div class="comm-card-icon">🆘</div>
+        <div class="comm-card-title">Ask for Help</div>
+        <div class="comm-card-desc">Stuck on a challenge? Post in the community with the "Need Help" flair. The community has your back — no gatekeeping.</div>
+      </div>
+      <div class="comm-card">
+        <div class="comm-card-icon">🔨</div>
+        <div class="comm-card-title">Build Challenges</div>
+        <div class="comm-card-desc">Submit your own challenges for admin review. Web archives, RE binaries, and static challenges all supported. Your work goes live to the whole platform.</div>
+      </div>
+      <div class="comm-card">
+        <div class="comm-card-icon">🎖️</div>
+        <div class="comm-card-title">Earn Recognition</div>
+        <div class="comm-card-desc">Badges, rank titles, avatar borders, and leaderboard placement. Your contributions — solves, posts, votes — all feed into your standing.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section style="border-top:1px solid var(--border);background:var(--bg2);padding:7rem 2rem;text-align:center;position:relative;overflow:hidden;">
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:350px;background:radial-gradient(ellipse,rgba(139,0,0,0.15) 0%,transparent 70%);pointer-events:none;"></div>
+  <div style="position:relative;z-index:1;max-width:640px;margin:0 auto;">
+    <div style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:var(--red);margin-bottom:1rem;">Ready?</div>
+    <h2 style="font-size:clamp(2rem,5vw,3.8rem);font-weight:900;text-transform:uppercase;color:#fff;letter-spacing:-0.02em;line-height:1;margin-bottom:1.2rem;">
+      The Omninet<br>is waiting.
+    </h2>
+    <p style="font-size:0.95rem;color:#666;line-height:1.7;margin-bottom:2.5rem;">
+      Every challenge you skip is a skill you don't build. Every flag you miss is a rank you don't climb.
+      The platform is live. The leaderboard is real. Your move.
+    </p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+      <a href="{{ url_for('auth.register') }}" class="btn-primary" style="font-size:1rem;padding:1rem 2.8rem;">Create Account — It's Free</a>
+      <a href="{{ url_for('auth.login') }}" class="btn-ghost" style="font-size:1rem;padding:1rem 2.8rem;">Sign In</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="border-top:1px solid var(--border);background:var(--bg);padding:2rem;text-align:center;">
+  <div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+    <span style="font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#333;">CSIA <span style="color:var(--red);">GYM</span></span>
+    <span style="font-size:0.72rem;color:#444;">© 2026 · Built by v4mp &amp; ssecca</span>
+    <div style="display:flex;gap:1.5rem;">
+      <a href="{{ url_for('auth.login') }}" style="font-size:0.72rem;color:#444;text-decoration:none;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#444'">Login</a>
+      <a href="{{ url_for('auth.register') }}" style="font-size:0.72rem;color:#444;text-decoration:none;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#444'">Register</a>
+      <a href="{{ url_for('auth.whats_new') }}" style="font-size:0.72rem;color:#444;text-decoration:none;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#444'">Changelog</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Landing page hamburger
+(function() {
+  var btn = document.getElementById('lp-hamburger');
+  var links = document.getElementById('lp-nav-links');
+  if (!btn || !links) return;
+  btn.addEventListener('click', function() {
+    var open = links.classList.toggle('open');
+    btn.classList.toggle('open', open);
+  });
+  document.addEventListener('click', function(e) {
+    if (!btn.contains(e.target) && !links.contains(e.target)) {
+      links.classList.remove('open');
+      btn.classList.remove('open');
+    }
+  });
+})();
+
+// Smooth counter animation for stats
+function animateCount(el, target, duration) {
+  var start = 0, step = target / (duration / 16);
+  var timer = setInterval(function() {
+    start = Math.min(start + step, target);
+    el.childNodes[0].nodeValue = Math.floor(start);
+    if (start >= target) clearInterval(timer);
+  }, 16);
+}
+
+var observed = false;
+var observer = new IntersectionObserver(function(entries) {
+  if (entries[0].isIntersecting && !observed) {
+    observed = true;
+    var els = [
+      { id: 'cnt-challenges', val: {{ stats.challenges }} },
+      { id: 'cnt-users',      val: {{ stats.users }} },
+      { id: 'cnt-solves',     val: {{ stats.solves }} },
+      { id: 'cnt-posts',      val: {{ stats.posts }} },
+    ];
+    els.forEach(function(e) {
+      var el = document.getElementById(e.id);
+      if (el) animateCount(el, e.val, 1200);
+    });
+  }
+}, { threshold: 0.3 });
+
+var statsBar = document.querySelector('.stats-bar');
+if (statsBar) observer.observe(statsBar);
+
+// Active nav link on scroll
+var sections = document.querySelectorAll('section[id], div[id]');
+var navLinks = document.querySelectorAll('.lp-nav-link[href^="#"]');
+window.addEventListener('scroll', function() {
+  var scrollY = window.scrollY + 80;
+  sections.forEach(function(s) {
+    if (s.offsetTop <= scrollY && s.offsetTop + s.offsetHeight > scrollY) {
+      navLinks.forEach(function(l) {
+        l.style.color = l.getAttribute('href') === '#' + s.id ? '#fff' : '';
+      });
+    }
+  });
+}, { passive: true });
+</script>
+</body>
+</html>

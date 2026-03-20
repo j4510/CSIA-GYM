@@ -6,8 +6,9 @@
 <!-- MY SUBMISSIONS PAGE -->
 
 <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900">My Challenge Submissions</h1>
-    <p class="text-gray-600 mt-2">Track the status of your submitted challenges</p>
+    <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">Submissions</p>
+    <h1 class="text-3xl font-bold" style="color:#fff;">My Challenge Submissions</h1>
+    <p style="color:#666;margin-top:0.4rem;">Track the status of your submitted challenges</p>
 </div>
 
 <!-- Submissions List -->
@@ -33,7 +34,7 @@
                     </div>
                     
                     <p class="text-gray-600 mb-3">
-                        {{ submission.description[:150] }}{% if submission.description|length > 150 %}...{% endif %}
+                        {{ submission.description | striptags | truncate(200, True, '...') }}
                     </p>
                     
                     <p class="text-sm text-gray-500">
@@ -80,5 +81,8 @@
         </div>
     {% endfor %}
 </div>
+
+<script src="{{ url_for('static', filename='js/page-tour.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tour-my-submissions.js') }}"></script>
 
 {% endblock %}

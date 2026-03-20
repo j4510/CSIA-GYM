@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}BADGES - CSIA GYM{% endblock %}
+
+{% block extra_css %}
+<style>
+.badge-img { display:block; width:80px; height:80px; object-fit:cover; border-radius:4px; }
+
+@media (max-width:768px) {
+  .badge-img { width:60px; height:60px; }
+  .grid.md\:grid-cols-2 { grid-template-columns:1fr !important; }
+}
+
+/* tier1 – Common */
+.border-tier1 { border:3px solid #4a4a4a; }
+
+/* tier2 – Uncommon: silver breathe */
+.border-tier2 { border:3px solid #b0b8c8; animation:bdUncommon 3s ease-in-out infinite; }
+@keyframes bdUncommon { 0%,100%{box-shadow:0 0 5px rgba(176,184,200,0.4)} 50%{box-shadow:0 0 12px rgba(176,184,200,0.9),0 0 22px rgba(176,184,200,0.3)} }
+
+/* tier3 – Rare: green pulse */
+.border-tier3 { border:3px solid #4ade80; animation:bdRare 2.5s ease-in-out infinite; }
+@keyframes bdRare { 0%,100%{box-shadow:0 0 7px rgba(74,222,128,0.55),0 0 14px rgba(74,222,128,0.2)} 50%{box-shadow:0 0 18px rgba(74,222,128,1),0 0 34px rgba(74,222,128,0.45)} }
+
+/* tier4 – Epic: blue electric double-ring */
+.border-tier4 { border:3px solid #60a5fa; animation:bdEpic 2s ease-in-out infinite; }
+@keyframes bdEpic { 0%,100%{box-shadow:0 0 9px rgba(96,165,250,0.65),0 0 20px rgba(96,165,250,0.2)} 50%{box-shadow:0 0 22px rgba(96,165,250,1),0 0 44px rgba(96,165,250,0.5),0 0 66px rgba(96,165,250,0.15)} }
+
+/* tier5 – Legendary: purple shimmer */
+.border-tier5 { border:3px solid #a78bfa; animation:bdLegendary 1.8s ease-in-out infinite; }
+@keyframes bdLegendary { 0%,100%{box-shadow:0 0 12px rgba(167,139,250,0.65),0 0 24px rgba(167,139,250,0.2)} 50%{box-shadow:0 0 26px rgba(167,139,250,1),0 0 52px rgba(167,139,250,0.55),0 0 78px rgba(167,139,250,0.2)} }
+
+/* tier6 – Mythical: pink↔cyan color-shift */
+.border-tier6 { border:3px solid #f472b6; animation:bdMythical 1.6s ease-in-out infinite; }
+@keyframes bdMythical {
+  0%   {box-shadow:0 0 12px rgba(244,114,182,0.85),0 0 26px rgba(244,114,182,0.35); border-color:#f472b6;}
+  50%  {box-shadow:0 0 20px rgba(34,211,238,1),0 0 42px rgba(34,211,238,0.5),0 0 64px rgba(34,211,238,0.2); border-color:#22d3ee;}
+  100% {box-shadow:0 0 12px rgba(244,114,182,0.85),0 0 26px rgba(244,114,182,0.35); border-color:#f472b6;}
+}
+
+/* tier7 – Ancient: fire flicker orange→red→orange */
+.border-tier7 { border:3px solid #fb923c; animation:bdAncient 1.2s ease-in-out infinite; }
+@keyframes bdAncient {
+  0%   {box-shadow:0 0 10px rgba(251,146,60,0.8),0 0 22px rgba(251,146,60,0.35); border-color:#fb923c;}
+  35%  {box-shadow:0 0 24px rgba(239,68,68,1),0 0 48px rgba(239,68,68,0.55),0 0 72px rgba(239,68,68,0.2); border-color:#ef4444;}
+  65%  {box-shadow:0 0 16px rgba(251,146,60,0.9),0 0 32px rgba(251,146,60,0.45); border-color:#fbbf24;}
+  100% {box-shadow:0 0 10px rgba(251,146,60,0.8),0 0 22px rgba(251,146,60,0.35); border-color:#fb923c;}
+}
+
+/* tier8 – Divine: gold inward + outward glow */
+.border-tier8 { border:3px solid #facc15; animation:bdDivine 1.8s ease-in-out infinite; }
+@keyframes bdDivine {
+  0%,100%{box-shadow:0 0 14px rgba(250,204,21,0.85),0 0 30px rgba(250,204,21,0.35),0 0 50px rgba(250,204,21,0.1),inset 0 0 10px rgba(250,204,21,0.2);}
+  50%    {box-shadow:0 0 30px rgba(250,204,21,1),0 0 60px rgba(250,204,21,0.65),0 0 90px rgba(250,204,21,0.3),inset 0 0 20px rgba(250,204,21,0.4);}
+}
+
+/* tier9 – Celestial: red→white strobe with expanding rings */
+.border-tier9 { border:3px solid #f87171; animation:bdCelestial 1s ease-in-out infinite; }
+@keyframes bdCelestial {
+  0%   {box-shadow:0 0 14px rgba(248,113,113,0.9),0 0 32px rgba(248,113,113,0.45),0 0 60px rgba(248,113,113,0.15); border-color:#f87171;}
+  50%  {box-shadow:0 0 24px rgba(255,255,255,1),0 0 50px rgba(248,113,113,0.9),0 0 90px rgba(248,113,113,0.45),0 0 130px rgba(248,113,113,0.15); border-color:#fff;}
+  100% {box-shadow:0 0 14px rgba(248,113,113,0.9),0 0 32px rgba(248,113,113,0.45),0 0 60px rgba(248,113,113,0.15); border-color:#f87171;}
+}
+
+/* tier10 – GOD: spinning conic-gradient border + multi-layer pulse */
+.border-tier10 { border:3px solid transparent; position:relative; animation:bdGod 1.4s ease-in-out infinite; }
+.border-tier10::before { content:''; position:absolute; inset:-3px; border-radius:6px; background:conic-gradient(from 0deg,#ff0040,#ff8c00,#facc15,#4ade80,#00fff7,#60a5fa,#a78bfa,#f472b6,#ff0040); animation:bdGodSpin 1s linear infinite; z-index:-1; }
+@keyframes bdGodSpin { to{transform:rotate(360deg)} }
+@keyframes bdGod {
+  0%,100%{box-shadow:0 0 20px rgba(224,64,251,0.7),0 0 44px rgba(0,255,247,0.45),0 0 70px rgba(255,0,64,0.3);}
+  50%    {box-shadow:0 0 40px rgba(224,64,251,1),0 0 80px rgba(0,255,247,0.85),0 0 120px rgba(255,0,64,0.6);}
+}
+
+@keyframes badgeHighlight {
+  0%   { box-shadow:0 0 0 3px #facc15, 0 0 20px rgba(250,204,21,0.6); transform:scale(1.02); }
+  60%  { box-shadow:0 0 0 3px #facc15, 0 0 30px rgba(250,204,21,0.4); transform:scale(1.02); }
+  100% { box-shadow:none; transform:scale(1); }
+}
+.badge-highlight { animation: badgeHighlight 1.8s ease-out forwards; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto fade-in">
+  <div class="mb-8">
+    <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">■ PLATFORM</p>
+    <h1 class="text-4xl font-black uppercase" style="color:#fff;">BADGES</h1>
+    <p class="mt-2 text-sm font-bold uppercase" style="color:#666;letter-spacing:0.12em;">
+      Collectible achievements awarded by administrators
+    </p>
+  </div>
+
+  {% if badges %}
+  <div class="grid md:grid-cols-2 gap-5">
+    {% for badge in badges %}
+    {% set bs = badge.border_style or 'tier1' %}
+    <div id="badge-{{ badge.id }}"
+         class="bg-black p-5 flex gap-5 items-start transition-all duration-300"
+         style="border:2px solid #333;">
+      <div style="flex-shrink:0;position:relative;">
+        <img src="{{ url_for('settings.serve_badge', filename=badge.image_filename) }}"
+             alt="{{ badge.title }}"
+             class="badge-img border-{{ bs }}">
+      </div>
+      <div style="flex:1;">
+        <div class="flex flex-wrap items-center gap-2 mb-1">
+          <p class="font-black uppercase text-base">{{ badge.title }}</p>
+          {% if badge.is_limited %}
+          {% set sorted_recipients = badge.recipients | sort(attribute='awarded_at') %}
+          {% set holder_num = namespace(val=0) %}
+          {% for r in sorted_recipients %}
+            {% if r.user_id == current_user.id %}{% set holder_num.val = loop.index %}{% endif %}
+          {% endfor %}
+          <span style="font-size:0.6rem;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#facc15;border:1px solid #facc15;padding:1px 6px;">
+            ★ LIMITED{% if badge.limited_count %} · {{ badge.limited_count }}{% endif %}{% if holder_num.val > 0 %} &nbsp;·&nbsp; #{{ holder_num.val }}{% endif %}
+          </span>
+          {% endif %}
+          {% if badge.from_event %}
+          <span style="font-size:0.6rem;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#60a5fa;border:1px solid #60a5fa;padding:1px 6px;">EVENT</span>
+          {% endif %}
+          {% if badge.is_unattainable %}
+          <span style="font-size:0.6rem;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#f87171;border:1px solid #f87171;padding:1px 6px;">UNATTAINABLE</span>
+          {% endif %}
+        </div>
+        <p class="text-sm mb-2" style="color:#aaa;">{{ badge.description }}</p>
+        <p class="text-xs" style="color:#555;">
+          {{ badge.recipients|length }} holder{{ 's' if badge.recipients|length != 1 }}
+          &nbsp;·&nbsp;
+          {% set tier_names = {'tier1':'Common','tier2':'Uncommon','tier3':'Rare','tier4':'Epic','tier5':'Legendary','tier6':'Mythical','tier7':'Ancient','tier8':'Divine','tier9':'Celestial','tier10':'GOD'} %}
+          <span style="text-transform:uppercase;color:#888;">{{ tier_names.get(bs, bs) }}</span>
+        </p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-20 border-4 border-red-600">
+    <p class="text-2xl font-black uppercase opacity-40">NO BADGES YET</p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+(function(){
+  const hash = window.location.hash;
+  if (hash && hash.startsWith('#badge-')) {
+    const el = document.querySelector(hash);
+    if (el) {
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('badge-highlight');
+        setTimeout(() => el.classList.remove('badge-highlight'), 2000);
+      }, 200);
+    }
+  }
+})();
+</script>
+{% endblock %}

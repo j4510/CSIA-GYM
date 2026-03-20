@@ -6,6 +6,9 @@ services:
     container_name: ctf-platform
     expose:
       - "5050"
+    ports:
+      - "10000-10099:10000-10099"   # web challenge instances
+      - "11000-11099:11000-11099"   # nc/RE challenge instances
     env_file:
       - .env
     volumes:

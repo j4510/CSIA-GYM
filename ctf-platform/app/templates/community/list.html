@@ -1,78 +1,278 @@
 {% extends "base.html" %}
-
 {% block title %}COMMUNITY - CSIA GYM{% endblock %}
 
+{% block extra_css %}
+<style>
+  .comm-page { max-width: 860px; margin: 0 auto; }
+
+  .comm-header h1 {
+    font-size: clamp(2rem,6vw,3rem); font-weight:900; text-transform:uppercase;
+    color:#ffffff; letter-spacing:0.06em;
+  }
+  .comm-header p {
+    font-size:0.85rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.15em; color:#666; margin-top:0.3rem;
+  }
+
+  .filter-bar { display:flex; gap:0; flex-wrap:wrap; align-items:center; }
+
+  .sort-btn {
+    display:inline-flex; align-items:center; gap:0.3rem;
+    padding:0.5rem 1.1rem;
+    font-size:0.76rem; font-weight:800; text-transform:uppercase; letter-spacing:0.07em;
+    border:none; border-bottom:3px solid transparent;
+    background:transparent; color:#999;
+    cursor:pointer; text-decoration:none; transition:color 0.12s, border-color 0.12s;
+    white-space:nowrap;
+  }
+  .sort-btn:hover { color:#e5e5e5; border-bottom-color:rgba(204,0,0,0.5); }
+  .sort-btn.active { color:#fff; border-bottom-color:#cc0000; background:rgba(139,0,0,0.08); }
+
+  .flair-btn {
+    display:inline-flex; align-items:center; gap:0.3rem;
+    padding:0.28rem 0.75rem;
+    font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em;
+    border:1.5px solid transparent; cursor:pointer; text-decoration:none;
+    transition:opacity 0.12s, box-shadow 0.12s; border-radius:999px;
+    opacity:0.7;
+  }
+  .flair-btn:hover { opacity:1; }
+  .flair-btn.active { opacity:1; box-shadow:0 0 0 2px rgba(255,255,255,0.5); }
+
+  .flair-btn[data-flair="Challenge Discussion"] { background:#1e3a5f; color:#93c5fd; border-color:#1e40af; }
+  .flair-btn[data-flair="Writeups"]             { background:#1a3a1a; color:#86efac; border-color:#166534; }
+  .flair-btn[data-flair="For Beginners"]        { background:#3b1f00; color:#fcd34d; border-color:#92400e; }
+  .flair-btn[data-flair="Need Help"]            { background:#3b0a0a; color:#fca5a5; border-color:#991b1b; }
+  .flair-btn[data-flair="Tutorial"]             { background:#0d2137; color:#67e8f9; border-color:#0e7490; }
+
+  .flair-badge {
+    display:inline-flex; align-items:center; gap:0.25rem;
+    padding:0.18rem 0.6rem;
+    font-size:0.68rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em;
+    border-radius:999px; border:1.5px solid transparent;
+  }
+  .flair-badge[data-flair="Challenge Discussion"] { background:#1e3a5f; color:#93c5fd; border-color:#1e40af; }
+  .flair-badge[data-flair="Writeups"]             { background:#1a3a1a; color:#86efac; border-color:#166534; }
+  .flair-badge[data-flair="For Beginners"]        { background:#3b1f00; color:#fcd34d; border-color:#92400e; }
+  .flair-badge[data-flair="Need Help"]            { background:#3b0a0a; color:#fca5a5; border-color:#991b1b; }
+  .flair-badge[data-flair="Tutorial"]             { background:#0d2137; color:#67e8f9; border-color:#0e7490; }
+
+  .new-post-btn {
+    display:inline-flex; align-items:center; gap:0.5rem;
+    padding:0.5rem 1.3rem;
+    font-size:0.8rem; font-weight:900; text-transform:uppercase; letter-spacing:0.08em;
+    background:#cc0000; color:#fff; border:2px solid #cc0000; text-decoration:none;
+    transition:all 0.15s; border-radius:3px;
+  }
+  .new-post-btn:hover { background:transparent; color:#cc0000; }
+
+  .pinned-card {
+    display:block; text-decoration:none;
+    background:rgba(20,10,0,0.9);
+    border:2px solid rgba(204,150,0,0.6);
+    padding:1.1rem 1.4rem;
+    margin-bottom:1rem;
+    position:relative; overflow:hidden;
+    transition:border-color 0.15s, transform 0.15s;
+  }
+  .pinned-card::before {
+    content:''; position:absolute; left:0; top:0; bottom:0; width:4px;
+    background:rgba(204,150,0,0.8);
+  }
+  .pinned-card:hover { border-color:rgba(204,150,0,0.9); transform:translateX(3px); }
+  .pinned-label {
+    display:inline-flex; align-items:center; gap:0.3rem;
+    font-size:0.68rem; font-weight:900; text-transform:uppercase; letter-spacing:0.1em;
+    color:#d97706; margin-bottom:0.4rem;
+  }
+
+  .post-card {
+    display:block; text-decoration:none;
+    background:rgba(12,12,12,0.85);
+    border:1px solid rgba(139,0,0,0.2);
+    padding:1.25rem 1.4rem;
+    margin-bottom:0.75rem;
+    transition:border-color 0.15s, transform 0.15s;
+    position:relative; overflow:hidden;
+  }
+  .post-card::before {
+    content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+    background:rgba(139,0,0,0.5); transition:width 0.15s;
+  }
+  .post-card:hover { border-color:rgba(204,0,0,0.5); transform:translateX(3px); }
+  .post-card:hover::before { width:5px; background:#cc0000; }
+
+  .post-title {
+    font-size:1.05rem; font-weight:900; text-transform:uppercase;
+    color:#f0f0f0; letter-spacing:0.03em; margin-bottom:0.4rem; line-height:1.3;
+  }
+  .post-preview {
+    font-size:0.82rem; color:#888; line-height:1.55; margin-bottom:0.85rem;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .post-meta {
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:0.5rem;
+    border-top:1px solid rgba(139,0,0,0.15); padding-top:0.65rem;
+  }
+  .post-meta-left { display:flex; align-items:center; gap:0.85rem; flex-wrap:wrap; }
+  .post-author { display:flex; align-items:center; gap:0.4rem; }
+  .post-author img { width:20px; height:20px; object-fit:cover; border-radius:2px; position:relative; }
+  .post-author-name { font-size:0.73rem; font-weight:700; text-transform:uppercase; color:#ccc; }
+  .post-stat { display:flex; align-items:center; gap:0.25rem; font-size:0.7rem; font-weight:700; color:#666; }
+  .post-stat span:first-child { color:#8b0000; }
+  .post-date { font-size:0.68rem; color:#555; font-weight:600; }
+  .post-read { font-size:0.7rem; font-weight:900; text-transform:uppercase; color:#cc0000; letter-spacing:0.08em; }
+
+  .divider-label {
+    display:flex; align-items:center; gap:0.75rem;
+    font-size:0.68rem; font-weight:800; text-transform:uppercase; letter-spacing:0.12em;
+    color:#555; margin:1rem 0 0.6rem;
+  }
+  .divider-label::before, .divider-label::after {
+    content:''; flex:1; height:1px; background:rgba(139,0,0,0.2);
+  }
+
+  .pagination { display:flex; align-items:center; justify-content:center; gap:0.4rem; margin-top:1.5rem; flex-wrap:wrap; }
+  .pg-btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:2.2rem; height:2.2rem; padding:0 0.6rem;
+    font-size:0.76rem; font-weight:800; text-transform:uppercase;
+    border:2px solid rgba(139,0,0,0.3); background:rgba(15,15,15,0.7);
+    color:#aaa; text-decoration:none; transition:all 0.15s;
+  }
+  .pg-btn:hover { border-color:#cc0000; color:#fff; }
+  .pg-btn.active { border-color:#cc0000; background:rgba(139,0,0,0.25); color:#fff; pointer-events:none; }
+  .pg-btn.disabled { opacity:0.3; pointer-events:none; }
+  .pg-info { font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#555; padding:0 0.4rem; }
+
+  .comm-empty { text-align:center; padding:3.5rem 1rem; border:2px dashed rgba(139,0,0,0.3); color:#555; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="mb-8 fade-in">
-    <h1 class="text-5xl font-black uppercase tracking-tight community-header" style="color: #000000;">■ COMMUNITY</h1>
-    <p class="mt-2 text-xl community-subtitle" style="color: #000000;">DISCUSS CHALLENGES, SHARE WRITEUPS, ASK QUESTIONS</p>
-</div>
+<div class="comm-page fade-in">
 
-<!-- New Post Button -->
-<div class="mb-8">
-    <a href="{{ url_for('community.new_post') }}" 
-       class="inline-block bg-red-600 text-black px-8 py-4 font-black uppercase border-3 border-white hover:bg-white hover:text-black transition-all">
-        + CREATE NEW POST
-    </a>
-</div>
+  <div class="comm-header mb-5">
+    <h1>■ COMMUNITY</h1>
+    <p>Discuss challenges · Share writeups · Ask questions</p>
+  </div>
 
-<!-- Posts List -->
-<div class="space-y-6">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem;">
+    <div style="display:flex; flex-direction:column; gap:0.6rem; flex:1;">
+      <div style="display:flex; align-items:center; gap:0; border-bottom:1px solid rgba(139,0,0,0.2); padding-bottom:0;">
+        <a href="{{ url_for('community.list', sort='hot', flair=flair, page=1) }}"
+           class="sort-btn {% if sort == 'hot' %}active{% endif %}">🔥 Hot</a>
+        <a href="{{ url_for('community.list', sort='week', flair=flair, page=1) }}"
+           class="sort-btn {% if sort == 'week' %}active{% endif %}">📈 Top Weekly</a>
+        <a href="{{ url_for('community.list', sort='alltime', flair=flair, page=1) }}"
+           class="sort-btn {% if sort == 'alltime' %}active{% endif %}">🏆 All Time</a>
+        <a href="{{ url_for('community.list', sort='new', flair=flair, page=1) }}"
+           class="sort-btn {% if sort == 'new' %}active{% endif %}">🆕 New</a>
+      </div>
+      <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+        {% for f in valid_flairs %}
+        <a href="{{ url_for('community.list', sort=sort, flair=('' if flair == f else f), page=1) }}"
+           class="flair-btn {% if flair == f %}active{% endif %}" data-flair="{{ f }}">{{ f }}</a>
+        {% endfor %}
+      </div>
+    </div>
+    <a href="{{ url_for('community.new_post') }}" class="new-post-btn" style="flex-shrink:0;">+ New Post</a>
+  </div>
+
+  {% if pinned and not flair %}
+  {% for p in pinned %}
+  <a href="{{ url_for('community.view_post', post_id=p.id) }}" class="pinned-card">
+    <div class="pinned-label">📌 Pinned</div>
+    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.35rem; flex-wrap:wrap;">
+      {% if p.flair %}
+      <span class="flair-badge" data-flair="{{ p.flair }}">{{ p.flair }}</span>
+      {% endif %}
+      <span class="post-title" style="margin-bottom:0;">{{ p.title }}</span>
+    </div>
+    <div class="post-preview">{{ p.content | striptags | truncate(140, True, '...') }}</div>
+    <div class="post-meta">
+      <div class="post-meta-left">
+        <div class="post-author">
+          {% if p.author.profile_picture %}
+          <img src="{{ url_for('settings.serve_avatar', username=p.author.username) }}" alt=""
+               class="av-border-{{ p.author.get_top_border() or 'tier1' }}">
+          {% endif %}
+          <span class="post-author-name">{{ p.author.username }}</span>
+        </div>
+        <div class="post-stat"><span>▲</span><span>{{ p.upvotes }}</span></div>
+        <div class="post-stat"><span>💬</span><span>{{ p.comments|length }}</span></div>
+        <div class="post-date">{{ p.created_at.strftime('%b %d, %Y') }}</div>
+      </div>
+      <span class="post-read" style="color:#d97706;">Read →</span>
+    </div>
+  </a>
+  {% endfor %}
+  {% endif %}
+
+  {% if posts or flair %}
+  <div class="divider-label">{{ flair if flair else ('Latest' if sort == 'new' else 'Top This Week' if sort == 'week' else 'All Time Best' if sort == 'alltime' else 'Trending Today') }}</div>
+  {% endif %}
+
+  <div>
+    {% if posts %}
     {% for post in posts %}
-        <div class="bg-black border-4 border-red-600 p-6 hover-brutal shadow-lg challenge-card">
-            <a href="{{ url_for('community.view_post', post_id=post.id) }}" class="block">
-                <!-- Post Header -->
-                <div class="flex justify-between items-start mb-4">
-                    <h2 class="text-2xl font-black uppercase flex-1 leading-tight hover:text-red-600 transition-colors">
-                        {{ post.title }}
-                    </h2>
-                    
-                    <!-- Upvote Badge -->
-                    <div class="ml-4 bg-red-600 px-4 py-2 font-black border-2 border-white" style="color:#ffffff;">
-                        <span class="text-2xl">▲</span>
-                        <span class="ml-2">{{ post.upvotes }}</span>
-                    </div>
-                </div>
-                
-                <!-- Post Preview -->
-                <p class="mb-4 opacity-80 leading-relaxed">
-                    {{ post.content[:250] }}{% if post.content|length > 250 %}...{% endif %}
-                </p>
-                
-                <!-- Post Meta -->
-                <div class="flex justify-between items-center text-sm border-t-2 border-red-600 pt-4">
-                    <div class="flex items-center space-x-6 font-bold uppercase" style="color:#e0e0e0;">
-                        <span class="flex items-center gap-2">
-                            {% if post.author.profile_picture %}
-                            <img src="{{ url_for('static', filename='avatars/' + post.author.profile_picture) }}"
-                                 alt="" style="width:22px;height:22px;object-fit:cover;border:1px solid #8b0000;">
-                            {% else %}
-                            <span style="color:#8b0000;">👤</span>
-                            {% endif %}
-                            {{ post.author.username }}
-                        </span>
-                        <span class="flex items-center" style="color:#e0e0e0;">
-                            <span style="color:#8b0000; margin-right:0.5rem;">💬</span> {{ post.comments|length }}
-                        </span>
-                        <span class="flex items-center" style="color:#a0a0a0;">
-                            <span style="color:#8b0000; margin-right:0.5rem;">📅</span> {{ post.created_at.strftime('%b %d, %Y') }}
-                        </span>
-                    </div>
-                    <span class="font-black uppercase" style="color:#ffffff;">READ MORE →</span>
-                </div>
-            </a>
+    <a href="{{ url_for('community.view_post', post_id=post.id) }}" class="post-card challenge-card">
+      <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.35rem; flex-wrap:wrap;">
+        {% if post.flair %}
+        <span class="flair-badge" data-flair="{{ post.flair }}">{{ post.flair }}</span>
+        {% endif %}
+        <span class="post-title" style="margin-bottom:0;">{{ post.title }}</span>
+      </div>
+      <div class="post-preview">{{ post.content | striptags | truncate(160, True, '...') }}</div>
+      <div class="post-meta">
+        <div class="post-meta-left">
+          <div class="post-author">
+            {% if post.author.profile_picture %}
+            <img src="{{ url_for('settings.serve_avatar', username=post.author.username) }}" alt=""
+                 class="av-border-{{ post.author.get_top_border() or 'tier1' }}">
+            {% else %}
+            <span style="color:#8b0000;font-size:0.85rem;">👤</span>
+            {% endif %}
+            <span class="post-author-name">{{ post.author.username }}</span>
+          </div>
+          <div class="post-stat"><span>▲</span><span>{{ post.upvotes }}</span></div>
+          <div class="post-stat"><span>💬</span><span>{{ post.comments|length }}</span></div>
+          <div class="post-date">{{ post.created_at.strftime('%b %d, %Y') }}</div>
         </div>
-    {% else %}
-        <!-- No Posts Message -->
-        <div class="text-center py-20 border-4 border-red-600 no-posts-message">
-            <p class="text-4xl font-black uppercase mb-4" style="color: #000000;">NO POSTS YET</p>
-            <p class="text-xl mb-6" style="color: #000000;">BE THE FIRST TO START A DISCUSSION!</p>
-            <a href="{{ url_for('community.new_post') }}" 
-               class="inline-block bg-red-600 text-black px-8 py-4 font-black uppercase hover:bg-white hover:text-black transition-all">
-                CREATE FIRST POST
-            </a>
-        </div>
+        <span class="post-read">Read →</span>
+      </div>
+    </a>
     {% endfor %}
+    {% else %}
+    <div class="comm-empty">
+      <p style="font-size:1.1rem; margin-bottom:0.6rem;">No posts{% if flair %} with this flair{% endif %} yet</p>
+      <a href="{{ url_for('community.new_post') }}" class="new-post-btn" style="margin-top:0.75rem;">Create First Post</a>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if total_pages > 1 %}
+  <div class="pagination">
+    <a href="{{ url_for('community.list', sort=sort, flair=flair, page=page-1) }}"
+       class="pg-btn {% if page <= 1 %}disabled{% endif %}">← Prev</a>
+    {% for p in range(1, total_pages + 1) %}
+      {% if p == page %}
+        <span class="pg-btn active">{{ p }}</span>
+      {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+        <a href="{{ url_for('community.list', sort=sort, flair=flair, page=p) }}" class="pg-btn">{{ p }}</a>
+      {% elif p == page - 3 or p == page + 3 %}
+        <span class="pg-info">…</span>
+      {% endif %}
+    {% endfor %}
+    <a href="{{ url_for('community.list', sort=sort, flair=flair, page=page+1) }}"
+       class="pg-btn {% if page >= total_pages %}disabled{% endif %}">Next →</a>
+    <span class="pg-info">{{ total }} post{{ 's' if total != 1 }}</span>
+  </div>
+  {% endif %}
+
 </div>
 
+<script src="{{ url_for('static', filename='js/page-tour.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tour-community.js') }}"></script>
 {% endblock %}

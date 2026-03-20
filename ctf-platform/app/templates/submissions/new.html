@@ -3,53 +3,36 @@
 {% block title %}Submit Challenge - CSIA GYM{% endblock %}
 
 {% block content %}
-<!-- SUBMIT CHALLENGE PAGE -->
-
 <div class="max-w-2xl mx-auto">
     <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Submit a Challenge</h1>
-        <p class="text-gray-600 mt-2">
-            Create and submit your own CTF challenge for admin review.
-        </p>
+        <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">Community</p>
+        <h1 class="text-3xl font-bold" style="color:#fff;">Submit a Challenge</h1>
+        <p style="color:#666;margin-top:0.4rem;">Create and submit your own CTF challenge for admin review.</p>
     </div>
-    
+
     <div class="bg-white rounded-lg shadow-md p-8">
-        <form method="POST" action="{{ url_for('submissions.new') }}">
+        <form method="POST" action="{{ url_for('submissions.new') }}" enctype="multipart/form-data" id="sub-form">
+
             <!-- Title -->
             <div class="mb-4">
-                <label for="title" class="block text-gray-700 font-semibold mb-2">
-                    Challenge Title *
-                </label>
-                <input type="text" 
-                       id="title" 
-                       name="title" 
-                       required
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <label for="title" class="block text-gray-700 font-semibold mb-2">Challenge Title *</label>
+                <input type="text" id="title" name="title" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                        placeholder="e.g., SQL Injection Challenge">
             </div>
-            
-            <!-- Description -->
+
+            <!-- Description (Quill Markdown) -->
             <div class="mb-4">
-                <label for="description" class="block text-gray-700 font-semibold mb-2">
-                    Description *
-                </label>
-                <textarea id="description" 
-                          name="description" 
-                          required
-                          rows="6"
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Describe your challenge..."></textarea>
+                <label class="block text-gray-700 font-semibold mb-2">Description * <span class="text-xs font-normal text-gray-500">(Markdown)</span></label>
+                <div id="quill-desc" style="min-height:200px; background:#fff; border:1px solid #d1d5db; border-radius:0 0 0.5rem 0.5rem;"></div>
+                <input type="hidden" name="description" id="desc-input">
             </div>
-            
+
             <!-- Category -->
             <div class="mb-4">
-                <label for="category" class="block text-gray-700 font-semibold mb-2">
-                    Category *
-                </label>
-                <select id="category" 
-                        name="category" 
-                        required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label for="category" class="block text-gray-700 font-semibold mb-2">Category *</label>
+                <select id="category" name="category" required onchange="toggleWebArchive(this.value)"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
                     <option value="">Select a category</option>
                     <option value="Web">Web Exploitation</option>
                     <option value="Cryptography">Cryptography</option>
@@ -62,64 +45,161 @@
                     <option value="Misc">Miscellaneous</option>
                 </select>
             </div>
-            
+
+            <!-- Web Archive (shown only for Web category) -->
+            <div id="web-archive-section" class="mb-4" style="display:none;">
+                <label class="block text-gray-700 font-semibold mb-2">
+                    Web Challenge Archive *
+                    <span class="text-xs font-normal text-gray-500">(.tar.gz, max 100 MB)</span>
+                </label>
+                <label id="web-archive-btn" for="web_archive" style="display:inline-flex;align-items:center;gap:0.5rem;padding:9px 20px;background:#1a1a1a;color:#e5e5e5 !important;border:2px solid #8b0000;cursor:pointer;font-weight:700;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.05em;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg>
+                    Choose Archive
+                </label>
+                <input type="file" name="web_archive" id="web_archive" accept=".tar.gz,application/gzip"
+                       style="display:none;"
+                       onchange="document.getElementById('web-archive-name').textContent = this.files[0] ? this.files[0].name : ''">
+                <span id="web-archive-name" style="font-size:0.75rem;color:#888;margin-left:0.5rem;"></span>
+                <div class="mt-2 p-3 rounded-lg text-xs" style="background:rgba(139,0,0,0.06);border:1px solid rgba(139,0,0,0.2);color:#555;line-height:1.7;">
+                    <strong style="color:#8b0000;">Archive requirements:</strong><br>
+                    • Must be a <code>.tar.gz</code> file containing your web server files (max 100 MB)<br>
+                    • <strong>PHP</strong> — any <code>.php</code> file detected → served with <code>php -S</code><br>
+                    • <strong>Node.js / JavaScript</strong> — include <code>package.json</code> with a <code>start</code> script, or name your entry point <code>index.js</code>, <code>server.js</code>, or <code>app.js</code><br>
+                    • <strong>TypeScript</strong> — name your entry point <code>index.ts</code>, <code>server.ts</code>, or <code>app.ts</code> (runs via <code>ts-node</code>)<br>
+                    • <strong>Java</strong> — include a runnable <code>.jar</code> file<br>
+                    • <strong>Python</strong> — name your entry point <code>app.py</code>, <code>main.py</code>, or <code>server.py</code>; static HTML falls back to <code>python3 -m http.server</code><br>
+                    • Your server must listen on the port provided via the <code>PORT</code> environment variable or hard-code any port — the platform will detect it automatically
+                </div>
+                <div class="mt-2 p-3 rounded-lg text-xs" style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.35);color:#555;line-height:1.7;">
+                    ⚠️ <strong style="color:#92400e;">Dynamic flag notice:</strong> If your archive contains a <code>flag.txt</code>, its contents will be <strong>automatically overwritten</strong> with a randomly generated <code>CSIA{...}</code> flag each time a player launches their instance. Do <em>not</em> rely on the flag value you put in <code>flag.txt</code> — set the <strong>Flag</strong> field above to a placeholder; the real flag is generated at runtime and shown to the player in their instance panel.
+                </div>
+            </div>
+
+            <!-- RE Binary (shown only for Reverse Engineering category) -->
+            <div id="nc-binary-section" class="mb-4" style="display:none;">
+                <label class="block text-gray-700 font-semibold mb-2">
+                    Challenge Executable *
+                    <span class="text-xs font-normal text-gray-500">(executable or .tar.gz archive, max 100 MB)</span>
+                </label>
+                <label id="nc-binary-btn" for="nc_binary" style="display:inline-flex;align-items:center;gap:0.5rem;padding:9px 20px;background:#1a1a1a;color:#e5e5e5 !important;border:2px solid #8b0000;cursor:pointer;font-weight:700;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.05em;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg>
+                    Choose Executable
+                </label>
+                <input type="file" name="nc_binary" id="nc_binary"
+                       style="display:none;"
+                       onchange="document.getElementById('nc-binary-name').textContent = this.files[0] ? this.files[0].name : ''">
+                <span id="nc-binary-name" style="font-size:0.75rem;color:#888;margin-left:0.5rem;"></span>
+                <div class="mt-2 p-3 rounded-lg text-xs" style="background:rgba(139,0,0,0.06);border:1px solid rgba(139,0,0,0.2);color:#555;line-height:1.7;">
+                    <strong style="color:#8b0000;">Accepted formats:</strong><br>
+                    • <strong>Single executable</strong> — ELF binary, <code>.sh</code>, Python script, etc. Scripts need a shebang (e.g. <code>#!/bin/bash</code>)<br>
+                    • <strong><code>.tar.gz</code> archive</strong> — include your executable alongside any supporting files (e.g. <code>flag.txt</code>, data files). Name your main executable <code>run</code>, <code>main</code>, or <code>challenge</code> so it is detected automatically<br>
+                    • Players connect via <code>nc &lt;host&gt; &lt;port&gt;</code> — each connection spawns a fresh isolated process<br>
+                    • Max size: 100 MB
+                </div>
+                <div class="mt-2 p-3 rounded-lg text-xs" style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.35);color:#555;line-height:1.7;">
+                    ⚠️ <strong style="color:#92400e;">Dynamic flag notice:</strong> If your archive contains a <code>flag.txt</code>, its contents will be <strong>automatically overwritten</strong> with a randomly generated <code>CSIA{...}</code> flag each time a player launches their instance. Do <em>not</em> rely on the flag value you put in <code>flag.txt</code> — set the <strong>Flag</strong> field above to a placeholder; the real flag is generated at runtime and shown to the player in their instance panel.
+                </div>
+            </div>
+
             <!-- Difficulty -->
             <div class="mb-4">
-                <label for="difficulty" class="block text-gray-700 font-semibold mb-2">
-                    Difficulty *
-                </label>
-                <select id="difficulty" 
-                        name="difficulty" 
-                        required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label for="difficulty" class="block text-gray-700 font-semibold mb-2">Difficulty *</label>
+                <select id="difficulty" name="difficulty" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
                     <option value="">Select difficulty</option>
                     <option value="easy">Easy</option>
                     <option value="medium">Medium</option>
                     <option value="hard">Hard</option>
                 </select>
             </div>
-            
+
             <!-- Flag -->
             <div class="mb-4">
                 <label for="flag" class="block text-gray-700 font-semibold mb-2">Flag *</label>
-                <input type="text"
-                       id="flag"
-                       name="flag"
-                       required
-                       pattern="CSIA\{.+\}"
-                       title="Flag must be in the format CSIA{...}"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <input type="text" id="flag" name="flag" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                        placeholder="CSIA{your_flag_here}">
                 <p class="text-sm text-gray-500 mt-1">Must be in the format <code>CSIA{...}</code></p>
             </div>
-            
+
             <!-- Points -->
             <div class="mb-6">
-                <label for="points" class="block text-gray-700 font-semibold mb-2">
-                    Points *
-                </label>
-                <input type="number" 
-                       id="points" 
-                       name="points" 
-                       required
-                       min="50"
-                       max="500"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <label for="points" class="block text-gray-700 font-semibold mb-2">Points *</label>
+                <input type="number" id="points" name="points" required min="50" max="500"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                        placeholder="100">
-                <p class="text-sm text-gray-500 mt-1">
-                    Suggested points: Easy (50-150), Medium (150-300), Hard (300-500)
-                </p>
+                <p class="text-sm text-gray-500 mt-1">Suggested: Easy (50–150), Medium (150–300), Hard (300–500)</p>
             </div>
-            
-            <!-- Submit Button -->
+
+            <div class="mb-4">
+                <label style="display:inline-flex;align-items:center;gap:0.6rem;cursor:pointer;">
+                    <input type="checkbox" name="is_regex" style="width:16px;height:16px;accent-color:#8b0000;cursor:pointer;">
+                    <span class="text-gray-700 font-semibold">Regex flag matching</span>
+                </label>
+                <p class="text-sm text-gray-500 mt-1 ml-6">Enable if your flag is a regex pattern (e.g. <code>CSIA\{[a-z0-9_]+\}</code>). Uses Python <code>re.fullmatch</code>.</p>
+            </div>
+
+            <!-- File Attachments -->
+            <div class="mb-6">
+                <label class="block text-gray-700 font-semibold mb-2">
+                    Submit Files for Review
+                    <span class="text-xs font-normal text-gray-500">(optional, max 250 MB total per upload)</span>
+                </label>
+                <div class="mb-2 p-3 rounded-lg text-xs" style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.35);color:#555;line-height:1.7;">
+                    ⚠️ <strong style="color:#92400e;">These files are for review purposes only</strong> — they are <em>not</em> served as part of your challenge and will not be accessible to players during the CTF.
+                    Use them to provide writeups, source code, or supplementary materials for admin review.
+                    For Web challenges, upload your server files as a <code>.tar.gz</code> in the field above instead.
+                    Max 250 MB per upload.
+                </div>
+
+                <label id="attach-btn" for="attachments" style="display:inline-flex;align-items:center;gap:0.5rem;padding:10px 22px;background:#1a1a1a;color:#e5e5e5 !important;border:2px solid #8b0000;cursor:pointer;font-weight:700;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.05em;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg>
+                    Choose Files
+                </label>
+                <input type="file" name="attachments" id="attachments" multiple
+                       style="display:none;"
+                       onchange="updateQuotaBar(this); updateFileList(this)">
+                <div id="file-list" style="margin-top:6px;font-size:0.75rem;color:#888;"></div>
+
+                <!-- Quota bar -->
+                {% set used_mb = (used_bytes / 1048576) | round(1) %}
+                {% set quota_mb = (quota_bytes / 1048576) | round(0) | int %}
+                {% set pct = ((used_bytes / quota_bytes) * 100) | round(1) %}
+
+                <div class="mt-3">
+                    <div class="flex justify-between text-xs mb-1" style="color:#111111;">
+                        <span id="quota-label">Pending storage: <strong>{{ used_mb }} MB</strong> used of {{ quota_mb }} MB</span>
+                        <span id="quota-pct" style="color:#111111;">{{ pct }}%</span>
+                    </div>
+                    <div style="width:100%; background:#e5e7eb; border-radius:9999px; height:10px; overflow:hidden;">
+                        <div id="quota-bar"
+                             style="height:10px; border-radius:9999px; transition:width 0.3s, background 0.3s; width: {{ [pct, 100] | min }}%; background: {% if pct >= 90 %}#dc2626{% elif pct >= 65 %}#f59e0b{% else %}#16a34a{% endif %};"></div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">
+                        Storage frees up when your pending submissions are approved.
+                        For files over 250 MB, use
+                        <a href="https://drive.google.com" target="_blank" rel="noopener" class="text-red-700 underline">Google Drive</a>,
+                        <a href="https://onedrive.live.com" target="_blank" rel="noopener" class="text-red-700 underline">OneDrive</a>, or
+                        <a href="https://www.dropbox.com" target="_blank" rel="noopener" class="text-red-700 underline">Dropbox</a>
+                        and link them in your description.
+                    </p>
+                </div>
+
+                <!-- Over-quota warning (hidden by default) -->
+                <div id="quota-warning" class="hidden mt-2 p-3 rounded-lg text-sm font-medium"
+                     style="background:rgba(220,38,38,0.1); border:1px solid rgba(220,38,38,0.4); color:#7f1d1d;">
+                    ⚠️ Selected files exceed your remaining quota. Please reduce the selection or use a third-party file sharing service.
+                </div>
+            </div>
+
+            <!-- Submit -->
             <div class="flex space-x-4">
-                <button type="submit" 
-                        class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                <button type="submit" id="submit-btn"
+                        style="flex:1;padding:0.75rem;background:#8b0000;color:#fff !important;font-weight:700;border:none;cursor:pointer;font-size:0.95rem;">
                     Submit for Review
                 </button>
-                
-                <a href="{{ url_for('submissions.my_submissions') }}" 
-                   class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition text-center">
+                <a href="{{ url_for('submissions.my_submissions') }}"
+                   style="flex:1;padding:0.75rem;background:#1a1a1a;color:#fff !important;font-weight:700;border:1px solid #444;text-align:center;font-size:0.95rem;">
                     View My Submissions
                 </a>
             </div>
@@ -127,4 +207,121 @@
     </div>
 </div>
 
+<!-- Quill -->
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<style>
+  /* ── Quota label ── */
+  #quota-label, #quota-label strong, #quota-pct { color: #111111 !important; }
+  /* ── Quill editor text ── */
+  #quill-desc .ql-editor,
+  #quill-desc .ql-editor p,
+  #quill-desc .ql-editor span,
+  #quill-desc .ql-editor li,
+  #quill-desc .ql-editor div,
+  #quill-desc .ql-editor h1,
+  #quill-desc .ql-editor h2,
+  #quill-desc .ql-editor h3 { color: #111111 !important; }
+  #quill-desc .ql-editor.ql-blank::before { color: #9ca3af !important; font-style: italic; }
+  /* ── Quill toolbar ── */
+  #quill-desc .ql-toolbar.ql-snow { background: #f9fafb !important; border-color: #d1d5db !important; }
+  #quill-desc .ql-container.ql-snow { border-color: #d1d5db !important; }
+  #quill-desc .ql-snow .ql-picker-label,
+  #quill-desc .ql-snow .ql-picker-label span,
+  #quill-desc .ql-snow .ql-picker-label::before,
+  #quill-desc .ql-snow .ql-picker-item,
+  #quill-desc .ql-snow .ql-picker-item span,
+  #quill-desc .ql-snow .ql-picker-item::before { color: #111111 !important; }
+  #quill-desc .ql-snow .ql-picker-options { background: #ffffff !important; border-color: #d1d5db !important; }
+  #quill-desc .ql-snow .ql-picker-item:hover,
+  #quill-desc .ql-snow .ql-picker-item:hover::before { color: #8b0000 !important; }
+  #quill-desc .ql-snow.ql-toolbar button svg .ql-stroke,
+  #quill-desc .ql-snow .ql-toolbar button svg .ql-stroke { stroke: #444444 !important; }
+  #quill-desc .ql-snow.ql-toolbar button svg .ql-fill,
+  #quill-desc .ql-snow .ql-toolbar button svg .ql-fill { fill: #444444 !important; }
+</style>
+<script>
+(function () {
+    const quill = new Quill('#quill-desc', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ['bold', 'italic', 'code'],
+                ['blockquote', 'code-block'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                ['link'],
+                ['clean'],
+            ],
+        },
+        placeholder: 'Describe your challenge in Markdown-style formatting...',
+    });
+
+    document.getElementById('sub-form').addEventListener('submit', function () {
+        // Store the full HTML so formatting is preserved on display
+        document.getElementById('desc-input').value = quill.root.innerHTML;
+    });
+
+    // ── Quota bar live update ──────────────────────────────────────────────
+    const QUOTA_BYTES  = {{ quota_bytes }};
+    const USED_BYTES   = {{ used_bytes }};
+    const MAX_UPLOAD   = 250 * 1024 * 1024;
+
+    window.updateFileList = function(input) {
+        var list = document.getElementById('file-list');
+        if (!input.files.length) { list.textContent = ''; return; }
+        var names = Array.from(input.files).map(function(f) {
+            return f.name + ' (' + (f.size / 1048576).toFixed(1) + ' MB)';
+        });
+        list.textContent = names.join(' · ');
+    };
+
+    window.updateQuotaBar = function (input) {
+        let newBytes = 0;
+        for (const f of input.files) newBytes += f.size;
+
+        const totalUsed = USED_BYTES + newBytes;
+        const pct       = Math.min((totalUsed / QUOTA_BYTES) * 100, 100).toFixed(1);
+        const usedMB    = (totalUsed / 1048576).toFixed(1);
+        const quotaMB   = (QUOTA_BYTES / 1048576).toFixed(0);
+        const newMB     = (newBytes / 1048576).toFixed(1);
+
+        document.getElementById('quota-label').innerHTML =
+            `Pending storage: <strong>${usedMB} MB</strong> used of ${quotaMB} MB` +
+            (newBytes > 0 ? ` <span style="color:#111111;">(+${newMB} MB this upload)</span>` : '');
+        document.getElementById('quota-pct').textContent = pct + '%';
+        document.getElementById('quota-pct').style.color = '#111111';
+
+        const bar = document.getElementById('quota-bar');
+        bar.style.width = pct + '%';
+        bar.style.background = pct >= 90 ? '#dc2626' : pct >= 65 ? '#f59e0b' : '#16a34a';
+
+        const overQuota = totalUsed > QUOTA_BYTES || newBytes > MAX_UPLOAD;
+        document.getElementById('quota-warning').classList.toggle('hidden', !overQuota);
+        document.getElementById('submit-btn').disabled = overQuota;
+    };
+
+    window.toggleWebArchive = function(cat) {
+        const webSec = document.getElementById('web-archive-section');
+        const webInput = document.getElementById('web_archive');
+        const ncSec = document.getElementById('nc-binary-section');
+        const ncInput = document.getElementById('nc_binary');
+
+        webSec.style.display = 'none';
+        webInput.required = false;
+        ncSec.style.display = 'none';
+        ncInput.required = false;
+
+        if (cat === 'Web') {
+            webSec.style.display = 'block';
+            webInput.required = true;
+        } else if (cat === 'Reverse Engineering') {
+            ncSec.style.display = 'block';
+            ncInput.required = true;
+        }
+    };
+})();
+</script>
+<script src="{{ url_for('static', filename='js/page-tour.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tour-submit.js') }}"></script>
 {% endblock %}

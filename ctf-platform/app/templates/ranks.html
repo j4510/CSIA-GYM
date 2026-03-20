@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% block title %}RANKS - CSIA GYM{% endblock %}
+
+{% block extra_css %}
+<style>
+{{ rank_keyframes }}
+
+.rank-row {
+  display:grid;
+  grid-template-columns: 2fr 1fr 3fr;
+  align-items:center;
+  gap:1.5rem;
+  padding:1.4rem 1.6rem;
+  border:1px solid rgba(139,0,0,0.2);
+  margin-bottom:0.6rem;
+  background:rgba(10,10,10,0.85);
+  transition:border-color 0.15s, transform 0.15s;
+}
+.rank-row:hover { border-color:rgba(204,0,0,0.5); transform:translateX(4px); }
+.rank-row.current-rank { border-color:#ffd700; background:rgba(20,16,0,0.9); }
+
+.legendary-row {
+  display:grid;
+  grid-template-columns: 2fr 1fr 3fr;
+  align-items:center;
+  gap:1.5rem;
+  padding:1.6rem 1.8rem;
+  margin-bottom:0.7rem;
+  transition:transform 0.15s;
+  position:relative;
+  overflow:hidden;
+}
+.legendary-row::before {
+  content:'';
+  position:absolute;inset:0;
+  border:1px solid transparent;
+  pointer-events:none;
+  animation:legendBorderPulse 3s ease-in-out infinite;
+}
+.legendary-row.tier-ambassador { background:rgba(0,20,30,0.95); }
+.legendary-row.tier-ambassador::before { border-color:rgba(0,180,216,0.35); }
+.legendary-row.tier-sovereign   { background:rgba(15,0,25,0.95); }
+.legendary-row.tier-sovereign::before  { border-color:rgba(224,64,251,0.35); }
+.legendary-row.tier-ghost       { background:rgba(0,20,22,0.95); }
+.legendary-row.tier-ghost::before      { border-color:rgba(0,255,247,0.35); }
+.legendary-row.tier-deity       { background:rgba(20,5,0,0.95); }
+.legendary-row.tier-deity::before      { border-color:rgba(255,0,64,0.4); }
+.legendary-row.tier-singularity { background:rgba(5,5,15,0.98); }
+.legendary-row.tier-singularity::before { border-color:rgba(200,200,255,0.5); animation:legendSingularityBorder 2s ease-in-out infinite; }
+
+.legendary-row:hover { transform:translateX(6px); }
+.legendary-row.current-rank { outline:2px solid #ffd700; }
+
+.rank-title-cell { font-size:1.15rem; font-weight:900; }
+.rank-pct-cell  { font-size:0.75rem; font-weight:800; text-transform:uppercase;
+                  letter-spacing:0.06em; color:#666; text-align:center; }
+.rank-desc-cell { font-size:0.82rem; color:#999; line-height:1.55; }
+
+.legendary-badge {
+  display:inline-block;
+  font-size:0.55rem;font-weight:900;text-transform:uppercase;letter-spacing:0.12em;
+  padding:2px 7px;margin-left:0.5rem;vertical-align:middle;
+  border:1px solid currentColor;opacity:0.8;
+}
+
+.how-row {
+  display:flex; align-items:flex-start; gap:1rem;
+  padding:1rem 1.2rem; margin-bottom:0.5rem;
+  border-left:3px solid rgba(139,0,0,0.4);
+  background:rgba(10,10,10,0.7);
+}
+.how-num { font-size:1.4rem; font-weight:900; color:#8b0000; min-width:2rem; }
+.how-text { font-size:0.83rem; color:#bbb; line-height:1.6; }
+.how-text strong { color:#e0e0e0; }
+
+.singularity-unknown {
+  font-weight:900;letter-spacing:0.18em;font-size:1.15rem;
+  background:linear-gradient(90deg,#ffffff,#c0c0ff,#ffffff,#a0a0ff,#ffffff,#e0e0ff,#ffffff);
+  background-size:400% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:legendSingularity 1.2s linear infinite;
+  filter:drop-shadow(0 0 16px #ffffff) drop-shadow(0 0 32px #8080ff) drop-shadow(0 0 48px #4040cc);
+}
+
+@media (max-width:768px) {
+  .rank-row, .legendary-row {
+    grid-template-columns: 1fr;
+    gap:0.5rem;
+    padding:1rem;
+  }
+  .rank-pct-cell { text-align:left; }
+  .rank-desc-cell { font-size:0.78rem; }
+  div[style*="grid-template-columns:2fr 1fr 3fr"] { display:none; }
+}
+
+@keyframes legendBorderPulse {
+  0%,100% { opacity:1; }
+  50%      { opacity:0.4; }
+}
+@keyframes legendSingularityBorder {
+  0%,100% { border-color:rgba(200,200,255,0.5); box-shadow:inset 0 0 20px rgba(128,128,255,0.05); }
+  50%      { border-color:rgba(255,255,255,0.8); box-shadow:inset 0 0 40px rgba(180,180,255,0.12); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto fade-in">
+
+  <div class="mb-8">
+    <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">■ PLATFORM</p>
+    <h1 class="text-4xl font-black uppercase" style="color:#fff;">RANKS</h1>
+    <p class="mt-2 text-sm font-bold uppercase" style="color:#666;letter-spacing:0.12em;">
+      Earn your title — climb the percentile ladder
+    </p>
+  </div>
+
+  <!-- How ranks work -->
+  <div class="bg-black border-4 border-red-600 p-8 mb-8 shadow-lg">
+    <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">HOW RANKS WORK</h2>
+    <p class="text-sm mb-6" style="color:#aaa;line-height:1.7;">
+      Your rank is calculated from a <strong style="color:#e0e0e0;">weighted score</strong> that reflects
+      your overall contribution and skill across the platform. Scores are compared against all active
+      players to produce a <strong style="color:#e0e0e0;">percentile</strong> — the higher your percentile,
+      the higher your rank. Ranks update in real time as the player base grows.
+    </p>
+
+    <div>
+      <div class="how-row">
+        <div class="how-num">1</div>
+        <div class="how-text"><strong>Solve quality</strong> — Challenges solved weighted by rarity (fewer solvers = higher reward), difficulty (Easy / Medium / Hard), and point value. This is the highest-impact factor.</div>
+      </div>
+      <div class="how-row">
+        <div class="how-num">2</div>
+        <div class="how-text"><strong>Category breadth</strong> — How much of each category you've completed. Solving across many categories rewards versatility.</div>
+      </div>
+      <div class="how-row">
+        <div class="how-num">3</div>
+        <div class="how-text"><strong>Community posts</strong> — Every post you author contributes to your score. Quality engagement matters.</div>
+      </div>
+      <div class="how-row">
+        <div class="how-num">4</div>
+        <div class="how-text"><strong>Accepted challenge submissions</strong> — Challenges you submitted that were approved by admins. A strong positive signal of expertise.</div>
+      </div>
+      <div class="how-row">
+        <div class="how-num">5</div>
+        <div class="how-text"><strong>Rejected submissions</strong> — Submissions that were rejected carry a small negative weight. Quality over quantity.</div>
+      </div>
+      <div class="how-row">
+        <div class="how-num">6</div>
+        <div class="how-text"><strong>Post upvotes received</strong> — Upvotes on your community posts reflect how valuable others find your contributions.</div>
+      </div>
+      <div class="how-row">
+        <div class="how-num">7</div>
+        <div class="how-text"><strong>Comments made</strong> — Active participation in discussions adds a small boost.</div>
+      </div>
+      <div class="how-row">
+        <div class="how-num">8</div>
+        <div class="how-text"><strong>Wrong flag attempts</strong> — A very small penalty per incorrect submission. Encourages careful thinking over brute-forcing. (Lowest weight of all factors.)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Standard rank tiers -->
+  <div class="bg-black border-4 border-red-600 p-8 mb-8 shadow-lg">
+    <h2 class="text-2xl font-black uppercase mb-2 border-b-2 border-red-600 pb-2">ALL RANKS</h2>
+    <p class="text-xs uppercase font-bold mb-6" style="color:#555;letter-spacing:0.1em;">
+      Lowest → Highest &nbsp;·&nbsp; Percentile = % of players you outrank
+    </p>
+
+    <div style="display:grid;grid-template-columns:2fr 1fr 3fr;gap:1.5rem;padding:0.5rem 1.6rem;margin-bottom:0.4rem;">
+      <p class="text-xs font-black uppercase" style="color:#555;letter-spacing:0.1em;">Title</p>
+      <p class="text-xs font-black uppercase text-center" style="color:#555;letter-spacing:0.1em;">Percentile</p>
+      <p class="text-xs font-black uppercase" style="color:#555;letter-spacing:0.1em;">Description</p>
+    </div>
+
+    {% for threshold, title in tiers %}
+    {% set next_threshold = tiers[loop.index].0 if not loop.last else 100.0 %}
+    <div class="rank-row {% if current_user.is_authenticated and title == current_rank_title %}current-rank{% endif %}">
+      <div class="rank-title-cell">
+        <span style="{{ rank_css[title] }}">{{ title }}</span>
+        {% if current_user.is_authenticated and title == current_rank_title %}
+        <span style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#ffd700;margin-left:0.5rem;">◄ YOU</span>
+        {% endif %}
+      </div>
+      <div class="rank-pct-cell">
+        {% if threshold == 99.9 %}
+          99.9–100%
+        {% elif threshold == 0.0 %}
+          0–25%
+        {% else %}
+          {{ threshold|int }}–{{ next_threshold|int }}%
+        {% endif %}
+      </div>
+      <div class="rank-desc-cell">{{ rank_descriptions[title] }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Legendary ranks -->
+  <div class="p-8 shadow-lg" style="background:#050508;border:4px solid #7b2ff7;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#e040fb,#00fff7,#ff0040,#ffffff,#7b2ff7,transparent);animation:legendShimmerBar 4s linear infinite;background-size:300% auto;"></div>
+
+    <h2 class="text-2xl font-black uppercase mb-1 pb-2" style="border-bottom:2px solid #7b2ff7;">
+      <span style="background:linear-gradient(90deg,#e040fb,#00fff7,#ff0040,#ffffff,#7b2ff7);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:legendShimmerBar 4s linear infinite;">⬡ LEGENDARY RANKS</span>
+    </h2>
+    <p class="text-xs uppercase font-bold mb-6" style="color:#555;letter-spacing:0.1em;">
+      Cannot be earned — only bestowed &nbsp;·&nbsp; Transcend the percentile system
+    </p>
+
+    <div style="display:grid;grid-template-columns:2fr 1fr 3fr;gap:1.5rem;padding:0.5rem 1.8rem;margin-bottom:0.4rem;">
+      <p class="text-xs font-black uppercase" style="color:#444;letter-spacing:0.1em;">Title</p>
+      <p class="text-xs font-black uppercase text-center" style="color:#444;letter-spacing:0.1em;">Origin</p>
+      <p class="text-xs font-black uppercase" style="color:#444;letter-spacing:0.1em;">Description</p>
+    </div>
+
+    {% set tier_classes = {
+      'Omninet Ambassador': 'tier-ambassador',
+      'Omninet Sovereign':  'tier-sovereign',
+      'Ghost in the Core':  'tier-ghost',
+      'Zero-Day Deity':     'tier-deity',
+      'Singularity Architect': 'tier-singularity'
+    } %}
+    {% set tier_origins = {
+      'Omninet Ambassador': 'Admin Grant',
+      'Omninet Sovereign':  'Admin Grant',
+      'Ghost in the Core':  'Hidden',
+      'Zero-Day Deity':     'Dev Only',
+      'Singularity Architect': '???'
+    } %}
+    {% set origin_colors = {
+      'Admin Grant': '#00b4d8',
+      'Hidden':      '#00fff7',
+      'Dev Only':    '#ff0040',
+      '???':         '#ffffff'
+    } %}
+
+    {% for title in legendary_tiers %}
+    {% set is_singularity = (title == 'Singularity Architect') %}
+    {% set origin = tier_origins[title] %}
+    <div class="legendary-row {{ tier_classes[title] }} {% if current_user.is_authenticated and title == current_rank_title %}current-rank{% endif %}">
+      <div class="rank-title-cell">
+        {% if is_singularity %}
+          <span class="singularity-unknown">???</span>
+        {% else %}
+          <span style="{{ legendary_css[title] }}">{{ title }}</span>
+        {% endif %}
+        {% if current_user.is_authenticated and title == current_rank_title %}
+        <span style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#ffd700;margin-left:0.5rem;">◄ YOU</span>
+        {% endif %}
+      </div>
+      <div class="rank-pct-cell" style="color:{{ origin_colors[origin] }};opacity:0.85;">{{ origin }}</div>
+      <div class="rank-desc-cell" style="{% if is_singularity %}color:#444;font-style:italic;letter-spacing:0.06em;{% endif %}">
+        {{ legendary_descriptions[title] }}
+      </div>
+    </div>
+    {% endfor %}
+
+    <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#7b2ff7,#e040fb,#00fff7,transparent);animation:legendShimmerBar 4s linear infinite reverse;background-size:300% auto;"></div>
+  </div>
+
+</div>
+
+<style>
+@keyframes legendShimmerBar {
+  0%   { background-position:0% center; }
+  100% { background-position:300% center; }
+}
+</style>
+
+<script>
+(function(){
+  const GHOST = 'I4mGroot';
+  let buf = '';
+  document.addEventListener('keydown', function(e){
+    if(e.key.length === 1) buf += e.key;
+    else if(e.key === 'Backspace') buf = buf.slice(0,-1);
+    if(buf.length > GHOST.length) buf = buf.slice(-GHOST.length);
+    if(buf === GHOST){
+      buf = '';
+      fetch('/api/ghost-unlock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({command:GHOST})})
+        .then(r=>r.json()).then(d=>{
+          if(d.ok && !d.already){
+            const el = document.createElement('div');
+            el.innerHTML = '<span style="font-weight:900;background:linear-gradient(90deg,#00fff7,#00e5ff,#18ffff,#84ffff,#00fff7);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:legendGhost 2s linear infinite;filter:drop-shadow(0 0 10px #00fff7);letter-spacing:0.1em;">GHOST IN THE CORE — UNLOCKED</span>';
+            el.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#000;border:2px solid #00fff7;padding:24px 40px;z-index:9999;text-align:center;box-shadow:0 0 60px #00fff7,0 0 120px #00bcd4;';
+            document.body.appendChild(el);
+            setTimeout(()=>{ el.style.transition='opacity 1s'; el.style.opacity='0'; setTimeout(()=>el.remove(),1000); }, 3500);
+            setTimeout(()=>location.reload(), 4600);
+          }
+        }).catch(()=>{});
+    }
+  });
+})();
+</script>
+{% endblock %}

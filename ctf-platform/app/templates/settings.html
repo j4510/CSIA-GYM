@@ -5,8 +5,9 @@
 {% block content %}
 <div class="max-w-3xl mx-auto fade-in">
     <div class="mb-8">
-        <h1 class="text-4xl font-black uppercase" style="color: #000000;">■ SETTINGS</h1>
-        <p class="mt-2 text-xl font-bold uppercase" style="color: #000000;">UPDATE YOUR PROFILE AND SECURITY SETTINGS</p>
+        <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">Account</p>
+        <h1 class="text-4xl font-black uppercase" style="color:#fff;">■ SETTINGS</h1>
+        <p class="mt-2 text-xl font-bold uppercase" style="color:#666;">UPDATE YOUR PROFILE AND SECURITY SETTINGS</p>
     </div>
 
     <!-- Profile Picture -->
@@ -14,21 +15,39 @@
         <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">PROFILE PICTURE</h2>
         <div class="flex items-center gap-8 mb-6">
             {% if current_user.profile_picture %}
-            <img src="{{ url_for('static', filename='avatars/' + current_user.profile_picture) }}"
-                 alt="Avatar" style="width:100px;height:100px;object-fit:cover;border:3px solid #8b0000;">
+            <img src="{{ url_for('settings.serve_avatar', username=current_user.username) }}"
+                 alt="Avatar" id="current-avatar" style="width:100px;height:100px;object-fit:cover;border:3px solid #8b0000;">
             {% endif %}
             <div>
                 <p class="text-sm opacity-60 uppercase font-bold mb-2">Upload a new picture (PNG, JPG, WEBP)</p>
-                <p class="text-xs opacity-40 uppercase">Will be resized to 500×500 and saved as WebP</p>
+                <p class="text-xs opacity-40 uppercase">Crop before uploading — saved as 500×500 WebP</p>
             </div>
         </div>
-        <form method="POST" action="{{ url_for('settings.upload_avatar') }}" enctype="multipart/form-data">
-            <div class="flex gap-4 items-center">
-                <input type="file" name="avatar" accept="image/*" class="text-sm">
-                <button type="submit" style="padding: 8px 20px; background: #8b0000; color: #fff; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer;">
-                    UPLOAD
-                </button>
+
+        <!-- File picker (not inside the upload form) -->
+        <label id="avatar-pick-btn" style="display:inline-flex;align-items:center;gap:0.5rem;padding:9px 20px;background:#1a1a1a;color:#e5e5e5;border:2px solid #8b0000;cursor:pointer;font-weight:700;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.05em;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg>
+            Choose Image
+        </label>
+        <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
+
+        <!-- Cropper modal -->
+        <div id="cropper-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; display:none; align-items:center; justify-content:center;">
+            <div style="background:#111; border:3px solid #8b0000; padding:24px; max-width:520px; width:95%; border-radius:4px;">
+                <p class="text-sm font-black uppercase mb-3" style="color:#fff;">CROP YOUR PHOTO</p>
+                <div style="max-height:380px; overflow:hidden;">
+                    <img id="cropper-img" style="max-width:100%; display:block;">
+                </div>
+                <div class="flex gap-3 mt-4">
+                    <button id="crop-confirm" style="flex:1; padding:10px; background:#8b0000; color:#fff; font-weight:900; text-transform:uppercase; border:none; cursor:pointer;">CROP &amp; UPLOAD</button>
+                    <button id="crop-cancel" style="flex:1; padding:10px; background:#333; color:#fff; font-weight:900; text-transform:uppercase; border:none; cursor:pointer;">CANCEL</button>
+                </div>
             </div>
+        </div>
+
+        <!-- Hidden form that submits the cropped blob -->
+        <form id="avatar-upload-form" method="POST" action="{{ url_for('settings.upload_avatar') }}" enctype="multipart/form-data" style="display:none;">
+            <input type="file" name="avatar" id="avatar-cropped-input">
         </form>
     </div>
 
@@ -168,4 +187,88 @@
         </form>
     </div>
 </div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+<script>
+(function () {
+    const fileInput   = document.getElementById('avatar-file-input');
+    const modal       = document.getElementById('cropper-modal');
+    const cropperImg  = document.getElementById('cropper-img');
+    const confirmBtn  = document.getElementById('crop-confirm');
+    const cancelBtn   = document.getElementById('crop-cancel');
+    const uploadForm  = document.getElementById('avatar-upload-form');
+    const croppedInput = document.getElementById('avatar-cropped-input');
+    let cropper = null;
+
+    fileInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        cropperImg.src = url;
+        modal.style.display = 'flex';
+        if (cropper) { cropper.destroy(); cropper = null; }
+        cropper = new Cropper(cropperImg, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 0.9,
+        });
+    });
+
+    cancelBtn.addEventListener('click', function () {
+        modal.style.display = 'none';
+        if (cropper) { cropper.destroy(); cropper = null; }
+        fileInput.value = '';
+    });
+
+    confirmBtn.addEventListener('click', function () {
+        if (!cropper) return;
+        cropper.getCroppedCanvas({ width: 500, height: 500 }).toBlob(function (blob) {
+            const dt = new DataTransfer();
+            dt.items.add(new File([blob], 'avatar.webp', { type: 'image/webp' }));
+            croppedInput.files = dt.files;
+            modal.style.display = 'none';
+            if (cropper) { cropper.destroy(); cropper = null; }
+            uploadForm.submit();
+        }, 'image/webp', 0.85);
+    });
+})();
+</script>
+    <!-- Notification Preferences -->
+    <div class="bg-black border-4 border-red-600 p-8 mt-6 shadow-lg hover-brutal">
+        <h2 class="text-2xl font-black uppercase mb-2 border-b-2 border-red-600 pb-2">NOTIFICATION PREFERENCES</h2>
+        <p class="text-xs opacity-40 uppercase mb-6">Control which notifications you receive</p>
+        <form method="POST" action="{{ url_for('settings.save_notification_prefs') }}">
+            {% set prefs = [
+                ('notif_global',            'Admin Announcements',          'Global notifications sent by administrators'),
+                ('notif_changelog',         'Version Changelogs',           'Notified when the platform is updated'),
+                ('notif_new_challenge',     'New Challenges',               'Notified when a new challenge is published'),
+                ('notif_challenge_solve',   'Your Challenge Solved',        'Notified when someone solves a challenge you authored'),
+                ('notif_challenge_sub',     'Subscribed Challenge Solves',  'Notified when someone solves a challenge you subscribed to'),
+                ('notif_post_reply',        'Post Replies',                 'Notified when someone replies to your post or a post you subscribed to'),
+                ('notif_submission_result', 'Submission Results',           'Notified when your challenge submission is approved or rejected'),
+                ('notif_badge_earned',      'Badge Earned',                 'Notified when you earn a new badge'),
+                ('notif_first_blood',       'First Blood',                  'Notified when you are the first to solve a challenge'),
+            ] %}
+            <div style="display:flex;flex-direction:column;gap:12px;">
+            {% for col, label, desc in prefs %}
+            <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#111;border:1px solid #222;cursor:pointer;gap:16px;">
+                <div>
+                    <p style="font-size:0.85rem;font-weight:900;text-transform:uppercase;color:#e5e5e5;margin:0;">{{ label }}</p>
+                    <p style="font-size:0.72rem;color:#555;margin:2px 0 0;">{{ desc }}</p>
+                </div>
+                <input type="checkbox" name="{{ col }}" {% if current_user|attr(col) %}checked{% endif %}
+                       style="width:18px;height:18px;accent-color:#8b0000;flex-shrink:0;">
+            </label>
+            {% endfor %}
+            </div>
+            <button type="submit" style="margin-top:20px;padding:10px 28px;background:#8b0000;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;">
+                SAVE PREFERENCES
+            </button>
+        </form>
+    </div>
+
+<script src="{{ url_for('static', filename='js/page-tour.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tour-settings.js') }}"></script>
+
 {% endblock %}

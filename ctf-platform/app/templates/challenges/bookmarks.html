@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Saved Challenges - CSIA GYM{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto fade-in">
+  <div class="mb-8">
+    <h1 class="text-4xl font-black uppercase" style="color:#000;">🔖 SAVED CHALLENGES</h1>
+    <p class="mt-2 text-sm font-bold uppercase" style="color:#555;">{{ saved|length }} bookmarked</p>
+  </div>
+
+  {% if saved %}
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    {% for bm in saved %}
+    {% set ch = bm.challenge %}
+    {% set diff_colors = {'Easy':'#4ade80','Medium':'#fb923c','Hard':'#f87171','Insane':'#a78bfa'} %}
+    {% set dc = diff_colors.get(ch.difficulty, '#888') %}
+    <div style="background:#0a0a0a;border:1px solid rgba(139,0,0,0.3);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
+          <span style="font-size:0.65rem;font-weight:900;text-transform:uppercase;color:{{ dc }};border:1px solid {{ dc }};padding:2px 7px;">{{ ch.difficulty }}</span>
+          <span style="font-size:0.65rem;font-weight:700;text-transform:uppercase;color:#555;border:1px solid #333;padding:2px 7px;">{{ ch.category }}</span>
+          {% if ch.id in solved_ids %}
+          <span style="font-size:0.65rem;font-weight:900;text-transform:uppercase;color:#4ade80;">✓ SOLVED</span>
+          {% endif %}
+        </div>
+        <a href="{{ url_for('challenges.detail', challenge_id=ch.id) }}"
+           style="font-size:1rem;font-weight:900;color:#e5e5e5;text-decoration:none;">{{ ch.title }}</a>
+        <p style="font-size:0.75rem;color:#555;margin-top:2px;">{{ ch.points }} pts · {{ ch.solve_count() }} solves</p>
+      </div>
+      <form method="POST" action="{{ url_for('challenges.toggle_bookmark', challenge_id=ch.id) }}">
+        <button type="submit"
+                style="padding:6px 14px;background:transparent;color:#f87171;font-weight:900;font-size:0.72rem;text-transform:uppercase;border:1px solid rgba(248,113,113,0.4);cursor:pointer;">
+          Remove
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:4rem 1rem;border:2px dashed rgba(139,0,0,0.3);">
+    <p style="font-size:1.1rem;font-weight:900;text-transform:uppercase;color:#555;">No saved challenges yet</p>
+    <a href="{{ url_for('challenges.list') }}" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#8b0000;color:#fff;font-weight:900;text-transform:uppercase;text-decoration:none;">Browse Challenges</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

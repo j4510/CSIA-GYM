@@ -1,97 +1,151 @@
 {% extends "base.html" %}
-
 {% block title %}New Post - Community{% endblock %}
 
 {% block content %}
-<!-- CREATE NEW POST PAGE -->
-
 <div class="max-w-3xl mx-auto">
     <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Create a Post</h1>
-        <p class="text-gray-600 mt-2">
-            Share a writeup, ask a question, or start a discussion
-        </p>
+        <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">Community</p>
+        <h1 class="text-3xl font-bold" style="color:#fff;">Create a Post</h1>
+        <p style="color:#666;margin-top:0.4rem;">Share a writeup, ask a question, or start a discussion</p>
     </div>
-    
+
     <div class="bg-white rounded-lg shadow-md p-8">
-        <form method="POST" action="{{ url_for('community.new_post') }}">
-            <!-- Title -->
+        <form method="POST" action="{{ url_for('community.new_post') }}" id="post-form">
             <div class="mb-6">
-                <label for="title" class="block text-gray-700 font-semibold mb-2">
-                    Title *
-                </label>
-                <input type="text" 
-                       id="title" 
-                       name="title" 
-                       required
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <label for="title" class="block text-gray-700 font-semibold mb-2">Title *</label>
+                <input type="text" id="title" name="title" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                        placeholder="Enter a clear, descriptive title...">
             </div>
-            
-            <!-- 
-            TO ADD: Category selection
-            <div class="mb-6">
-                <label for="category" class="block text-gray-700 font-semibold mb-2">
-                    Category
-                </label>
-                <select id="category" name="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                    <option value="writeup">Writeup</option>
-                    <option value="question">Question</option>
-                    <option value="discussion">Discussion</option>
-                    <option value="announcement">Announcement</option>
-                </select>
-            </div>
-            -->
-            
-            <!-- Content -->
-            <div class="mb-6">
-                <label for="content" class="block text-gray-700 font-semibold mb-2">
-                    Content *
-                </label>
-                <textarea id="content" 
-                          name="content" 
-                          required
-                          rows="12"
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Write your post content here...
 
-Tips:
-- Be clear and concise
-- Use proper formatting
-- Include relevant details
-- Be respectful to others"></textarea>
-                
-                <!-- 
-                TO ADD: Markdown help text
-                <p class="text-sm text-gray-500 mt-2">
-                    Markdown formatting is supported. 
-                    <a href="#" class="text-blue-600 hover:underline">Formatting guide</a>
-                </p>
-                -->
+            <div class="mb-6">
+                <label class="block text-gray-700 font-semibold mb-2">Flair <span class="text-xs font-normal text-gray-500">(optional)</span></label>
+                <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                  <label style="cursor:pointer;">
+                    <input type="radio" name="flair" value="" checked style="display:none;" class="flair-radio">
+                    <span class="flair-pill" data-flair="">None</span>
+                  </label>
+                  {% for f in valid_flairs %}
+                  <label style="cursor:pointer;">
+                    <input type="radio" name="flair" value="{{ f }}" style="display:none;" class="flair-radio">
+                    <span class="flair-pill" data-flair="{{ f }}">{{ f }}</span>
+                  </label>
+                  {% endfor %}
+                </div>
             </div>
-            
-            <!-- Submit Buttons -->
+
+            <div class="mb-6">
+                <label class="block text-gray-700 font-semibold mb-2">Content *</label>
+                <div id="quill-editor" style="min-height:280px; background:#fff; border:1px solid #d1d5db; border-radius:0 0 0.5rem 0.5rem;"></div>
+                <input type="hidden" name="content" id="content-input">
+            </div>
+
             <div class="flex space-x-4">
-                <button type="submit" 
-                        class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold">
+                <button type="submit"
+                        class="bg-red-700 text-white px-6 py-3 rounded-lg hover:bg-red-800 transition font-semibold">
                     Publish Post
                 </button>
-                
-                <a href="{{ url_for('community.list') }}" 
+                <a href="{{ url_for('community.list') }}"
                    class="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition font-semibold">
                     Cancel
                 </a>
-                
-                <!-- 
-                TO ADD: Save as draft
-                <button type="submit" name="draft" value="true"
-                        class="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300">
-                    Save as Draft
-                </button>
-                -->
             </div>
         </form>
     </div>
 </div>
 
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<style>
+  .flair-pill {
+    display:inline-flex; align-items:center;
+    padding:0.3rem 0.85rem; border-radius:999px;
+    font-size:0.73rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em;
+    cursor:pointer; transition:all 0.12s;
+    border:2px solid transparent;
+  }
+  .flair-pill[data-flair=""]                     { background:#f3f4f6; color:#555;    border-color:#d1d5db; }
+  .flair-pill[data-flair="Challenge Discussion"]  { background:#1e3a5f; color:#93c5fd; border-color:#1e40af; }
+  .flair-pill[data-flair="Writeups"]              { background:#1a3a1a; color:#86efac; border-color:#166534; }
+  .flair-pill[data-flair="For Beginners"]         { background:#3b1f00; color:#fcd34d; border-color:#92400e; }
+  .flair-pill[data-flair="Need Help"]             { background:#3b0a0a; color:#fca5a5; border-color:#991b1b; }
+  .flair-pill[data-flair="Tutorial"]              { background:#0d2137; color:#67e8f9; border-color:#0e7490; }
+  .flair-pill.selected { box-shadow:0 0 0 2px #fff, 0 0 0 4px #cc0000; }
+
+  #quill-editor .ql-editor,
+  #quill-editor .ql-editor p,
+  #quill-editor .ql-editor span,
+  #quill-editor .ql-editor li,
+  #quill-editor .ql-editor div,
+  #quill-editor .ql-editor h1,
+  #quill-editor .ql-editor h2,
+  #quill-editor .ql-editor h3 { color:#111111 !important; }
+  #quill-editor .ql-editor.ql-blank::before { color:#9ca3af !important; font-style:italic; }
+  #quill-editor .ql-toolbar.ql-snow { background:#f9fafb !important; border-color:#d1d5db !important; }
+  #quill-editor .ql-container.ql-snow { border-color:#d1d5db !important; }
+  #quill-editor .ql-snow .ql-picker-label,
+  #quill-editor .ql-snow .ql-picker-label span,
+  #quill-editor .ql-snow .ql-picker-label::before,
+  #quill-editor .ql-snow .ql-picker-item,
+  #quill-editor .ql-snow .ql-picker-item span,
+  #quill-editor .ql-snow .ql-picker-item::before { color:#111111 !important; }
+  #quill-editor .ql-snow .ql-picker-options { background:#ffffff !important; border-color:#d1d5db !important; }
+  #quill-editor .ql-snow .ql-picker-item:hover,
+  #quill-editor .ql-snow .ql-picker-item:hover::before { color:#8b0000 !important; }
+  #quill-editor .ql-snow .ql-stroke { stroke:#444444 !important; }
+  #quill-editor .ql-snow .ql-fill { fill:#444444 !important; }
+</style>
+<script>
+document.querySelectorAll('.flair-radio').forEach(radio => {
+  radio.addEventListener('change', () => {
+    document.querySelectorAll('.flair-pill').forEach(p => p.classList.remove('selected'));
+    radio.nextElementSibling.classList.add('selected');
+  });
+});
+document.querySelector('.flair-radio').nextElementSibling.classList.add('selected');
+
+(function () {
+    const quill = new Quill('#quill-editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                ['blockquote', 'code-block'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                ['link', 'image'],
+                ['clean'],
+            ]
+        },
+        placeholder: 'Write your post content here...',
+    });
+
+    quill.getModule('toolbar').addHandler('image', function () {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.click();
+        input.onchange = async () => {
+            const file = input.files[0];
+            if (!file) return;
+            const fd = new FormData();
+            fd.append('image', file);
+            const res = await fetch('{{ url_for("community.upload_image") }}', {
+                method: 'POST', credentials: 'same-origin', body: fd,
+            });
+            const data = await res.json();
+            if (data.url) {
+                const range = quill.getSelection(true);
+                quill.insertEmbed(range.index, 'image', data.url);
+            } else {
+                alert('Image upload failed: ' + (data.error || 'unknown error'));
+            }
+        };
+    });
+
+    document.getElementById('post-form').addEventListener('submit', function () {
+        document.getElementById('content-input').value = quill.root.innerHTML;
+    });
+})();
+</script>
 {% endblock %}

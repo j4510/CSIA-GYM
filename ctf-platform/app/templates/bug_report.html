@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Bug Report - CSIA GYM{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto fade-in">
+  <div class="mb-8">
+    <h1 class="text-4xl font-black uppercase" style="color:#000;">🐛 BUG REPORT</h1>
+    <p class="mt-2 text-base font-bold uppercase" style="color:#555;">Found something broken? Let us know.</p>
+  </div>
+
+  <div class="bg-black border-4 border-red-600 p-8 shadow-lg">
+    <form method="POST" action="{{ url_for('settings.bug_report') }}">
+
+      <div class="mb-5">
+        <label class="block text-sm opacity-60 uppercase font-bold mb-1">Title <span style="color:#f87171;">*</span></label>
+        <input type="text" name="title" required maxlength="200"
+               placeholder="Short description of the bug"
+               style="width:100%;padding:10px 14px;background:#111;color:#e5e5e5;border:2px solid #333;font-size:0.9rem;outline:none;">
+      </div>
+
+      <div class="mb-5">
+        <label class="block text-sm opacity-60 uppercase font-bold mb-1">Description <span style="color:#f87171;">*</span></label>
+        <textarea name="description" required rows="6" maxlength="2000"
+                  placeholder="Steps to reproduce, what you expected vs what happened..."
+                  style="width:100%;padding:10px 14px;background:#111;color:#e5e5e5;border:2px solid #333;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
+      </div>
+
+      <div class="mb-5">
+        <label class="block text-sm opacity-60 uppercase font-bold mb-1">Page / URL where it occurred</label>
+        <input type="text" name="page_url" maxlength="300"
+               placeholder="e.g. /challenges/42 or /community"
+               style="width:100%;padding:10px 14px;background:#111;color:#e5e5e5;border:2px solid #333;font-size:0.9rem;outline:none;">
+      </div>
+
+      <div class="mb-8">
+        <label class="block text-sm opacity-60 uppercase font-bold mb-1">Severity</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          {% for val, label, color in [('low','Low','#4ade80'),('medium','Medium','#fb923c'),('high','High','#f87171'),('critical','Critical','#ff0040')] %}
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:7px 14px;border:2px solid {{ color }};background:transparent;"
+                 id="sev-{{ val }}">
+            <input type="radio" name="severity" value="{{ val }}" {% if val == 'medium' %}checked{% endif %}
+                   onchange="highlightSev()"
+                   style="accent-color:{{ color }};">
+            <span style="font-size:0.8rem;font-weight:900;text-transform:uppercase;color:{{ color }};">{{ label }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="flex gap-4">
+        <button type="submit"
+                style="padding:12px 32px;background:#8b0000;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;">
+          SUBMIT REPORT
+        </button>
+        <a href="{{ url_for('challenges.list') }}"
+           style="padding:12px 32px;background:#222;color:#fff;font-weight:900;text-transform:uppercase;text-decoration:none;border:2px solid #8b0000;">
+          CANCEL
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <p class="mt-4 text-xs font-bold uppercase" style="color:#444;">
+    Reports are reviewed by administrators. Thank you for helping improve the platform.
+  </p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function highlightSev() {
+  var colors = {low:'#4ade80', medium:'#fb923c', high:'#f87171', critical:'#ff0040'};
+  document.querySelectorAll('input[name="severity"]').forEach(function(r) {
+    var lbl = document.getElementById('sev-' + r.value);
+    lbl.style.background = r.checked ? 'rgba(139,0,0,0.15)' : 'transparent';
+  });
+}
+document.addEventListener('DOMContentLoaded', highlightSev);
+</script>
+{% endblock %}

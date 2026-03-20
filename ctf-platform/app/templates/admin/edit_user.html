@@ -113,5 +113,24 @@
             </a>
         </div>
     </form>
+
+    <!-- Legendary Rank Assignment (separate form, admin-assignable only) -->
+    {% set protected = user.legendary_rank in ('Zero-Day Deity', 'Singularity Architect', 'Ghost in the Core') %}
+    <div class="bg-black border-4 p-8 mt-8 shadow-lg" style="border-color:#7b2ff7;">
+        <h2 class="text-xl font-black uppercase mb-1 pb-2" style="border-bottom:2px solid #7b2ff7;color:#e040fb;">⬡ LEGENDARY RANK</h2>
+        <p class="text-xs uppercase font-bold mb-4" style="color:#555;letter-spacing:0.1em;">Admin-assignable legendary titles only. Dev-tier ranks are protected.</p>
+        {% if protected %}
+        <p class="text-sm font-bold" style="color:#e040fb;">This user holds a protected legendary rank: <strong>{{ user.legendary_rank }}</strong>. It cannot be modified here.</p>
+        {% else %}
+        <form method="POST" action="{{ url_for('admin.assign_legendary', user_id=user.id) }}" class="flex items-center gap-4">
+            <select name="legendary_rank" style="background:#1a1a1a;color:#e0e0e0;border:1px solid #7b2ff7;padding:8px 14px;font-weight:700;">
+                <option value="">— None (remove legendary rank) —</option>
+                <option value="Omninet Ambassador" {% if user.legendary_rank == 'Omninet Ambassador' %}selected{% endif %}>Omninet Ambassador</option>
+                <option value="Omninet Sovereign" {% if user.legendary_rank == 'Omninet Sovereign' %}selected{% endif %}>Omninet Sovereign</option>
+            </select>
+            <button type="submit" style="padding:8px 24px;background:#7b2ff7;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;">ASSIGN</button>
+        </form>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

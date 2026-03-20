@@ -20,3 +20,6 @@ gunicorn==21.2.0
 
 # Image processing
 Pillow==10.1.0
+
+# HTML sanitization
+bleach==6.1.0

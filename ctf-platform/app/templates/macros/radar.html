@@ -1,0 +1,171 @@
+{#
+  Radar chart + compare widget macro.
+  Usage: {% from 'macros/radar.html' import radar_chart %}
+         {{ radar_chart(radar_categories, radar_datasets, all_users, primary_user_id) }}
+#}
+{% macro radar_chart(categories, datasets, all_users, primary_user_id) %}
+{% set chart_id = 'radar_' ~ primary_user_id %}
+<div style="background:#0a0a0a;border:2px solid rgba(139,0,0,0.3);padding:1.5rem;margin-top:2rem;">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.2rem;">
+    <h3 class="text-xl font-black uppercase" style="display:flex;align-items:center;gap:0.5rem;">
+      <span style="color:#8b0000;">►</span> CATEGORY RADAR
+    </h3>
+    <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+      <span style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#555;">Compare:</span>
+      <div style="position:relative;">
+        <input id="compare-search-{{ chart_id }}"
+               type="text"
+               placeholder="Search username..."
+               autocomplete="off"
+               style="background:#111;color:#ccc;border:1px solid #8b0000;padding:0.25rem 0.5rem;font-size:0.75rem;font-weight:700;border-radius:3px;width:150px;outline:none;">
+        <div id="compare-results-{{ chart_id }}"
+             style="display:none;position:absolute;top:100%;left:0;right:0;background:#111;border:1px solid #8b0000;border-top:none;z-index:50;max-height:160px;overflow-y:auto;border-radius:0 0 3px 3px;"></div>
+      </div>
+      <button onclick="radarClear_{{ chart_id }}()"
+              style="padding:0.25rem 0.65rem;background:#222;color:#aaa;font-size:0.72rem;font-weight:900;text-transform:uppercase;border:1px solid #444;cursor:pointer;border-radius:3px;">CLEAR</button>
+    </div>
+  </div>
+
+  <div id="radar-legend-{{ chart_id }}" style="display:flex;flex-wrap:wrap;gap:0.6rem;margin-bottom:1rem;min-height:28px;"></div>
+
+  <div style="position:relative;max-width:520px;margin:0 auto;">
+    <canvas id="{{ chart_id }}"></canvas>
+  </div>
+</div>
+
+<script>
+(function(){
+  const CHART_ID   = '{{ chart_id }}';
+  const PRIMARY_ID = {{ primary_user_id }};
+  const COLORS     = ['#cc0000','#00aaff','#00cc66','#ffaa00'];
+
+  const ALL_USERS = [
+    {% for u in all_users %}{% if u.id != primary_user_id %}
+    { id: {{ u.id }}, username: {{ u.username | tojson }} },
+    {% endif %}{% endfor %}
+  ];
+
+  function hexRgba(hex, a) {
+    const r = parseInt(hex.slice(1,3),16),
+          g = parseInt(hex.slice(3,5),16),
+          b = parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function makeDs(ds, i) {
+    const col = COLORS[i % COLORS.length];
+    return {
+      label: ds.username,
+      data: ds.data,
+      _userId: ds.user_id,
+      backgroundColor: hexRgba(col, 0.15),
+      borderColor: col,
+      pointBackgroundColor: col,
+      pointRadius: 4,
+      borderWidth: 2,
+      fill: true,
+    };
+  }
+
+  const chart = new Chart(document.getElementById(CHART_ID).getContext('2d'), {
+    type: 'radar',
+    data: {
+      labels: {{ categories | tojson }},
+      datasets: {{ datasets | tojson }}.map((ds, i) => makeDs(ds, i)),
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          beginAtZero: true,
+          grid:       { color: 'rgba(139,0,0,0.2)' },
+          angleLines: { color: 'rgba(139,0,0,0.3)' },
+          pointLabels:{ color: '#aaa', font:{ size:11, weight:'bold' } },
+          ticks:      { color:'#555', backdropColor:'transparent', stepSize:50 },
+        }
+      }
+    }
+  });
+
+  function renderLegend() {
+    const el = document.getElementById('radar-legend-' + CHART_ID);
+    el.innerHTML = '';
+    chart.data.datasets.forEach(ds => {
+      const div = document.createElement('div');
+      div.style.cssText = `display:inline-flex;align-items:center;gap:0.4rem;padding:0.22rem 0.6rem;
+        background:#111;border:1.5px solid ${ds.borderColor};border-radius:999px;`;
+      div.innerHTML =
+        `<img src="/avatar/${encodeURIComponent(ds.label)}"
+              style="width:20px;height:20px;object-fit:cover;border-radius:2px;border:1px solid ${ds.borderColor};">` +
+        `<span style="font-size:0.72rem;font-weight:800;text-transform:uppercase;color:${ds.borderColor};">${ds.label}</span>`;
+      el.appendChild(div);
+    });
+  }
+  renderLegend();
+
+  let compareIds = [PRIMARY_ID];
+
+  // ── Search widget ──────────────────────────────────────────────
+  const searchInput  = document.getElementById('compare-search-' + CHART_ID);
+  const resultsBox   = document.getElementById('compare-results-' + CHART_ID);
+
+  function showResults(query) {
+    const q = query.trim().toLowerCase();
+    resultsBox.innerHTML = '';
+    if (!q) { resultsBox.style.display = 'none'; return; }
+
+    const matches = ALL_USERS.filter(u =>
+      u.username.toLowerCase().includes(q) && !compareIds.includes(u.id)
+    ).slice(0, 8);
+
+    if (!matches.length) { resultsBox.style.display = 'none'; return; }
+
+    matches.forEach(u => {
+      const item = document.createElement('div');
+      item.textContent = u.username;
+      item.style.cssText = 'padding:0.3rem 0.6rem;font-size:0.75rem;font-weight:700;color:#ccc;cursor:pointer;';
+      item.addEventListener('mouseenter', () => item.style.background = '#1a1a1a');
+      item.addEventListener('mouseleave', () => item.style.background = '');
+      item.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        addUser(u.id);
+        searchInput.value = '';
+        resultsBox.style.display = 'none';
+      });
+      resultsBox.appendChild(item);
+    });
+    resultsBox.style.display = 'block';
+  }
+
+  searchInput.addEventListener('input', () => showResults(searchInput.value));
+  searchInput.addEventListener('focus', () => showResults(searchInput.value));
+  searchInput.addEventListener('blur',  () => setTimeout(() => { resultsBox.style.display = 'none'; }, 150));
+
+  function addUser(uid) {
+    if (!uid || compareIds.includes(uid) || compareIds.length >= 4) return;
+    compareIds.push(uid);
+    fetch('/api/radar?' + compareIds.map(id => 'uid=' + id).join('&'))
+      .then(r => r.json()).then(data => {
+        chart.data.labels   = data.categories;
+        chart.data.datasets = data.datasets.map((ds, i) => makeDs(ds, i));
+        chart.update();
+        renderLegend();
+      });
+  }
+
+  window['radarClear_' + CHART_ID] = function() {
+    compareIds = [PRIMARY_ID];
+    searchInput.value = '';
+    resultsBox.style.display = 'none';
+    fetch('/api/radar?uid=' + PRIMARY_ID)
+      .then(r => r.json()).then(data => {
+        chart.data.labels   = data.categories;
+        chart.data.datasets = data.datasets.map((ds, i) => makeDs(ds, i));
+        chart.update();
+        renderLegend();
+      });
+  };
+})();
+</script>
+{% endmacro %}

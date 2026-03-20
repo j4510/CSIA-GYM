@@ -1,150 +1,324 @@
 {% extends "base.html" %}
-
 {% block title %}Manage Users - Admin{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto">
-    <div class="mb-6 flex justify-between items-center">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Manage Users</h1>
-            <p class="text-gray-600 mt-1">{{ users|length }} total users</p>
-        </div>
-        <a href="{{ url_for('admin.dashboard') }}" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300">
-            ← Back to Dashboard
-        </a>
+  <div class="mb-6 flex justify-between items-center flex-wrap gap-3">
+    <div>
+      <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">Admin</p>
+      <h1 class="text-3xl font-black uppercase" style="color:#fff;">■ MANAGE USERS</h1>
+      <p class="text-sm font-bold uppercase mt-1" style="color:#555;">{{ users|length }} total users</p>
     </div>
+    <a href="{{ url_for('admin.dashboard') }}" style="padding:8px 18px;background:transparent;color:#555;font-weight:700;font-size:0.8rem;text-transform:uppercase;border:2px solid #333;text-decoration:none;">← BACK</a>
+  </div>
 
-    <div class="bg-white rounded-lg shadow-md" style="overflow: visible;">
-        <div style="overflow-x: auto;">
-        <table class="min-w-full table-auto" style="overflow: visible;">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avatar</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Scoreboard</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                {% for user in users %}
-                <tr class="transition" style="cursor:default;"
-                    onmouseenter="this.style.background='rgba(139,0,0,0.12)'"
-                    onmouseleave="this.style.background=''">
-                    <td class="px-4 py-3">
-                        {% if user.profile_picture %}
-                        <img src="{{ url_for('static', filename='avatars/' + user.profile_picture) }}"
-                             alt="" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:2px solid #8b0000;">
-                        {% else %}
-                        <div style="width:36px;height:36px;background:#222;border:2px solid #8b0000;border-radius:4px;"></div>
-                        {% endif %}
-                    </td>
-                    <td class="px-4 py-3">
-                        <div class="font-semibold">{{ user.username }}</div>
-                        {% if user.full_name %}<div class="text-xs opacity-60">{{ user.full_name }}</div>{% endif %}
-                    </td>
-                    <td class="px-4 py-3 text-sm">{{ user.email }}</td>
-                    <td class="px-4 py-3">
-                        {% if user.is_admin %}
-                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-semibold">ADMIN</span>
-                        {% else %}
-                        <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">User</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-4 py-3 text-sm">{{ user.get_score() }} pts</td>
-                    <td class="px-4 py-3 text-sm">{{ user.created_at.strftime('%b %d, %Y') }}</td>
-                    <td class="px-4 py-3 text-sm">
-                        {% if user.is_hidden_from_scoreboard %}
-                        <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-semibold">Hidden</span>
-                        {% else %}
-                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold">Visible</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-4 py-3">
-                        <!-- Dropdown -->
-                        <div class="relative">
-                            <button onclick="toggleDropdown(this)"
-                                    style="padding: 6px 14px; background: #8b0000; color: #fff; font-weight: 700; font-size: 12px; border: none; cursor: pointer; text-transform: uppercase;">
-                                ACTIONS ▾
-                            </button>
-                            <div class="admin-dropdown"
-                                 style="display:none; position:absolute; top:100%; right:0; z-index:9999; min-width:160px; background:#111; border:2px solid #8b0000; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
-
-                                <!-- Edit -->
-                                <a href="{{ url_for('admin.edit_user', user_id=user.id) }}"
-                                   style="display:block; padding:10px 16px; color:#fff; font-size:12px; font-weight:700; text-transform:uppercase; text-decoration:none; border-bottom:1px solid #8b0000;">
-                                    ✎ EDIT PROFILE
-                                </a>
-
-                                <!-- Show / Hide scoreboard -->
-                                {% if user.is_hidden_from_scoreboard %}
-                                <form method="POST" action="{{ url_for('admin.show_on_scoreboard', user_id=user.id) }}">
-                                    <button type="submit" style="display:block; width:100%; padding:10px 16px; background:transparent; color:#4ade80; font-size:12px; font-weight:700; text-transform:uppercase; border:none; border-bottom:1px solid #8b0000; cursor:pointer; text-align:left;">
-                                        👁 SHOW ON BOARD
-                                    </button>
-                                </form>
-                                {% else %}
-                                <form method="POST" action="{{ url_for('admin.hide_from_scoreboard', user_id=user.id) }}">
-                                    <button type="submit" style="display:block; width:100%; padding:10px 16px; background:transparent; color:#fb923c; font-size:12px; font-weight:700; text-transform:uppercase; border:none; border-bottom:1px solid #8b0000; cursor:pointer; text-align:left;">
-                                        🚫 HIDE FROM BOARD
-                                    </button>
-                                </form>
-                                {% endif %}
-
-                                <!-- Promote / Demote -->
-                                {% if not user.is_admin %}
-                                <form method="POST" action="{{ url_for('admin.promote_user', user_id=user.id) }}" onsubmit="return confirm('Promote to admin?');">
-                                    <button type="submit" style="display:block; width:100%; padding:10px 16px; background:transparent; color:#f87171; font-size:12px; font-weight:700; text-transform:uppercase; border:none; border-bottom:1px solid #8b0000; cursor:pointer; text-align:left;">
-                                        ▲ PROMOTE
-                                    </button>
-                                </form>
-                                {% elif user.id != current_user.id %}
-                                <form method="POST" action="{{ url_for('admin.demote_user', user_id=user.id) }}" onsubmit="return confirm('Demote from admin?');">
-                                    <button type="submit" style="display:block; width:100%; padding:10px 16px; background:transparent; color:#facc15; font-size:12px; font-weight:700; text-transform:uppercase; border:none; border-bottom:1px solid #8b0000; cursor:pointer; text-align:left;">
-                                        ▼ DEMOTE
-                                    </button>
-                                </form>
-                                {% endif %}
-
-                                <!-- Delete -->
-                                {% if user.id != current_user.id %}
-                                <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" onsubmit="return confirm('Delete user?');">
-                                    <button type="submit" style="display:block; width:100%; padding:10px 16px; background:transparent; color:#ef4444; font-size:12px; font-weight:700; text-transform:uppercase; border:none; cursor:pointer; text-align:left;">
-                                        🗑 DELETE
-                                    </button>
-                                </form>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        </div>
+  <div style="background:#0d0d0d;border:1px solid rgba(139,0,0,0.25);border-radius:6px;overflow:hidden;">
+    <div style="padding:14px 20px;border-bottom:1px solid rgba(139,0,0,0.2);display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:rgba(139,0,0,0.06);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:0.8rem;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#e5e5e5;">Users</span>
+        <span style="font-size:0.7rem;font-weight:700;padding:2px 8px;background:rgba(139,0,0,0.2);border:1px solid rgba(139,0,0,0.35);color:#f87171;border-radius:3px;">{{ users|length }}</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" id="user-search" placeholder="Search username, email, full name…"
+               oninput="adminSearch('user-row','user-search','user-no-results')"
+               style="padding:7px 14px;background:#1a1a1a;color:#e5e5e5;border:1px solid rgba(139,0,0,0.3);border-radius:4px;font-size:0.8rem;width:260px;outline:none;">
+        <button onclick="toggleBulk()" style="padding:7px 14px;background:transparent;color:#fb923c;font-weight:900;font-size:0.75rem;text-transform:uppercase;border:2px solid #fb923c;cursor:pointer;border-radius:3px;">BULK</button>
+      </div>
     </div>
+    <div id="bulk-bar" style="display:none;background:#1a0a00;border-bottom:1px solid #fb923c;padding:10px 16px;flex-wrap:wrap;gap:8px;align-items:center;">
+      <form method="POST" action="{{ url_for('admin.bulk_users') }}" id="bulk-user-form" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <div id="bulk-hidden-ids"></div>
+        <select name="bulk_action" id="bulk-action-select" onchange="showBulkExtra()" style="padding:6px 10px;background:#111;color:#e5e5e5;border:1px solid #555;font-size:0.8rem;border-radius:3px;">
+          <option value="">-- Select Action --</option>
+          <option value="ban">Ban</option>
+          <option value="unban">Unban</option>
+          <option value="timeout">Timeout</option>
+          <option value="reset_password">Reset Password</option>
+          <option value="set_affiliation">Set Affiliation</option>
+          <option value="assign_badge">Assign Badge</option>
+          <option value="make_moderator">Make Moderator</option>
+          <option value="remove_moderator">Remove Moderator</option>
+          <option value="delete">Delete</option>
+        </select>
+        <div id="bulk-extra" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+        <button type="submit" onclick="return prepareBulk()" style="padding:6px 14px;background:#fb923c;color:#000;font-weight:900;font-size:0.78rem;text-transform:uppercase;border:none;cursor:pointer;border-radius:3px;">APPLY</button>
+      </form>
+      <button onclick="selectAllUsers()" style="padding:6px 10px;background:transparent;color:#aaa;font-weight:700;font-size:0.72rem;text-transform:uppercase;border:1px solid #555;cursor:pointer;border-radius:3px;">ALL</button>
+      <button onclick="clearSelection()" style="padding:6px 10px;background:transparent;color:#aaa;font-weight:700;font-size:0.72rem;text-transform:uppercase;border:1px solid #555;cursor:pointer;border-radius:3px;">CLEAR</button>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(139,0,0,0.2);">
+          <th id="bulk-th" style="display:none;padding:10px 8px;width:36px;"></th>
+          <th style="padding:10px 12px;text-align:left;font-size:0.7rem;font-weight:900;text-transform:uppercase;color:#888;">Avatar</th>
+          <th style="padding:10px 12px;text-align:left;font-size:0.7rem;font-weight:900;text-transform:uppercase;color:#888;">User</th>
+          <th style="padding:10px 12px;text-align:left;font-size:0.7rem;font-weight:900;text-transform:uppercase;color:#888;">Email</th>
+          <th style="padding:10px 12px;text-align:left;font-size:0.7rem;font-weight:900;text-transform:uppercase;color:#888;">Role</th>
+          <th style="padding:10px 12px;text-align:left;font-size:0.7rem;font-weight:900;text-transform:uppercase;color:#888;">Score</th>
+          <th style="padding:10px 12px;text-align:left;font-size:0.7rem;font-weight:900;text-transform:uppercase;color:#888;">Joined</th>
+          <th style="padding:10px 12px;text-align:left;font-size:0.7rem;font-weight:900;text-transform:uppercase;color:#888;">Board</th>
+          <th style="padding:10px 12px;text-align:left;font-size:0.7rem;font-weight:900;text-transform:uppercase;color:#888;">Status</th>
+          <th style="padding:10px 12px;text-align:left;font-size:0.7rem;font-weight:900;text-transform:uppercase;color:#888;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="user-tbody">
+        {% for user in users %}
+        <tr class="user-row" style="border-bottom:1px solid rgba(139,0,0,0.15);"
+            onmouseenter="this.style.background='rgba(139,0,0,0.08)'"
+            onmouseleave="this.style.background=''">
+          <td id="bulk-td-{{ user.id }}" style="display:none;padding:8px;">
+            <input type="checkbox" class="bulk-cb" data-id="{{ user.id }}" style="width:16px;height:16px;accent-color:#fb923c;">
+          </td>
+          <td style="padding:8px 12px;">
+            {% set uborder = user.get_top_border() %}
+            <img src="{{ url_for('settings.serve_avatar', username=user.username) }}"
+                 alt="" style="width:34px;height:34px;object-fit:cover;border-radius:3px;position:relative;"
+                 class="av-border-{{ uborder or 'tier1' }}">
+          </td>
+          <td style="padding:8px 12px;">
+            <a href="{{ url_for('settings.public_profile', user_id=user.id) }}"
+               style="font-weight:700;font-size:0.85rem;color:#f5f5f5;text-decoration:none;"
+               onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{{ user.username }}</a>
+            {% if user.full_name %}<div style="font-size:0.7rem;color:#666;">{{ user.full_name }}</div>{% endif %}
+          </td>
+          <td style="padding:8px 12px;font-size:0.78rem;color:#aaa;">{{ user.email }}</td>
+          <td style="padding:8px 12px;">
+            {% if user.is_admin %}
+            <span style="font-size:0.65rem;font-weight:900;text-transform:uppercase;color:#f87171;border:1px solid #f87171;padding:2px 7px;">ADMIN</span>
+            {% elif user.is_moderator %}
+            <span style="font-size:0.65rem;font-weight:900;text-transform:uppercase;color:#60a5fa;border:1px solid #60a5fa;padding:2px 7px;">MOD</span>
+            {% else %}
+            <span style="font-size:0.65rem;font-weight:700;text-transform:uppercase;color:#888;border:1px solid #444;padding:2px 7px;">USER</span>
+            {% endif %}
+          </td>
+          <td style="padding:8px 12px;font-size:0.78rem;color:#aaa;">{{ user.get_score() }} pts</td>
+          <td style="padding:8px 12px;font-size:0.75rem;color:#666;white-space:nowrap;">{{ user.created_at.strftime('%b %d, %Y') }}</td>
+          <td style="padding:8px 12px;">
+            {% if user.is_hidden_from_scoreboard %}
+            <span style="font-size:0.65rem;font-weight:900;color:#fb923c;border:1px solid #fb923c;padding:2px 7px;">HIDDEN</span>
+            {% else %}
+            <span style="font-size:0.65rem;font-weight:900;color:#4ade80;border:1px solid #4ade80;padding:2px 7px;">VISIBLE</span>
+            {% endif %}
+          </td>
+          <td style="padding:8px 12px;">
+            {% if user.is_banned %}
+            <span style="font-size:0.65rem;font-weight:900;color:#ef4444;border:1px solid #ef4444;padding:2px 7px;">BANNED</span>
+            {% elif user.is_timed_out() %}
+            <span style="font-size:0.65rem;font-weight:900;color:#f97316;border:1px solid #f97316;padding:2px 7px;" title="Until {{ user.timeout_until.strftime('%Y-%m-%d %H:%M UTC') }}">TIMEOUT</span>
+            {% else %}
+            <span style="font-size:0.65rem;font-weight:700;color:#4ade80;border:1px solid #4ade80;padding:2px 7px;">OK</span>
+            {% endif %}
+          </td>
+          <td style="padding:8px 12px;">
+            <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
+              <a href="{{ url_for('admin.edit_user', user_id=user.id) }}"
+                 style="padding:3px 9px;background:#1a1a1a;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;text-decoration:none;border:1px solid #8b0000;">EDIT</a>
+              {% if user.is_hidden_from_scoreboard %}
+              <form method="POST" action="{{ url_for('admin.show_on_scoreboard', user_id=user.id) }}" style="margin:0;">
+                <button type="submit" style="padding:3px 9px;background:transparent;color:#4ade80;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #4ade80;cursor:pointer;">SHOW</button>
+              </form>
+              {% else %}
+              <form method="POST" action="{{ url_for('admin.hide_from_scoreboard', user_id=user.id) }}" style="margin:0;">
+                <button type="submit" style="padding:3px 9px;background:transparent;color:#fb923c;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #fb923c;cursor:pointer;">HIDE</button>
+              </form>
+              {% endif %}
+              {% if not user.is_admin %}
+              <form method="POST" action="{{ url_for('admin.promote_user', user_id=user.id) }}" onsubmit="return confirm('Promote to admin?');" style="margin:0;">
+                <button type="submit" style="padding:3px 9px;background:transparent;color:#facc15;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #facc15;cursor:pointer;">PROMOTE</button>
+              </form>
+              {% elif user.id != current_user.id %}
+              <form method="POST" action="{{ url_for('admin.demote_user', user_id=user.id) }}" onsubmit="return confirm('Demote from admin?');" style="margin:0;">
+                <button type="submit" style="padding:3px 9px;background:transparent;color:#a78bfa;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #a78bfa;cursor:pointer;">DEMOTE</button>
+              </form>
+              {% endif %}
+              {% if not user.is_admin %}
+              {% if user.is_moderator %}
+              <form method="POST" action="{{ url_for('admin.remove_moderator', user_id=user.id) }}" style="margin:0;">
+                <button type="submit" style="padding:3px 9px;background:transparent;color:#60a5fa;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #60a5fa;cursor:pointer;">-MOD</button>
+              </form>
+              {% else %}
+              <form method="POST" action="{{ url_for('admin.make_moderator', user_id=user.id) }}" style="margin:0;">
+                <button type="submit" style="padding:3px 9px;background:transparent;color:#38bdf8;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #38bdf8;cursor:pointer;">+MOD</button>
+              </form>
+              {% endif %}
+              {% endif %}
+              {% if user.id != current_user.id %}
+              {% if user.is_banned %}
+              <form method="POST" action="{{ url_for('admin.unban_user', user_id=user.id) }}" style="margin:0;">
+                <button type="submit" style="padding:3px 9px;background:transparent;color:#4ade80;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #4ade80;cursor:pointer;">UNBAN</button>
+              </form>
+              {% else %}
+              <button onclick="showBanModal({{ user.id }}, '{{ user.username|e }}')"
+                      style="padding:3px 9px;background:transparent;color:#ef4444;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #ef4444;cursor:pointer;">BAN</button>
+              {% endif %}
+              {% if user.is_timed_out() %}
+              <form method="POST" action="{{ url_for('admin.untimeout_user', user_id=user.id) }}" style="margin:0;">
+                <button type="submit" style="padding:3px 9px;background:transparent;color:#4ade80;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #4ade80;cursor:pointer;">UNTIMEOUT</button>
+              </form>
+              {% else %}
+              <button onclick="showTimeoutModal({{ user.id }}, '{{ user.username|e }}')"
+                      style="padding:3px 9px;background:transparent;color:#f97316;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #f97316;cursor:pointer;">TIMEOUT</button>
+              {% endif %}
+              <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" onsubmit="return confirm('Delete user?');" style="margin:0;">
+                <button type="submit" style="padding:3px 9px;background:transparent;color:#f87171;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #f87171;cursor:pointer;">DEL</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <p id="user-no-results" style="display:none;padding:2rem;text-align:center;color:#555;font-size:0.85rem;text-transform:uppercase;font-weight:700;">No matching users.</p>
+  </div>
+  <div id="user-pg" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:1rem;flex-wrap:wrap;"></div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function toggleDropdown(btn) {
-    var menu = btn.nextElementSibling;
-    var allMenus = document.querySelectorAll('.admin-dropdown');
-    allMenus.forEach(function(m) { if (m !== menu) m.style.display = 'none'; });
-    if (menu.style.display === 'none' || menu.style.display === '') {
-        menu.style.display = 'block';
-    } else {
-        menu.style.display = 'none';
-    }
+var PER_PAGE = 15;
+var _pages = {};
+
+function adminSearch(rowClass, inputId, noResultsId) {
+  var q = document.getElementById(inputId).value.toLowerCase();
+  var rows = document.querySelectorAll('.' + rowClass);
+  var visible = 0;
+  rows.forEach(function(r) {
+    var show = !q || r.textContent.toLowerCase().includes(q);
+    r.dataset.hidden = show ? '' : '1';
+    visible += show ? 1 : 0;
+  });
+  document.getElementById(noResultsId).style.display = (visible === 0 && q) ? 'block' : 'none';
+  renderPage(rowClass, 1, document.getElementById(rowClass.replace('-row','-pg') || rowClass + '-pg'));
 }
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.relative')) {
-        document.querySelectorAll('.admin-dropdown').forEach(function(m) { m.style.display = 'none'; });
-    }
+
+function renderPage(rowClass, page, pgEl) {
+  var rows = Array.from(document.querySelectorAll('.' + rowClass)).filter(function(r){ return !r.dataset.hidden; });
+  var total = rows.length;
+  var totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  page = Math.min(Math.max(1, page), totalPages);
+  _pages[rowClass] = page;
+  rows.forEach(function(r, i) {
+    r.style.display = (i >= (page-1)*PER_PAGE && i < page*PER_PAGE) ? '' : 'none';
+  });
+  if (!pgEl) return;
+  pgEl.innerHTML = '';
+  if (totalPages <= 1) return;
+  function btn(label, p, active, disabled) {
+    var b = document.createElement('button');
+    b.textContent = label;
+    b.style.cssText = 'padding:5px 12px;font-size:0.75rem;font-weight:800;text-transform:uppercase;border:2px solid ' +
+      (active ? '#cc0000' : 'rgba(139,0,0,0.3)') + ';background:' +
+      (active ? 'rgba(139,0,0,0.25)' : 'rgba(15,15,15,0.7)') + ';color:' +
+      (active ? '#fff' : '#aaa') + ';cursor:' + (disabled ? 'default' : 'pointer') + ';opacity:' + (disabled ? '0.3' : '1') + ';';
+    if (!disabled) b.onclick = function(){ renderPage(rowClass, p, pgEl); };
+    return b;
+  }
+  pgEl.appendChild(btn('← Prev', page-1, false, page<=1));
+  for (var p = 1; p <= totalPages; p++) {
+    if (p===1||p===totalPages||Math.abs(p-page)<=2) pgEl.appendChild(btn(p, p, p===page, p===page));
+    else if (Math.abs(p-page)===3) { var sp=document.createElement('span'); sp.textContent='…'; sp.style.color='#555'; pgEl.appendChild(sp); }
+  }
+  pgEl.appendChild(btn('Next →', page+1, false, page>=totalPages));
+  var info = document.createElement('span');
+  info.textContent = total + ' total';
+  info.style.cssText = 'font-size:0.7rem;color:#555;font-weight:700;text-transform:uppercase;padding:0 6px;';
+  pgEl.appendChild(info);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderPage('user-row', 1, document.getElementById('user-pg'));
 });
+</script>
+
+<!-- Ban Modal -->
+<div id="ban-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#0a0a0a;border:2px solid #ef4444;padding:28px 32px;min-width:340px;max-width:480px;">
+    <p style="font-size:0.9rem;font-weight:900;text-transform:uppercase;color:#ef4444;margin-bottom:16px;">BAN USER: <span id="ban-username"></span></p>
+    <form id="ban-form" method="POST">
+      <label style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:#aaa;">Ban Reason</label>
+      <textarea name="ban_reason" rows="3" placeholder="Reason for ban..." required
+                style="width:100%;margin-top:6px;margin-bottom:16px;padding:8px;background:#1a1a1a;color:#fff;border:1px solid #8b0000;font-size:0.82rem;resize:vertical;"></textarea>
+      <div style="display:flex;gap:8px;">
+        <button type="submit" style="padding:7px 20px;background:#ef4444;color:#fff;font-weight:900;font-size:0.8rem;text-transform:uppercase;border:none;cursor:pointer;">CONFIRM BAN</button>
+        <button type="button" onclick="closeBanModal()" style="padding:7px 20px;background:transparent;color:#aaa;font-weight:700;font-size:0.8rem;text-transform:uppercase;border:1px solid #555;cursor:pointer;">CANCEL</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Timeout Modal -->
+<div id="timeout-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#0a0a0a;border:2px solid #f97316;padding:28px 32px;min-width:340px;max-width:480px;">
+    <p style="font-size:0.9rem;font-weight:900;text-transform:uppercase;color:#f97316;margin-bottom:16px;">TIMEOUT USER: <span id="timeout-username"></span></p>
+    <form id="timeout-form" method="POST">
+      <label style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:#aaa;">Duration (hours)</label>
+      <input type="number" name="timeout_hours" min="1" max="720" value="24" required
+             style="width:100%;margin-top:6px;margin-bottom:16px;padding:8px;background:#1a1a1a;color:#fff;border:1px solid #8b0000;font-size:0.82rem;">
+      <p style="font-size:0.7rem;color:#666;margin-bottom:16px;">User will be blocked from posting, commenting, upvoting, and reacting until the timeout expires.</p>
+      <div style="display:flex;gap:8px;">
+        <button type="submit" style="padding:7px 20px;background:#f97316;color:#fff;font-weight:900;font-size:0.8rem;text-transform:uppercase;border:none;cursor:pointer;">CONFIRM TIMEOUT</button>
+        <button type="button" onclick="closeTimeoutModal()" style="padding:7px 20px;background:transparent;color:#aaa;font-weight:700;font-size:0.8rem;text-transform:uppercase;border:1px solid #555;cursor:pointer;">CANCEL</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function showBanModal(userId, username) {
+  document.getElementById('ban-username').textContent = username;
+  document.getElementById('ban-form').action = '/admin/users/' + userId + '/ban';
+  var m = document.getElementById('ban-modal');
+  m.style.display = 'flex';
+}
+function closeBanModal() { document.getElementById('ban-modal').style.display = 'none'; }
+function showTimeoutModal(userId, username) {
+  document.getElementById('timeout-username').textContent = username;
+  document.getElementById('timeout-form').action = '/admin/users/' + userId + '/timeout';
+  var m = document.getElementById('timeout-modal');
+  m.style.display = 'flex';
+}
+function closeTimeoutModal() { document.getElementById('timeout-modal').style.display = 'none'; }
+
+// Bulk selection
+var _bulkMode = false;
+function toggleBulk() {
+  _bulkMode = !_bulkMode;
+  document.getElementById('bulk-bar').style.display = _bulkMode ? 'flex' : 'none';
+  document.getElementById('bulk-th').style.display = _bulkMode ? '' : 'none';
+  document.querySelectorAll('[id^="bulk-td-"]').forEach(function(td) { td.style.display = _bulkMode ? '' : 'none'; });
+}
+function selectAllUsers() {
+  document.querySelectorAll('.bulk-cb').forEach(function(cb) { cb.checked = true; });
+}
+function clearSelection() {
+  document.querySelectorAll('.bulk-cb').forEach(function(cb) { cb.checked = false; });
+}
+function prepareBulk() {
+  var ids = Array.from(document.querySelectorAll('.bulk-cb:checked')).map(function(cb){ return cb.dataset.id; });
+  if (!ids.length) { alert('Select at least one user.'); return false; }
+  var container = document.getElementById('bulk-hidden-ids');
+  container.innerHTML = '';
+  ids.forEach(function(id) {
+    var inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = 'user_ids'; inp.value = id;
+    container.appendChild(inp);
+  });
+  return confirm('Apply bulk action to ' + ids.length + ' user(s)?');
+}
+var BULK_EXTRAS = {
+  ban: '<input name="ban_reason" placeholder="Ban reason" style="padding:5px 8px;background:#111;color:#fff;border:1px solid #555;font-size:0.78rem;width:180px;">',
+  reset_password: '<input name="new_password" type="password" placeholder="New password" style="padding:5px 8px;background:#111;color:#fff;border:1px solid #555;font-size:0.78rem;width:160px;">',
+  set_affiliation: '<input name="affiliation" placeholder="Affiliation" style="padding:5px 8px;background:#111;color:#fff;border:1px solid #555;font-size:0.78rem;width:160px;">',
+  timeout: '<input name="timeout_hours" type="number" value="24" min="1" placeholder="Hours" style="padding:5px 8px;background:#111;color:#fff;border:1px solid #555;font-size:0.78rem;width:80px;">',
+  assign_badge: '<select name="badge_id" style="padding:5px 8px;background:#111;color:#e5e5e5;border:1px solid #555;font-size:0.78rem;"><option value="">Select badge</option>{% for b in all_badges %}<option value="{{ b.id }}">{{ b.title }}</option>{% endfor %}</select>',
+};
+function showBulkExtra() {
+  var action = document.getElementById('bulk-action-select').value;
+  document.getElementById('bulk-extra').innerHTML = BULK_EXTRAS[action] || '';
+}
 </script>
 {% endblock %}

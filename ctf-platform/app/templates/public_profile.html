@@ -1,165 +1,246 @@
 {% extends "base.html" %}
+{% from 'macros/radar.html' import radar_chart %}
 
 {% block title %}{{ user.username }} - CSIA GYM{% endblock %}
 
+{% block extra_css %}
+<style>
+{{ rank_keyframes }}
+.badge-img { display:block; width:80px; height:80px; object-fit:cover; border-radius:4px; }
+.border-tier1 { border:3px solid #555; }
+.border-tier2 { border:3px solid #aaa; box-shadow:0 0 6px #aaa; }
+.border-tier3 { border:3px solid #4ade80; animation:pulseGreen 2.5s ease-in-out infinite; }
+@keyframes pulseGreen { 0%,100%{box-shadow:0 0 6px rgba(74,222,128,0.5),0 0 12px rgba(74,222,128,0.2)} 50%{box-shadow:0 0 14px rgba(74,222,128,0.9),0 0 28px rgba(74,222,128,0.4)} }
+.border-tier4 { border:3px solid #60a5fa; animation:pulseBlue 2s ease-in-out infinite; }
+@keyframes pulseBlue { 0%,100%{box-shadow:0 0 8px rgba(96,165,250,0.6),0 0 16px rgba(96,165,250,0.2)} 50%{box-shadow:0 0 18px rgba(96,165,250,1),0 0 36px rgba(96,165,250,0.5)} }
+.border-tier5 { border:3px solid #a78bfa; animation:pulsePurple 2s ease-in-out infinite; }
+@keyframes pulsePurple { 0%,100%{box-shadow:0 0 10px rgba(167,139,250,0.6),0 0 20px rgba(167,139,250,0.2)} 50%{box-shadow:0 0 22px rgba(167,139,250,1),0 0 44px rgba(167,139,250,0.5)} }
+.border-tier6 { border:3px solid #f472b6; animation:pulsePink 1.8s ease-in-out infinite; }
+@keyframes pulsePink { 0%,100%{box-shadow:0 0 12px rgba(244,114,182,0.7),0 0 24px rgba(244,114,182,0.3)} 50%{box-shadow:0 0 26px rgba(244,114,182,1),0 0 52px rgba(244,114,182,0.6)} }
+.border-tier7 { border:3px solid #fb923c; animation:fireFlicker 1.5s ease-in-out infinite; }
+@keyframes fireFlicker { 0%{box-shadow:0 0 10px rgba(251,146,60,0.7),0 0 20px rgba(251,146,60,0.3)} 33%{box-shadow:0 0 20px rgba(251,146,60,1),0 0 40px rgba(239,68,68,0.5)} 66%{box-shadow:0 0 14px rgba(251,146,60,0.8),0 0 28px rgba(251,146,60,0.4)} 100%{box-shadow:0 0 10px rgba(251,146,60,0.7),0 0 20px rgba(251,146,60,0.3)} }
+.border-tier8 { border:3px solid #facc15; animation:goldShine 2s ease-in-out infinite; }
+@keyframes goldShine { 0%,100%{box-shadow:0 0 14px rgba(250,204,21,0.8),0 0 28px rgba(250,204,21,0.3)} 50%{box-shadow:0 0 28px rgba(250,204,21,1),0 0 56px rgba(250,204,21,0.6)} }
+.border-tier9 { border:3px solid #f87171; animation:celestialPulse 1.4s ease-in-out infinite; }
+@keyframes celestialPulse { 0%,100%{box-shadow:0 0 16px rgba(248,113,113,0.9),0 0 32px rgba(248,113,113,0.4),0 0 64px rgba(248,113,113,0.15)} 50%{box-shadow:0 0 32px rgba(248,113,113,1),0 0 64px rgba(248,113,113,0.7),0 0 96px rgba(248,113,113,0.3)} }
+.border-tier10 { border:3px solid transparent; position:relative; animation:godPulse 2s ease-in-out infinite; }
+.border-tier10::before { content:''; position:absolute; inset:-3px; border-radius:6px; background:linear-gradient(90deg,#ff0040,#e040fb,#00fff7,#facc15,#ff0040); background-size:300% 100%; animation:rainbowShift 2s linear infinite; z-index:-1; }
+@keyframes rainbowShift { 0%{background-position:0% 50%} 100%{background-position:300% 50%} }
+@keyframes godPulse { 0%,100%{box-shadow:0 0 20px rgba(224,64,251,0.6),0 0 40px rgba(0,255,247,0.4)} 50%{box-shadow:0 0 40px rgba(224,64,251,1),0 0 80px rgba(0,255,247,0.8)} }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-5xl mx-auto fade-in">
-    <div class="mb-8">
-        <h1 class="text-4xl font-black uppercase" style="color: #000000;">■ {{ user.username }}</h1>
-        <p class="mt-2 text-xl uppercase font-bold" style="color: #000000;">PLAYER PROFILE</p>
+  <div class="mb-8">
+    <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">Profile</p>
+    <h1 class="text-4xl font-black uppercase" style="color:#fff;">■ {{ user.username }}</h1>
+    <p class="mt-2 text-xl uppercase font-bold" style="color:#666;">PLAYER PROFILE</p>
+  </div>
+
+  <!-- Profile card -->
+  <div class="bg-black border-4 border-red-600 p-8 mb-6 shadow-lg hover-brutal">
+    <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">PROFILE</h2>
+
+    <div class="flex items-center gap-6 mb-6">
+      <img src="{{ url_for('settings.serve_avatar', username=user.username) }}"
+           alt="Avatar" style="width:90px;height:90px;object-fit:cover;flex-shrink:0;position:relative;"
+           class="{% if top_border %}av-border-{{ top_border }}{% else %}av-border-tier1{% endif %}">
+      <div>
+        <p class="text-2xl font-black uppercase">{{ user.username }}</p>
+        {% if user.full_name %}<p class="opacity-60 uppercase text-sm">{{ user.full_name.split()[0] }}</p>{% endif %}
+        <a href="{{ url_for('settings.ranks') }}" style="text-decoration:none;">
+          <p style="margin-top:0.4rem;font-size:1rem;{{ rank_style }}">{{ rank_title }}</p>
+        </a>
+        <p style="font-size:0.68rem;opacity:0.45;text-transform:uppercase;letter-spacing:0.08em;margin-top:0.15rem;">
+          Top {{ '%.1f'|format(100 - rank_percentile) }}% of players
+        </p>
+      </div>
     </div>
 
-    <div class="bg-black border-4 border-red-600 p-8 mb-6 shadow-lg hover-brutal">
-        <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">PROFILE</h2>
+    {% if user.bio %}
+    <div class="mb-6 p-4 border-l-4 border-red-600" style="background:#111;">
+      <p class="text-sm font-bold uppercase opacity-60 mb-1">BIO</p>
+      <p style="color:#e5e5e5;white-space:pre-wrap;">{{ user.bio }}</p>
+    </div>
+    {% endif %}
 
-        <div class="flex items-center gap-6 mb-6">
-            {% if user.profile_picture %}
-            <img src="{{ url_for('static', filename='avatars/' + user.profile_picture) }}"
-                 alt="Avatar" style="width:90px;height:90px;object-fit:cover;border:3px solid #8b0000;">
-            {% endif %}
-            <div>
-                <p class="text-2xl font-black uppercase">{{ user.username }}</p>
-                {% if user.full_name %}<p class="opacity-60 uppercase text-sm">{{ user.full_name }}</p>{% endif %}
-            </div>
-        </div>
+    <!-- Social links -->
+    {% set has_social = user.github or user.linkedin or user.facebook or user.contact_number or user.discord %}
+    {% if has_social %}
+    <div class="flex flex-wrap gap-4 mb-6 items-center">
+      {% if user.github %}
+      <a href="{{ user.github }}" target="_blank" rel="noopener noreferrer" title="GitHub"
+         style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:#24292e;border-radius:6px;border:2px solid #8b0000;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.729.083-.729 1.205.084 1.84 1.237 1.84 1.237 1.07 1.834 2.807 1.304 3.492.997.108-.775.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.468-2.38 1.235-3.22-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.3 1.23a11.5 11.5 0 0 1 3.003-.404c1.02.005 2.047.138 3.003.404 2.29-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.233 1.91 1.233 3.22 0 4.61-2.804 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.898-.015 3.293 0 .322.216.694.825.576C20.565 21.796 24 17.298 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      </a>
+      {% endif %}
+      {% if user.linkedin %}
+      <a href="{{ user.linkedin }}" target="_blank" rel="noopener noreferrer" title="LinkedIn"
+         style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:#0077b5;border-radius:6px;border:2px solid #8b0000;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      </a>
+      {% endif %}
+      {% if user.facebook %}
+      <a href="{{ user.facebook }}" target="_blank" rel="noopener noreferrer" title="Facebook"
+         style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:#1877f2;border-radius:6px;border:2px solid #8b0000;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+      </a>
+      {% endif %}
+      {% if user.contact_number %}
+      <button onclick="copyToClipboard('{{ user.contact_number }}', 'Phone number')" title="Copy phone number"
+         style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:#25d366;border-radius:6px;border:2px solid #8b0000;cursor:pointer;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M6.62 10.79a15.053 15.053 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.25 1.01l-2.2 2.2z"/></svg>
+      </button>
+      {% endif %}
+      {% if user.discord %}
+      <button onclick="copyToClipboard('{{ user.discord }}', 'Discord username')" title="Copy Discord username"
+         style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:#5865f2;border-radius:6px;border:2px solid #8b0000;cursor:pointer;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+      </button>
+      {% endif %}
+    </div>
+    {% endif %}
 
-        {% if user.bio %}
-        <div class="mb-6 p-4 border-l-4 border-red-600" style="background:#111;">
-            <p class="text-sm font-bold uppercase opacity-60 mb-1">BIO</p>
-            <p style="color:#e5e5e5;white-space:pre-wrap;">{{ user.bio }}</p>
+    <div id="copy-toast" style="display:none;position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 22px;border-radius:6px;border:2px solid #8b0000;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;z-index:9999;"></div>
+    <script>
+    function copyToClipboard(text, label) {
+      navigator.clipboard.writeText(text).then(function() {
+        const t = document.getElementById('copy-toast');
+        t.textContent = label + ' copied!';
+        t.style.display = 'block';
+        clearTimeout(window._toastTimer);
+        window._toastTimer = setTimeout(() => t.style.display = 'none', 2500);
+      });
+    }
+    </script>
+
+    <div class="space-y-3">
+      {% if user.affiliation %}
+      <div class="flex justify-between items-center py-3 border-b border-red-600">
+        <p class="text-sm opacity-60 uppercase font-bold">AFFILIATION</p>
+        <p class="font-bold">{{ user.affiliation }}</p>
+      </div>
+      {% endif %}
+      {% if user.age %}
+      <div class="flex justify-between items-center py-3 border-b border-red-600">
+        <p class="text-sm opacity-60 uppercase font-bold">AGE</p>
+        <p class="font-bold">{{ user.age }}</p>
+      </div>
+      {% endif %}
+      {% if user.gender %}
+      <div class="flex justify-between items-center py-3 border-b border-red-600">
+        <p class="text-sm opacity-60 uppercase font-bold">GENDER</p>
+        <p class="font-bold">{{ user.gender }}</p>
+      </div>
+      {% endif %}
+      <div class="flex justify-between items-center py-3 border-b border-red-600">
+        <p class="text-sm opacity-60 uppercase font-bold">MEMBER SINCE</p>
+        <p class="font-bold">{{ user.created_at.strftime('%B %d, %Y') }}</p>
+      </div>
+      {% if user.is_admin %}
+      <div class="flex justify-between items-center py-3 border-b border-red-600">
+        <p class="text-sm opacity-60 uppercase font-bold">ROLE</p>
+        <p class="font-black text-red-600">ADMINISTRATOR</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Stats card -->
+  <div class="bg-black border-4 border-red-600 p-8 shadow-lg hover-brutal">
+    <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">STATISTICS</h2>
+
+    <div class="grid md:grid-cols-3 gap-6 mb-6">
+      <div class="text-center p-6 bg-black border-3 border-red-600 hover-brutal">
+        <div class="text-5xl font-black text-red-600 mb-2">{{ user.get_score() }}</div>
+        <div class="text-sm opacity-80 uppercase font-bold">TOTAL POINTS</div>
+      </div>
+      <div class="text-center p-6 bg-black border-3 border-green-500 hover-brutal">
+        <div class="text-5xl font-black text-green-500 mb-2">{{ user.solves|length }}</div>
+        <div class="text-sm opacity-80 uppercase font-bold">CHALLENGES SOLVED</div>
+      </div>
+      <div class="text-center p-6 bg-black border-3 border-red-500 hover-brutal">
+        <div class="text-5xl font-black text-red-500 mb-2">{{ user.posts|length }}</div>
+        <div class="text-sm opacity-80 uppercase font-bold">COMMUNITY POSTS</div>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mb-6">
+      <div class="text-center p-4 bg-black border border-yellow-600 hover-brutal">
+        <div class="text-3xl font-black mb-1" style="color:#d97706;">{{ accepted }}</div>
+        <div class="text-xs opacity-70 uppercase font-bold">ACCEPTED SUBMISSIONS</div>
+      </div>
+      <div class="text-center p-4 bg-black border border-gray-600 hover-brutal">
+        <div class="text-3xl font-black mb-1" style="color:#888;">{{ rejected }}</div>
+        <div class="text-xs opacity-70 uppercase font-bold">REJECTED SUBMISSIONS</div>
+      </div>
+      <div class="text-center p-4 bg-black border border-gray-700 hover-brutal">
+        <div class="text-3xl font-black mb-1" style="color:#666;">{{ user.comments|length }}</div>
+        <div class="text-xs opacity-70 uppercase font-bold">COMMENTS MADE</div>
+      </div>
+    </div>
+
+    <!-- Rank block -->
+    <div class="text-center p-5 mb-8" style="background:#0a0a0a;border:2px solid rgba(255,215,0,0.2);">
+      <a href="{{ url_for('settings.ranks') }}" style="text-decoration:none;">
+        <p style="font-size:1.35rem;{{ rank_style }}">{{ rank_title }}</p>
+      </a>
+      <p style="font-size:0.72rem;opacity:0.5;text-transform:uppercase;letter-spacing:0.1em;margin-top:0.3rem;">
+        Percentile {{ rank_percentile }}% &mdash; Top {{ '%.1f'|format(100 - rank_percentile) }}%
+      </p>
+    </div>
+
+    <!-- Radar chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    {{ radar_chart(radar_categories, radar_datasets, all_users, user.id) }}
+
+    <!-- Badges -->
+    <div class="mt-8">
+      <h3 class="text-xl font-black uppercase mb-4 flex items-center">
+        <span class="text-red-600 mr-2">►</span> BADGES EARNED
+      </h3>
+      {% if user.badges %}
+      <div class="flex flex-wrap gap-4 mb-8">
+        {% for ub in user.badges %}
+        <a href="{{ url_for('settings.badges') }}#badge-{{ ub.badge.id }}" style="text-decoration:none;" class="text-center">
+          <div style="width:80px;position:relative;">
+            <img src="{{ url_for('settings.serve_badge', filename=ub.badge.image_filename) }}"
+                 alt="{{ ub.badge.title }}" title="{{ ub.badge.description }}"
+                 class="badge-img border-{{ ub.badge.border_style or 'tier1' }}">
+            <p class="text-xs font-black uppercase mt-1" style="word-break:break-word;color:#e5e5e5;">{{ ub.badge.title }}</p>
+            {% if ub.badge.is_limited %}<p class="text-xs" style="color:#facc15;">LIMITED</p>{% endif %}
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="opacity-40 uppercase text-sm mb-8">NO BADGES EARNED YET</p>
+      {% endif %}
+
+      <h3 class="text-xl font-black uppercase mb-4 flex items-center">
+        <span class="text-red-600 mr-2">►</span> RECENT SOLVES
+      </h3>
+      {% if user.solves %}
+      <div class="space-y-3">
+        {% for solve in user.solves|sort(attribute='solved_at', reverse=True) %}
+        {% if loop.index <= 5 %}
+        <div class="flex justify-between items-center p-4 bg-black border-2 border-red-600 hover-brutal">
+          <div>
+            <p class="font-black uppercase">{{ solve.challenge.title }}</p>
+            <p class="text-sm opacity-60 uppercase">{{ solve.challenge.category }} • {{ solve.challenge.points }} PTS</p>
+          </div>
+          <p class="text-sm font-bold opacity-80">{{ solve.solved_at.strftime('%b %d, %Y') }}</p>
         </div>
         {% endif %}
-
-        <!-- Social Media Icons -->
-        {% set has_social = user.github or user.linkedin or user.facebook or user.contact_number or user.discord %}
-        {% if has_social %}
-        <div class="flex flex-wrap gap-4 mb-6 items-center">
-            <p class="text-sm font-bold uppercase opacity-60 mr-2">CONNECT:</p>
-            {% if user.github %}
-            <a href="{{ user.github }}" target="_blank" rel="noopener noreferrer" title="GitHub"
-               style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:#24292e;border-radius:6px;border:2px solid #8b0000;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white">
-                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.729.083-.729 1.205.084 1.84 1.237 1.84 1.237 1.07 1.834 2.807 1.304 3.492.997.108-.775.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.468-2.38 1.235-3.22-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.3 1.23a11.5 11.5 0 0 1 3.003-.404c1.02.005 2.047.138 3.003.404 2.29-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.233 1.91 1.233 3.22 0 4.61-2.804 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.898-.015 3.293 0 .322.216.694.825.576C20.565 21.796 24 17.298 24 12c0-6.63-5.37-12-12-12z"/>
-                </svg>
-            </a>
-            {% endif %}
-            {% if user.linkedin %}
-            <a href="{{ user.linkedin }}" target="_blank" rel="noopener noreferrer" title="LinkedIn"
-               style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:#0077b5;border-radius:6px;border:2px solid #8b0000;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white">
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                </svg>
-            </a>
-            {% endif %}
-            {% if user.facebook %}
-            <a href="{{ user.facebook }}" target="_blank" rel="noopener noreferrer" title="Facebook"
-               style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:#1877f2;border-radius:6px;border:2px solid #8b0000;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white">
-                    <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
-                </svg>
-            </a>
-            {% endif %}
-            {% if user.contact_number %}
-            <span title="Contact: {{ user.contact_number }}"
-               style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:#25d366;border-radius:6px;border:2px solid #8b0000;cursor:default;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white">
-                    <path d="M6.62 10.79a15.053 15.053 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.25 1.01l-2.2 2.2z"/>
-                </svg>
-            </span>
-            {% endif %}
-            {% if user.discord %}
-            <span title="Discord: {{ user.discord }}"
-               style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:#5865f2;border-radius:6px;border:2px solid #8b0000;cursor:default;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white">
-                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
-                </svg>
-            </span>
-            {% endif %}
-        </div>
-        {% endif %}
-
-        <div class="space-y-3">
-            {% if user.affiliation %}
-            <div class="flex justify-between items-center py-3 border-b border-red-600">
-                <p class="text-sm opacity-60 uppercase font-bold">AFFILIATION</p>
-                <p class="font-bold">{{ user.affiliation }}</p>
-            </div>
-            {% endif %}
-            <div class="flex justify-between items-center py-3 border-b border-red-600">
-                <p class="text-sm opacity-60 uppercase font-bold">MEMBER SINCE</p>
-                <p class="font-bold">{{ user.created_at.strftime('%B %d, %Y') }}</p>
-            </div>
-            {% if user.is_admin %}
-            <div class="flex justify-between items-center py-3 border-b border-red-600">
-                <p class="text-sm opacity-60 uppercase font-bold">ROLE</p>
-                <p class="font-black text-red-600">ADMINISTRATOR</p>
-            </div>
-            {% endif %}
-        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-12 border-3 border-red-600 opacity-60">
+        <p class="text-xl font-black uppercase">NO CHALLENGES SOLVED YET</p>
+      </div>
+      {% endif %}
     </div>
-
-    <div class="bg-black border-4 border-red-600 p-8 shadow-lg hover-brutal">
-        <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">STATISTICS</h2>
-
-        <div class="grid md:grid-cols-3 gap-6 mb-8">
-            <div class="text-center p-6 bg-black border-3 border-red-600 hover-brutal">
-                <div class="text-5xl font-black text-red-600 mb-2">{{ user.get_score() }}</div>
-                <div class="text-sm opacity-80 uppercase font-bold">TOTAL POINTS</div>
-            </div>
-            <div class="text-center p-6 bg-black border-3 border-green-500 hover-brutal">
-                <div class="text-5xl font-black text-green-500 mb-2">{{ user.solves|length }}</div>
-                <div class="text-sm opacity-80 uppercase font-bold">CHALLENGES SOLVED</div>
-            </div>
-            <div class="text-center p-6 bg-black border-3 border-red-500 hover-brutal">
-                <div class="text-5xl font-black text-red-500 mb-2">{{ user.posts|length }}</div>
-                <div class="text-sm opacity-80 uppercase font-bold">COMMUNITY POSTS</div>
-            </div>
-        </div>
-
-        <!-- Badges -->
-        <div class="mt-8">
-            <h3 class="text-xl font-black uppercase mb-4 flex items-center">
-                <span class="text-red-600 mr-2">►</span> BADGES EARNED
-            </h3>
-            {% if user.badges %}
-            <div class="flex flex-wrap gap-4 mb-8">
-                {% for ub in user.badges %}
-                <div class="text-center" style="width:90px;">
-                    <img src="{{ url_for('static', filename='badges/' + ub.badge.image_filename) }}"
-                         alt="{{ ub.badge.title }}" title="{{ ub.badge.description }}"
-                         style="width:80px;height:80px;object-fit:cover;border:2px solid #8b0000;">
-                    <p class="text-xs font-black uppercase mt-1" style="word-break:break-word;">{{ ub.badge.title }}</p>
-                    {% if ub.badge.is_limited %}<p class="text-xs" style="color:#facc15;">LIMITED</p>{% endif %}
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <p class="opacity-40 uppercase text-sm mb-8">NO BADGES EARNED YET</p>
-            {% endif %}
-
-            <h3 class="text-xl font-black uppercase mb-4 flex items-center">
-                <span class="text-red-600 mr-2">►</span> RECENT SOLVES
-            </h3>
-            {% if user.solves %}
-                <div class="space-y-3">
-                    {% for solve in user.solves|sort(attribute='solved_at', reverse=True) %}
-                        {% if loop.index <= 5 %}
-                        <div class="flex justify-between items-center p-4 bg-black border-2 border-red-600 hover-brutal">
-                            <div>
-                                <p class="font-black uppercase">{{ solve.challenge.title }}</p>
-                                <p class="text-sm opacity-60 uppercase">{{ solve.challenge.category }} • {{ solve.challenge.points }} PTS</p>
-                            </div>
-                            <p class="text-sm font-bold opacity-80">{{ solve.solved_at.strftime('%b %d, %Y') }}</p>
-                        </div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="text-center py-12 border-3 border-red-600 opacity-60">
-                    <p class="text-xl font-black uppercase">NO CHALLENGES SOLVED YET</p>
-                </div>
-            {% endif %}
-        </div>
-    </div>
+  </div>
 </div>
 {% endblock %}

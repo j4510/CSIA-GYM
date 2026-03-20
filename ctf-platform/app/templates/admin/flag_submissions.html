@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Flag Submissions - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+  <div class="mb-6 flex justify-between items-center flex-wrap gap-3">
+    <div>
+      <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">Admin</p>
+      <h1 class="text-3xl font-black uppercase" style="color:#fff;">■ FLAG SUBMISSIONS</h1>
+      <p class="text-sm font-bold uppercase mt-1" style="color:#555;">{{ attempts|length }} entries</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" style="padding:8px 18px;background:transparent;color:#555;font-weight:700;font-size:0.8rem;text-transform:uppercase;border:2px solid #333;text-decoration:none;">← BACK</a>
+  </div>
+
+  <!-- Filters -->
+  <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+    <select name="challenge_id" style="padding:8px 12px;background:#1a1a1a;color:#e5e5e5;border:1px solid #8b0000;font-size:0.82rem;">
+      <option value="">All Challenges</option>
+      {% for ch in live_challenges %}
+      <option value="{{ ch.id }}" {% if selected_challenge == ch.id %}selected{% endif %}>{{ ch.title }}</option>
+      {% endfor %}
+    </select>
+    <select name="correct" style="padding:8px 12px;background:#1a1a1a;color:#e5e5e5;border:1px solid #8b0000;font-size:0.82rem;">
+      <option value="">All</option>
+      <option value="1" {% if correct_filter == '1' %}selected{% endif %}>Correct Only</option>
+      <option value="0" {% if correct_filter == '0' %}selected{% endif %}>Wrong Only</option>
+    </select>
+    <button type="submit" style="padding:8px 18px;background:#8b0000;color:#fff;font-weight:900;font-size:0.8rem;text-transform:uppercase;border:none;cursor:pointer;">FILTER</button>
+  </form>
+
+  <div style="background:#0d0d0d;border:1px solid rgba(139,0,0,0.25);border-radius:6px;overflow:hidden;">
+    <div style="padding:14px 20px;border-bottom:1px solid rgba(139,0,0,0.2);display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:rgba(139,0,0,0.06);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:0.8rem;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#e5e5e5;">Flag Attempts</span>
+        <span style="font-size:0.7rem;font-weight:700;padding:2px 8px;background:rgba(139,0,0,0.2);border:1px solid rgba(139,0,0,0.35);color:#f87171;border-radius:3px;">{{ attempts|length }}</span>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(139,0,0,0.2);">
+          <th style="padding:10px 14px;text-align:left;font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;color:#555;">Time</th>
+          <th style="padding:10px 14px;text-align:left;font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;color:#555;">User</th>
+          <th style="padding:10px 14px;text-align:left;font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;color:#555;">Challenge</th>
+          <th style="padding:10px 14px;text-align:left;font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;color:#555;">Submitted Flag</th>
+          <th style="padding:10px 14px;text-align:left;font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;color:#555;">Result</th>
+          <th style="padding:10px 14px;text-align:right;font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;color:#555;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in attempts %}
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;"
+            onmouseenter="this.style.background='rgba(139,0,0,0.07)'" onmouseleave="this.style.background='transparent'">
+          <td style="padding:9px 14px;font-size:0.72rem;color:#666;font-family:monospace;white-space:nowrap;">{{ a.attempted_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td style="padding:9px 14px;font-size:0.8rem;font-weight:700;color:#e5e5e5;">
+            <a href="{{ url_for('settings.public_profile', user_id=a.user_id) }}" style="color:#e5e5e5;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+              {{ a.user.username if a.user else a.user_id }}
+            </a>
+          </td>
+          <td style="padding:9px 14px;font-size:0.8rem;color:#aaa;">
+            {{ a.challenge.title if a.challenge else a.challenge_id }}
+          </td>
+          <td style="padding:9px 14px;font-size:0.72rem;color:#888;font-family:monospace;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            {{ a.submitted_flag or '—' }}
+          </td>
+          <td style="padding:9px 14px;">
+            {% if a.correct %}
+            <span style="font-size:0.68rem;font-weight:900;text-transform:uppercase;color:#4ade80;border:1px solid #4ade80;padding:2px 7px;">CORRECT</span>
+            {% else %}
+            <span style="font-size:0.68rem;font-weight:900;text-transform:uppercase;color:#f87171;border:1px solid #f87171;padding:2px 7px;">WRONG</span>
+            {% endif %}
+          </td>
+          <td style="padding:9px 14px;text-align:right;">
+            {% if not a.correct %}
+            <form method="POST" action="{{ url_for('admin.accept_flag_submission', attempt_id=a.id) }}" onsubmit="return confirm('Accept this submission and mark as solved?');" style="margin:0;">
+              <button type="submit" style="padding:4px 12px;background:rgba(74,222,128,0.1);color:#4ade80;font-size:0.72rem;font-weight:700;text-transform:uppercase;border:1px solid rgba(74,222,128,0.35);border-radius:3px;cursor:pointer;"
+                      onmouseover="this.style.background='rgba(74,222,128,0.2)'" onmouseout="this.style.background='rgba(74,222,128,0.1)'">✓ Accept</button>
+            </form>
+            {% else %}
+            <span style="font-size:0.68rem;color:#444;">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not attempts %}
+        <tr><td colspan="6" style="padding:2rem;text-align:center;color:#555;font-size:0.85rem;text-transform:uppercase;font-weight:700;">No submissions found.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

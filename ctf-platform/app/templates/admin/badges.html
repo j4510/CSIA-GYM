@@ -1,75 +1,300 @@
 {% extends "base.html" %}
-
 {% block title %}Manage Badges - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+.badge-img { display:block; width:100px; height:100px; object-fit:cover; border-radius:4px; margin:0 auto 10px; }
+
+/* tier1 – Common */
+.border-tier1 { border:3px solid #4a4a4a; }
+
+/* tier2 – Uncommon: silver breathe */
+.border-tier2 { border:3px solid #b0b8c8; animation:bdUncommon 3s ease-in-out infinite; }
+@keyframes bdUncommon { 0%,100%{box-shadow:0 0 5px rgba(176,184,200,0.4)} 50%{box-shadow:0 0 12px rgba(176,184,200,0.9),0 0 22px rgba(176,184,200,0.3)} }
+
+/* tier3 – Rare: green pulse */
+.border-tier3 { border:3px solid #4ade80; animation:bdRare 2.5s ease-in-out infinite; }
+@keyframes bdRare { 0%,100%{box-shadow:0 0 7px rgba(74,222,128,0.55),0 0 14px rgba(74,222,128,0.2)} 50%{box-shadow:0 0 18px rgba(74,222,128,1),0 0 34px rgba(74,222,128,0.45)} }
+
+/* tier4 – Epic: blue electric double-ring */
+.border-tier4 { border:3px solid #60a5fa; animation:bdEpic 2s ease-in-out infinite; }
+@keyframes bdEpic { 0%,100%{box-shadow:0 0 9px rgba(96,165,250,0.65),0 0 20px rgba(96,165,250,0.2)} 50%{box-shadow:0 0 22px rgba(96,165,250,1),0 0 44px rgba(96,165,250,0.5),0 0 66px rgba(96,165,250,0.15)} }
+
+/* tier5 – Legendary: purple shimmer + border-width pulse */
+.border-tier5 { border:3px solid #a78bfa; animation:bdLegendary 1.8s ease-in-out infinite; }
+@keyframes bdLegendary { 0%,100%{box-shadow:0 0 12px rgba(167,139,250,0.65),0 0 24px rgba(167,139,250,0.2)} 50%{box-shadow:0 0 26px rgba(167,139,250,1),0 0 52px rgba(167,139,250,0.55),0 0 78px rgba(167,139,250,0.2)} }
+
+/* tier6 – Mythical: pink↔cyan color-shift */
+.border-tier6 { border:3px solid #f472b6; animation:bdMythical 1.6s ease-in-out infinite; }
+@keyframes bdMythical {
+  0%   {box-shadow:0 0 12px rgba(244,114,182,0.85),0 0 26px rgba(244,114,182,0.35); border-color:#f472b6;}
+  50%  {box-shadow:0 0 20px rgba(34,211,238,1),0 0 42px rgba(34,211,238,0.5),0 0 64px rgba(34,211,238,0.2); border-color:#22d3ee;}
+  100% {box-shadow:0 0 12px rgba(244,114,182,0.85),0 0 26px rgba(244,114,182,0.35); border-color:#f472b6;}
+}
+
+/* tier7 – Ancient: fire flicker orange→red→orange */
+.border-tier7 { border:3px solid #fb923c; animation:bdAncient 1.2s ease-in-out infinite; }
+@keyframes bdAncient {
+  0%   {box-shadow:0 0 10px rgba(251,146,60,0.8),0 0 22px rgba(251,146,60,0.35); border-color:#fb923c;}
+  35%  {box-shadow:0 0 24px rgba(239,68,68,1),0 0 48px rgba(239,68,68,0.55),0 0 72px rgba(239,68,68,0.2); border-color:#ef4444;}
+  65%  {box-shadow:0 0 16px rgba(251,146,60,0.9),0 0 32px rgba(251,146,60,0.45); border-color:#fbbf24;}
+  100% {box-shadow:0 0 10px rgba(251,146,60,0.8),0 0 22px rgba(251,146,60,0.35); border-color:#fb923c;}
+}
+
+/* tier8 – Divine: gold with inward + outward glow */
+.border-tier8 { border:3px solid #facc15; animation:bdDivine 1.8s ease-in-out infinite; }
+@keyframes bdDivine {
+  0%,100%{box-shadow:0 0 14px rgba(250,204,21,0.85),0 0 30px rgba(250,204,21,0.35),0 0 50px rgba(250,204,21,0.1),inset 0 0 10px rgba(250,204,21,0.2);}
+  50%    {box-shadow:0 0 30px rgba(250,204,21,1),0 0 60px rgba(250,204,21,0.65),0 0 90px rgba(250,204,21,0.3),inset 0 0 20px rgba(250,204,21,0.4);}
+}
+
+/* tier9 – Celestial: red→white strobe with expanding rings */
+.border-tier9 { border:3px solid #f87171; animation:bdCelestial 1s ease-in-out infinite; }
+@keyframes bdCelestial {
+  0%   {box-shadow:0 0 14px rgba(248,113,113,0.9),0 0 32px rgba(248,113,113,0.45),0 0 60px rgba(248,113,113,0.15); border-color:#f87171;}
+  50%  {box-shadow:0 0 24px rgba(255,255,255,1),0 0 50px rgba(248,113,113,0.9),0 0 90px rgba(248,113,113,0.45),0 0 130px rgba(248,113,113,0.15); border-color:#fff;}
+  100% {box-shadow:0 0 14px rgba(248,113,113,0.9),0 0 32px rgba(248,113,113,0.45),0 0 60px rgba(248,113,113,0.15); border-color:#f87171;}
+}
+
+/* tier10 – GOD: spinning conic-gradient border + multi-layer pulse */
+.border-tier10 { border:3px solid transparent; position:relative; animation:bdGod 1.4s ease-in-out infinite; }
+.border-tier10::before { content:''; position:absolute; inset:-3px; border-radius:6px; background:conic-gradient(from 0deg,#ff0040,#ff8c00,#facc15,#4ade80,#00fff7,#60a5fa,#a78bfa,#f472b6,#ff0040); animation:bdGodSpin 1s linear infinite; z-index:-1; }
+@keyframes bdGodSpin { to{transform:rotate(360deg)} }
+@keyframes bdGod {
+  0%,100%{box-shadow:0 0 20px rgba(224,64,251,0.7),0 0 44px rgba(0,255,247,0.45),0 0 70px rgba(255,0,64,0.3);}
+  50%    {box-shadow:0 0 40px rgba(224,64,251,1),0 0 80px rgba(0,255,247,0.85),0 0 120px rgba(255,0,64,0.6);}
+}
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto">
-    <div class="mb-6 flex justify-between items-center">
+  <div class="mb-6 flex justify-between items-center">
+    <div>
+      <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">Admin</p>
+      <h1 class="text-3xl font-black uppercase" style="color:#fff;">■ MANAGE BADGES</h1>
+      <p style="font-size:0.82rem;font-weight:700;text-transform:uppercase;color:#555;margin-top:0.25rem;">{{ badges|length }} badges created</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" style="padding:8px 18px;background:transparent;color:#555;font-weight:700;font-size:0.8rem;text-transform:uppercase;border:2px solid #333;text-decoration:none;">← BACK</a>
+  </div>
+
+  <!-- Create Badge -->
+  <div class="bg-black border-4 border-red-600 p-8 mb-8 shadow-lg">
+    <h2 class="text-xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">CREATE NEW BADGE</h2>
+    <form method="POST" action="{{ url_for('admin.create_badge') }}" enctype="multipart/form-data" id="badge-form">
+      <input type="hidden" name="cropped_image" id="cropped-image-data">
+
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Manage Badges</h1>
-            <p class="text-gray-600 mt-1">{{ badges|length }} badges created</p>
+          <label class="block text-sm opacity-60 uppercase font-bold mb-1">Title</label>
+          <input type="text" name="title" required placeholder="Badge title"
+                 class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
+                 style="background:#1a1a1a;color:#fff;">
         </div>
-        <a href="{{ url_for('admin.dashboard') }}" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300">
-            ← Back to Dashboard
-        </a>
-    </div>
-
-    <!-- Create Badge -->
-    <div class="bg-black border-4 border-red-600 p-8 mb-8 shadow-lg">
-        <h2 class="text-xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">CREATE NEW BADGE</h2>
-        <form method="POST" action="{{ url_for('admin.create_badge') }}" enctype="multipart/form-data">
-            <div class="grid md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Title</label>
-                    <input type="text" name="title" required placeholder="Badge title"
-                           class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">
-                </div>
-                <div>
-                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Image (500×500 recommended)</label>
-                    <input type="file" name="image" accept="image/*" required class="text-sm text-white w-full py-2">
-                </div>
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm opacity-60 uppercase font-bold mb-1">Description</label>
-                <input type="text" name="description" required placeholder="Short description"
-                       class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">
-            </div>
-            <div class="mb-6 flex items-center gap-3">
-                <input type="checkbox" name="is_limited" id="is_limited" style="accent-color:#8b0000; width:16px; height:16px;">
-                <label for="is_limited" class="text-sm font-bold uppercase opacity-80">Limited Edition</label>
-            </div>
-            <button type="submit"
-                    style="padding:10px 28px; background:#8b0000; color:#fff; font-weight:900; text-transform:uppercase; border:none; cursor:pointer;">
-                CREATE BADGE
-            </button>
-        </form>
-    </div>
-
-    <!-- Badge List -->
-    {% if badges %}
-    <div class="grid md:grid-cols-4 gap-6">
-        {% for badge in badges %}
-        <div class="bg-black border-2 border-red-600 p-4 shadow-lg text-center">
-            <img src="{{ url_for('static', filename='badges/' + badge.image_filename) }}"
-                 alt="{{ badge.title }}" style="width:100%;max-width:120px;height:120px;object-fit:cover;margin:0 auto 12px;">
-            <p class="font-black uppercase text-sm mb-1">{{ badge.title }}</p>
-            {% if badge.is_limited %}
-            <p class="text-xs font-bold mb-1" style="color:#facc15;">★ LIMITED EDITION</p>
-            {% endif %}
-            <p class="text-xs opacity-60 mb-4">{{ badge.description }}</p>
-            <p class="text-xs opacity-40 mb-4">{{ badge.recipients|length }} holder(s)</p>
-            <form method="POST" action="{{ url_for('admin.delete_badge', badge_id=badge.id) }}" onsubmit="return confirm('Delete this badge?');">
-                <button type="submit" style="padding:6px 16px; background:#7f1d1d; color:#fff; font-size:11px; font-weight:700; text-transform:uppercase; border:none; cursor:pointer;">
-                    DELETE
-                </button>
-            </form>
+        <div>
+          <label class="block text-sm opacity-60 uppercase font-bold mb-1">Badge Image (500×500 recommended)</label>
+          <label id="file-pick-btn" style="display:inline-flex;align-items:center;gap:0.5rem;padding:9px 20px;background:#1a1a1a;color:#e5e5e5;border:2px solid #8b0000;cursor:pointer;font-weight:700;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.05em;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg>
+            Choose Image
+          </label>
+          <input type="file" id="badge-file-input" accept="image/*" style="display:none;">
+          <span id="file-name-display" style="font-size:0.75rem;color:#888;margin-left:0.5rem;"></span>
+          <div id="crop-preview" style="display:none;margin-top:8px;">
+            <img id="crop-preview-img" style="width:60px;height:60px;object-fit:cover;border:2px solid #8b0000;">
+            <span style="font-size:0.7rem;color:#4ade80;margin-left:6px;">✓ Cropped</span>
+          </div>
         </div>
-        {% endfor %}
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm opacity-60 uppercase font-bold mb-1">Description</label>
+        <input type="text" name="description" required placeholder="Short description"
+               class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
+               style="background:#1a1a1a;color:#fff;">
+      </div>
+
+      <!-- Border Tier -->
+      <div class="mb-4">
+        <label class="block text-sm opacity-60 uppercase font-bold mb-2">Border Tier</label>
+        <div class="grid grid-cols-5 md:grid-cols-10 gap-2">
+          {% set tier_labels = [
+            ('tier1',  '#4a4a4a', 'Common'),
+            ('tier2',  '#b0b8c8', 'Uncommon'),
+            ('tier3',  '#4ade80', 'Rare'),
+            ('tier4',  '#60a5fa', 'Epic'),
+            ('tier5',  '#a78bfa', 'Legendary'),
+            ('tier6',  '#f472b6', 'Mythical'),
+            ('tier7',  '#fb923c', 'Ancient'),
+            ('tier8',  '#facc15', 'Divine'),
+            ('tier9',  '#f87171', 'Celestial'),
+            ('tier10', 'rainbow', 'GOD'),
+          ] %}
+          {% for val, color, label in tier_labels %}
+          <label style="cursor:pointer;text-align:center;">
+            <input type="radio" name="border_style" value="{{ val }}" {% if loop.first %}checked{% endif %} style="display:none;" class="tier-radio">
+            <div class="tier-swatch" data-val="{{ val }}"
+                 style="width:100%;aspect-ratio:1;border-radius:4px;background:#111;
+                 {% if color == 'rainbow' %}box-shadow:0 0 0 2px #fff,0 0 8px #e040fb,0 0 16px #00fff7;{% else %}border:3px solid {{ color }};{% endif %}
+                 transition:transform 0.1s;"></div>
+            <p style="font-size:0.55rem;font-weight:900;text-transform:uppercase;color:#888;margin-top:3px;">{{ label }}</p>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Flags row -->
+      <div class="mb-6 flex flex-wrap gap-6 items-start">
+        <div>
+          <label style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;">
+            <input type="checkbox" name="is_limited" id="is_limited" style="accent-color:#8b0000;width:16px;height:16px;">
+            <span class="text-sm font-bold uppercase opacity-80">Limited Edition</span>
+          </label>
+          <div id="limited-count-wrap" style="display:none;margin-top:6px;">
+            <input type="number" name="limited_count" min="1" placeholder="Total copies"
+                   class="px-3 py-1 border border-gray-600 rounded text-sm"
+                   style="background:#1a1a1a;color:#fff;width:140px;">
+          </div>
+        </div>
+        <label style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;">
+          <input type="checkbox" name="from_event" style="accent-color:#3b82f6;width:16px;height:16px;">
+          <span class="text-sm font-bold uppercase opacity-80">From an Event</span>
+        </label>
+        <label style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;">
+          <input type="checkbox" name="is_unattainable" style="accent-color:#ef4444;width:16px;height:16px;">
+          <span class="text-sm font-bold uppercase opacity-80">Unattainable</span>
+        </label>
+      </div>
+
+      <button type="submit"
+              style="padding:10px 28px;background:#8b0000;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;">
+        CREATE BADGE
+      </button>
+    </form>
+  </div>
+
+  <!-- Badge List -->
+  {% if badges %}
+  <div class="grid md:grid-cols-4 gap-6">
+    {% for badge in badges %}
+    {% set bs = badge.border_style or 'tier1' %}
+    <div class="bg-black border-2 border-red-600 p-4 shadow-lg text-center">
+      <img src="{{ url_for('settings.serve_badge', filename=badge.image_filename) }}"
+           alt="{{ badge.title }}"
+           class="badge-img border-{{ bs }}">
+      <p class="font-black uppercase text-sm mb-1">{{ badge.title }}</p>
+      {% set tier_names = {'tier1':'Common','tier2':'Uncommon','tier3':'Rare','tier4':'Epic','tier5':'Legendary','tier6':'Mythical','tier7':'Ancient','tier8':'Divine','tier9':'Celestial','tier10':'GOD'} %}
+      <p class="text-xs opacity-40 mb-1">{{ tier_names.get(bs, bs|upper) }}</p>
+      {% if badge.is_limited %}
+      <p class="text-xs font-bold mb-1" style="color:#facc15;">★ LIMITED{% if badge.limited_count %} · {{ badge.limited_count }}{% endif %}</p>
+      {% endif %}
+      {% if badge.from_event %}<p class="text-xs mb-1" style="color:#60a5fa;">EVENT</p>{% endif %}
+      {% if badge.is_unattainable %}<p class="text-xs mb-1" style="color:#f87171;">UNATTAINABLE</p>{% endif %}
+      <p class="text-xs opacity-40 mb-3">{{ badge.description }}</p>
+      <p class="text-xs opacity-30 mb-3">{{ badge.recipients|length }} holder(s)</p>
+      <div class="flex gap-2 justify-center">
+      <a href="{{ url_for('admin.badge_rules', badge_id=badge.id) }}"
+         style="padding:5px 14px;background:#1a1a1a;color:#60a5fa;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #60a5fa;text-decoration:none;">
+        RULES
+      </a>
+      <form method="POST" action="{{ url_for('admin.delete_badge', badge_id=badge.id) }}" onsubmit="return confirm('Delete this badge?');">
+        <button type="submit" style="padding:5px 14px;background:#7f1d1d;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;border:none;cursor:pointer;">
+          DELETE
+        </button>
+      </form>
+      </div>
     </div>
-    {% else %}
-    <div class="text-center py-16 border-4 border-red-600">
-        <p class="text-2xl font-black uppercase opacity-60">NO BADGES YET</p>
-    </div>
-    {% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-16 border-4 border-red-600">
+    <p class="text-2xl font-black uppercase opacity-60">NO BADGES YET</p>
+  </div>
+  {% endif %}
 </div>
+
+<!-- Cropper modal -->
+<div id="badge-cropper-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#111;border:3px solid #8b0000;padding:24px;max-width:520px;width:95%;border-radius:4px;">
+    <p class="text-sm font-black uppercase mb-3" style="color:#fff;">CROP BADGE IMAGE</p>
+    <div style="max-height:380px;overflow:hidden;">
+      <img id="badge-cropper-img" style="max-width:100%;display:block;">
+    </div>
+    <div class="flex gap-3 mt-4">
+      <button id="badge-crop-confirm" style="flex:1;padding:10px;background:#8b0000;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;">CROP & USE</button>
+      <button id="badge-crop-cancel" style="flex:1;padding:10px;background:#333;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+<script>
+// ── Tier swatch selection highlight ──────────────────────────────────────────
+document.querySelectorAll('.tier-radio').forEach(function(r) {
+  r.addEventListener('change', function() {
+    document.querySelectorAll('.tier-swatch').forEach(function(s) {
+      s.style.transform = '';
+      s.style.outline = '';
+    });
+    var swatch = document.querySelector('.tier-swatch[data-val="' + r.value + '"]');
+    if (swatch) { swatch.style.transform = 'scale(1.15)'; swatch.style.outline = '2px solid #fff'; }
+  });
+});
+// Highlight default
+(function(){
+  var def = document.querySelector('.tier-swatch[data-val="tier1"]');
+  if (def) { def.style.transform = 'scale(1.15)'; def.style.outline = '2px solid #fff'; }
+})();
+
+// ── Limited count toggle ──────────────────────────────────────────────────────
+document.getElementById('is_limited').addEventListener('change', function() {
+  document.getElementById('limited-count-wrap').style.display = this.checked ? 'block' : 'none';
+});
+
+// ── Cropper ───────────────────────────────────────────────────────────────────
+var badgeCropper = null;
+var fileInput = document.getElementById('badge-file-input');
+var modal = document.getElementById('badge-cropper-modal');
+var cropperImg = document.getElementById('badge-cropper-img');
+
+document.getElementById('file-pick-btn').addEventListener('click', function() {
+  fileInput.click();
+});
+
+fileInput.addEventListener('change', function() {
+  var file = this.files[0];
+  if (!file) return;
+  document.getElementById('file-name-display').textContent = file.name;
+  var url = URL.createObjectURL(file);
+  cropperImg.src = url;
+  modal.style.display = 'flex';
+  if (badgeCropper) { badgeCropper.destroy(); badgeCropper = null; }
+  badgeCropper = new Cropper(cropperImg, { aspectRatio: 1, viewMode: 1, autoCropArea: 0.9 });
+});
+
+document.getElementById('badge-crop-cancel').addEventListener('click', function() {
+  modal.style.display = 'none';
+  if (badgeCropper) { badgeCropper.destroy(); badgeCropper = null; }
+  fileInput.value = '';
+  document.getElementById('file-name-display').textContent = '';
+});
+
+document.getElementById('badge-crop-confirm').addEventListener('click', function() {
+  if (!badgeCropper) return;
+  badgeCropper.getCroppedCanvas({ width: 500, height: 500 }).toBlob(function(blob) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('cropped-image-data').value = e.target.result;
+      var preview = document.getElementById('crop-preview');
+      var previewImg = document.getElementById('crop-preview-img');
+      previewImg.src = e.target.result;
+      preview.style.display = 'flex';
+      preview.style.alignItems = 'center';
+    };
+    reader.readAsDataURL(blob);
+    modal.style.display = 'none';
+    if (badgeCropper) { badgeCropper.destroy(); badgeCropper = null; }
+  }, 'image/webp', 0.85);
+});
+</script>
 {% endblock %}

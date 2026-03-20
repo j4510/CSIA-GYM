@@ -14,12 +14,13 @@ TO ADD NEW AUTH FEATURES:
 - OAuth login: Add /login/google, /login/github routes
 """
 
-from flask import Blueprint, render_template, redirect, url_for, flash, request
-from flask_login import login_user, logout_user, current_user
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask_login import login_user, logout_user, current_user, login_required
 import os, re
 from app import db
 from app.models import User
 from app.identicon import generate_identicon
+from app.routes.admin import log_event
 
 WHATS_NEW_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'WHATS-NEW.md')
 
@@ -52,14 +53,16 @@ def whats_new():
 
 @auth_bp.route('/')
 def index():
-    """
-    Homepage route.
-    
-    Shows landing page if not logged in, redirects to challenges if logged in.
-    """
     if current_user.is_authenticated:
         return redirect(url_for('challenges.list'))
-    return render_template('index.html')
+    from app.models import User, Challenge, UserChallengeSolve, CommunityPost
+    stats = {
+        'users':      User.query.count(),
+        'challenges': Challenge.query.filter_by(is_hidden=False).count(),
+        'solves':     UserChallengeSolve.query.count(),
+        'posts':      CommunityPost.query.count(),
+    }
+    return render_template('index.html', stats=stats)
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
@@ -113,7 +116,19 @@ def register():
         user.profile_picture = generate_identicon(username)
         db.session.add(user)
         db.session.commit()
-        
+        log_event(actor=username, action='register', target=email, category='auth')
+        # Send welcome + latest changelog notification
+        try:
+            from app.notifs import push
+            version = get_version()
+            push(user.id, f'Welcome to CSIA GYM, {username}!',
+                 f'You\'re now part of the platform. Check out the challenges and community!',
+                 category='system', link='/challenges')
+            push(user.id, f'Latest update: {version}',
+                 'Check out what\'s new on the platform.',
+                 category='system', link='/whats-new')
+        except Exception:
+            pass
         flash('Registration successful! Please log in.', 'success')
         return redirect(url_for('auth.login'))
     
@@ -148,27 +163,41 @@ def login():
         
         # Verify credentials
         if user and user.check_password(password):
+            if user.is_banned:
+                reason = user.ban_reason or 'No reason provided.'
+                log_event(actor=username, action='login_blocked_banned', target=reason, category='auth')
+                flash(f'Your account has been banned. Reason: {reason}', 'danger')
+                return redirect(url_for('auth.login'))
             # Log user in (creates session)
             login_user(user)
+            log_event(actor=username, action='login_success', category='auth')
             flash('Login successful!', 'success')
             
             # Redirect to page they were trying to access, or challenges page
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('challenges.list'))
         else:
+            log_event(actor=username or '(unknown)', action='login_failed', target='bad credentials', category='auth')
             flash('Invalid username or password', 'danger')
     
     # GET request - show form
     return render_template('auth/login.html')
 
 
+@auth_bp.route('/tour-done', methods=['POST'])
+def tour_done():
+   
+    if current_user.is_authenticated:
+        User.query.filter_by(id=current_user.id).update({'has_seen_tour': True})
+        db.session.commit()
+        
+    return '', 204
+
+
 @auth_bp.route('/logout')
 def logout():
-    """
-    User logout.
-    
-    Ends the user session and redirects to homepage.
-    """
+    if current_user.is_authenticated:
+        log_event(actor=current_user.username, action='logout', category='auth')
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.index'))

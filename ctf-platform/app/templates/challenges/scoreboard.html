@@ -42,7 +42,7 @@
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        color: #000000;
+        color: #e0e0e0;
     }
     .sb-stat strong { color: #cc0000; }
 
@@ -202,8 +202,8 @@
         width: 34px;
         height: 34px;
         object-fit: cover;
-        border: 1px solid #8b0000;
         flex-shrink: 0;
+        position: relative;
     }
     .sb-player-avatar-placeholder {
         width: 34px;
@@ -320,14 +320,14 @@
     <div class="sb-stats">
         <div class="sb-stat">Players <strong>{{ leaderboard|length }}</strong></div>
         {% if leaderboard %}
-        <div class="sb-stat">Top Score <strong>{{ leaderboard[0].get_score() }} pts</strong></div>
+        <div class="sb-stat">Top Score <strong>{{ leaderboard[0].score }} pts</strong></div>
         {% endif %}
         {% if current_user.is_authenticated %}
-            {% set ns = namespace(rank=0) %}
-            {% for u in leaderboard %}{% if u.id == current_user.id %}{% set ns.rank = loop.index %}{% endif %}{% endfor %}
+            {% set ns = namespace(rank=0, my_score=0) %}
+            {% for entry in leaderboard %}{% if entry.user.id == current_user.id %}{% set ns.rank = loop.index %}{% set ns.my_score = entry.score %}{% endif %}{% endfor %}
             {% if ns.rank > 0 %}
             <div class="sb-stat">Your Rank <strong>#{{ ns.rank }}</strong></div>
-            <div class="sb-stat">Your Score <strong>{{ current_user.get_score() }} pts</strong></div>
+            <div class="sb-stat">Your Score <strong>{{ ns.my_score }} pts</strong></div>
             {% endif %}
         {% endif %}
     </div>
@@ -343,20 +343,20 @@
         {% set p2 = leaderboard[1] %}
         <div class="podium-slot rank-2">
             <div class="podium-card">
-                <div class="podium-crown">🥈</div>
-                {% if p2.profile_picture %}
-                <img src="{{ url_for('static', filename='avatars/' + p2.profile_picture) }}"
-                     alt="" class="podium-avatar" style="border:2px solid #c0c0c0;">
+                {% if p2.user.profile_picture %}
+                <img src="{{ url_for('settings.serve_avatar', username=p2.user.username) }}"
+                     alt="" class="podium-avatar av-border-{{ p2.user.get_top_border() or 'tier1' }}">
                 {% else %}
-                <div class="podium-avatar-placeholder">{{ p2.username[0]|upper }}</div>
+                <div class="podium-avatar-placeholder">{{ p2.user.username[0]|upper }}</div>
                 {% endif %}
+                <div class="podium-crown">🥈</div>
                 <div class="podium-username">
-                    <a href="{{ url_for('settings.public_profile', user_id=p2.id) }}">{{ p2.username }}</a>
+                    <a href="{{ url_for('settings.public_profile', user_id=p2.user.id) }}">{{ p2.user.username }}</a>
                 </div>
-                <div class="podium-score">{{ p2.get_score() }}</div>
+                <div class="podium-score">{{ p2.score }}</div>
                 <div class="podium-pts">points</div>
-                <div class="podium-solves">{{ p2.solves|length }} solves</div>
-                {% if current_user.is_authenticated and p2.id == current_user.id %}
+                <div class="podium-solves">{{ p2.solves }} solves</div>
+                {% if current_user.is_authenticated and p2.user.id == current_user.id %}
                 <div class="podium-you">YOU</div>
                 {% endif %}
             </div>
@@ -368,20 +368,20 @@
         {% set p1 = leaderboard[0] %}
         <div class="podium-slot rank-1">
             <div class="podium-card">
-                <div class="podium-crown">🥇</div>
-                {% if p1.profile_picture %}
-                <img src="{{ url_for('static', filename='avatars/' + p1.profile_picture) }}"
-                     alt="" class="podium-avatar" style="border:2px solid #ffd700;">
+                {% if p1.user.profile_picture %}
+                <img src="{{ url_for('settings.serve_avatar', username=p1.user.username) }}"
+                     alt="" class="podium-avatar av-border-{{ p1.user.get_top_border() or 'tier1' }}">
                 {% else %}
-                <div class="podium-avatar-placeholder">{{ p1.username[0]|upper }}</div>
+                <div class="podium-avatar-placeholder">{{ p1.user.username[0]|upper }}</div>
                 {% endif %}
+                <div class="podium-crown">🥇</div>
                 <div class="podium-username">
-                    <a href="{{ url_for('settings.public_profile', user_id=p1.id) }}">{{ p1.username }}</a>
+                    <a href="{{ url_for('settings.public_profile', user_id=p1.user.id) }}">{{ p1.user.username }}</a>
                 </div>
-                <div class="podium-score">{{ p1.get_score() }}</div>
+                <div class="podium-score">{{ p1.score }}</div>
                 <div class="podium-pts">points</div>
-                <div class="podium-solves">{{ p1.solves|length }} solves</div>
-                {% if current_user.is_authenticated and p1.id == current_user.id %}
+                <div class="podium-solves">{{ p1.solves }} solves</div>
+                {% if current_user.is_authenticated and p1.user.id == current_user.id %}
                 <div class="podium-you">YOU</div>
                 {% endif %}
             </div>
@@ -393,20 +393,20 @@
         {% set p3 = leaderboard[2] %}
         <div class="podium-slot rank-3">
             <div class="podium-card">
-                <div class="podium-crown">🥉</div>
-                {% if p3.profile_picture %}
-                <img src="{{ url_for('static', filename='avatars/' + p3.profile_picture) }}"
-                     alt="" class="podium-avatar" style="border:2px solid #cd7f32;">
+                {% if p3.user.profile_picture %}
+                <img src="{{ url_for('settings.serve_avatar', username=p3.user.username) }}"
+                     alt="" class="podium-avatar av-border-{{ p3.user.get_top_border() or 'tier1' }}">
                 {% else %}
-                <div class="podium-avatar-placeholder">{{ p3.username[0]|upper }}</div>
+                <div class="podium-avatar-placeholder">{{ p3.user.username[0]|upper }}</div>
                 {% endif %}
+                <div class="podium-crown">🥉</div>
                 <div class="podium-username">
-                    <a href="{{ url_for('settings.public_profile', user_id=p3.id) }}">{{ p3.username }}</a>
+                    <a href="{{ url_for('settings.public_profile', user_id=p3.user.id) }}">{{ p3.user.username }}</a>
                 </div>
-                <div class="podium-score">{{ p3.get_score() }}</div>
+                <div class="podium-score">{{ p3.score }}</div>
                 <div class="podium-pts">points</div>
-                <div class="podium-solves">{{ p3.solves|length }} solves</div>
-                {% if current_user.is_authenticated and p3.id == current_user.id %}
+                <div class="podium-solves">{{ p3.solves }} solves</div>
+                {% if current_user.is_authenticated and p3.user.id == current_user.id %}
                 <div class="podium-you">YOU</div>
                 {% endif %}
             </div>
@@ -421,38 +421,31 @@
     {% if leaderboard|length > 3 %}
     <div class="sb-divider">Remaining Rankings</div>
     <div class="sb-list">
-        {% for user in leaderboard %}
+        {% for entry in leaderboard %}
         {% if loop.index > 3 %}
-        <div class="sb-row {% if current_user.is_authenticated and user.id == current_user.id %}is-you{% endif %}">
-
-            <!-- Rank number -->
+        <div class="sb-row {% if current_user.is_authenticated and entry.user.id == current_user.id %}is-you{% endif %}">
             <div class="sb-rank-num">#{{ loop.index }}</div>
-
-            <!-- Player -->
             <div class="sb-player">
-                {% if user.profile_picture %}
-                <img src="{{ url_for('static', filename='avatars/' + user.profile_picture) }}"
-                     alt="" class="sb-player-avatar">
+                {% if entry.user.profile_picture %}
+                <img src="{{ url_for('settings.serve_avatar', username=entry.user.username) }}"
+                     alt="" class="sb-player-avatar av-border-{{ entry.user.get_top_border() or 'tier1' }}">
                 {% else %}
-                <div class="sb-player-avatar-placeholder">{{ user.username[0]|upper }}</div>
+                <div class="sb-player-avatar-placeholder">{{ entry.user.username[0]|upper }}</div>
                 {% endif %}
                 <div>
                     <div class="sb-player-name">
-                        <a href="{{ url_for('settings.public_profile', user_id=user.id) }}">{{ user.username }}</a>
-                        {% if current_user.is_authenticated and user.id == current_user.id %}
+                        <a href="{{ url_for('settings.public_profile', user_id=entry.user.id) }}">{{ entry.user.username }}</a>
+                        {% if current_user.is_authenticated and entry.user.id == current_user.id %}
                         <span class="sb-you-tag">YOU</span>
                         {% endif %}
                     </div>
-                    <div class="sb-player-sub">{{ user.solves|length }} solve{% if user.solves|length != 1 %}s{% endif %}</div>
+                    <div class="sb-player-sub">{{ entry.solves }} solve{% if entry.solves != 1 %}s{% endif %}</div>
                 </div>
             </div>
-
-            <!-- Score -->
             <div class="sb-score-col">
-                <div class="sb-score-val">{{ user.get_score() }}</div>
+                <div class="sb-score-val">{{ entry.score }}</div>
                 <div class="sb-score-sub">pts</div>
             </div>
-
         </div>
         {% endif %}
         {% endfor %}
@@ -465,3 +458,6 @@
 
 </div>
 {% endblock %}
+
+<script src="{{ url_for('static', filename='js/page-tour.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tour-scoreboard.js') }}"></script>

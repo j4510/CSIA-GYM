@@ -1,106 +1,591 @@
 {% extends "base.html" %}
-
 {% block title %}{{ challenge.title }} - CSIA GYM{% endblock %}
 
 {% block content %}
-<!-- SINGLE CHALLENGE PAGE -->
-
 <div class="max-w-4xl mx-auto">
-    <!-- Back Button -->
-    <a href="{{ url_for('challenges.list') }}" 
-       class="inline-block mb-4 text-blue-600 hover:underline">
-        ← Back to Challenges
-    </a>
-    
-    <!-- Challenge Card -->
-    <div class="bg-white rounded-lg shadow-md p-8">
-        <!-- Header -->
-        <div class="flex justify-between items-start mb-6">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">
-                    {{ challenge.title }}
-                </h1>
-                
-                <div class="flex space-x-2">
-                    <span class="bg-gray-200 px-3 py-1 rounded" style="color:#111111;">
-                        {{ challenge.category }}
-                    </span>
-                    <span style="color:#111111;" class="{% if challenge.difficulty == 'easy' %}bg-green-100{% elif challenge.difficulty == 'medium' %}bg-yellow-100{% else %}bg-red-100{% endif %} px-3 py-1 rounded">
-                        {{ challenge.difficulty|capitalize }}
-                    </span>
-                </div>
-            </div>
-            
-            <div class="text-right">
-                <div class="text-3xl font-bold text-blue-600">
-                    {{ challenge.points }}
-                </div>
-                <div class="text-gray-500 text-sm">points</div>
-            </div>
+  <a href="{{ url_for('challenges.list') }}" class="inline-block mb-4 text-red-600 hover:underline">← Back to Challenges</a>
+
+  <div class="bg-white rounded-lg shadow-md p-8">
+    <div class="flex justify-between items-start mb-6">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ challenge.title }}</h1>
+        <div class="flex flex-wrap gap-2">
+          <span class="bg-gray-200 px-3 py-1 rounded" style="color:#111111;">{{ challenge.category }}</span>
+          <span class="px-3 py-1 rounded {% if challenge.difficulty == 'easy' %}bg-green-100{% elif challenge.difficulty == 'medium' %}bg-yellow-100{% else %}bg-red-100{% endif %}" style="color:#111111;">
+            {{ challenge.difficulty|capitalize }}
+          </span>
+          {% if challenge.is_regex %}
+          <span class="px-3 py-1 rounded" style="background:rgba(156,39,176,0.12);color:#7b1fa2;border:1px solid rgba(156,39,176,0.3);font-size:0.8rem;font-weight:700;">REGEX FLAG</span>
+          {% endif %}
         </div>
-        
-        <!-- Description -->
-        <div class="mb-6">
-            <h3 class="font-semibold text-lg mb-2" style="color:#111111;">Description</h3>
-            <div class="prose max-w-none" style="color: #111111;">
-                {{ challenge.description }}
-            </div>
-        </div>
-        
-        <!-- Solve Info -->
-        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-            <p class="text-gray-600">
-                🎯 <strong>{{ challenge.solve_count() }}</strong> solves
-                {% if challenge.solve_count() > 0 %}
-                    <span class="text-gray-400">|</span>
-                    Created by <strong>{{ challenge.author.username }}</strong>
-                {% endif %}
-            </p>
-        </div>
-        
-        {% if already_solved %}
-            <!-- Already Solved Message -->
-            <div class="bg-green-100 border border-green-200 p-4 rounded-lg text-center">
-                <p class="font-semibold" style="color:#000000;">✅ You have already solved this challenge!</p>
-            </div>
-        {% else %}
-            <!-- Flag Submission Form -->
-            <form method="POST" action="{{ url_for('challenges.submit_flag', challenge_id=challenge.id) }}">
-                <div class="mb-4">
-                    <label for="flag" class="block text-gray-700 font-semibold mb-2">
-                        Submit Flag
-                    </label>
-                    <div class="flex space-x-2">
-                        <input type="text"
-                               id="flag"
-                               name="flag"
-                               required
-                               pattern="CSIA\{.+\}"
-                               title="Flag must be in the format CSIA{...}"
-                               class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="CSIA{...}">
-                        
-                        <button type="submit" 
-                                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">
-                            Submit
-                        </button>
-                    </div>
-                </div>
-            </form>
-        {% endif %}
-        
-        <!-- 
-        TO ADD: Challenge Files
-        {% if challenge.file_path %}
-        <div class="mt-6">
-            <a href="{{ url_for('challenges.download_file', challenge_id=challenge.id, filename=challenge.file_path) }}" 
-               class="inline-block bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">
-                📥 Download Challenge Files
-            </a>
-        </div>
-        {% endif %}
-        -->
+      </div>
+      <div class="text-right">
+        <div class="text-3xl font-bold text-red-600">{{ challenge.points }}</div>
+        <div class="text-gray-500 text-sm">points</div>
+      </div>
     </div>
+
+    <div class="mb-6">
+      <h3 class="font-semibold text-lg mb-2" style="color:#111111;">Description</h3>
+      <div id="challenge-desc">{{ challenge.description | safe }}</div>
+    </div>
+    <style>
+      #challenge-desc, #challenge-desc p, #challenge-desc span, #challenge-desc div { color:#111111 !important; }
+      #challenge-desc h1, #challenge-desc h2, #challenge-desc h3 { color:#111111 !important; font-weight:700; margin:1rem 0 0.5rem; }
+      #challenge-desc strong { font-weight:700; color:#111111 !important; }
+      #challenge-desc em { font-style:italic; }
+      #challenge-desc blockquote { border-left:4px solid #8b0000; padding-left:1rem; color:#333 !important; margin:0.75rem 0; font-style:italic; }
+      #challenge-desc pre { background:#1a1a1a !important; color:#f5f5f5 !important; padding:1rem; border-radius:4px; overflow-x:auto; margin:0.75rem 0; }
+      #challenge-desc code { background:#f0f0f0 !important; color:#8b0000 !important; padding:0.1rem 0.35rem; border-radius:3px; }
+      #challenge-desc ul { list-style-type:disc !important; padding-left:1.5rem !important; margin-bottom:0.75rem; }
+      #challenge-desc ol { list-style-type:decimal !important; padding-left:1.5rem !important; margin-bottom:0.75rem; }
+      #challenge-desc li { display:list-item !important; color:#111111 !important; margin:0.25rem 0; }
+      #challenge-desc p { margin-bottom:0.6rem; }
+    </style>
+
+    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <p class="text-gray-600" style="margin:0;">🎯 <strong>{{ challenge.solve_count() }}</strong> solve{{ 's' if challenge.solve_count() != 1 }}</p>
+          <!-- Bookmark button -->
+          <button id="bm-btn" onclick="toggleBookmark()"
+                  style="display:inline-flex;align-items:center;gap:5px;padding:4px 12px;font-size:0.72rem;font-weight:900;text-transform:uppercase;border:2px solid {% if is_bookmarked %}#facc15{% else %}rgba(250,204,21,0.3){% endif %};background:{% if is_bookmarked %}rgba(250,204,21,0.12){% else %}transparent{% endif %};color:{% if is_bookmarked %}#facc15{% else %}#aaa{% endif %};cursor:pointer;transition:all 0.15s;">
+            🔖 <span id="bm-label">{% if is_bookmarked %}Saved{% else %}Save{% endif %}</span>
+          </button>
+          <!-- Subscribe button -->
+          <button id="sub-btn" onclick="toggleSubscribe()"
+                  style="display:inline-flex;align-items:center;gap:5px;padding:4px 12px;font-size:0.72rem;font-weight:900;text-transform:uppercase;border:2px solid {% if is_subscribed %}#60a5fa{% else %}rgba(96,165,250,0.3){% endif %};background:{% if is_subscribed %}rgba(96,165,250,0.12){% else %}transparent{% endif %};color:{% if is_subscribed %}#60a5fa{% else %}#aaa{% endif %};cursor:pointer;transition:all 0.15s;">
+            🔔 <span id="sub-label">{% if is_subscribed %}Subscribed{% else %}Subscribe{% endif %}</span>
+          </button>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <img src="{{ url_for('settings.serve_avatar', username=challenge.author.username) }}"
+               alt="" style="width:28px;height:28px;object-fit:cover;border-radius:3px;position:relative;"
+               class="av-border-{{ challenge.author.get_top_border() or 'tier1' }}">
+          <span style="font-size:0.82rem;font-weight:700;color:#333;"><a href="{{ url_for('settings.public_profile', user_id=challenge.author.id) }}" style="color:inherit;text-decoration:none;">{{ challenge.author.username }}</a></span>
+        </div>
+      </div>
+      <!-- Vote buttons (solvers only) -->
+      {% if already_solved %}
+      <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+        <span style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:#555;">Rate this challenge:</span>
+        <button id="upvote-btn" onclick="castVote(1)"
+                style="display:inline-flex;align-items:center;gap:0.3rem;padding:5px 14px;font-size:0.8rem;font-weight:900;text-transform:uppercase;border:2px solid {% if user_vote == 1 %}#4ade80{% else %}rgba(74,222,128,0.4){% endif %};background:{% if user_vote == 1 %}rgba(74,222,128,0.15){% else %}transparent{% endif %};color:{% if user_vote == 1 %}#4ade80{% else %}#aaa{% endif %};cursor:pointer;transition:all 0.15s;">
+          ▲ <span id="upvote-count">{{ upvotes }}</span>
+        </button>
+        <button id="downvote-btn" onclick="castVote(-1)"
+                style="display:inline-flex;align-items:center;gap:0.3rem;padding:5px 14px;font-size:0.8rem;font-weight:900;text-transform:uppercase;border:2px solid {% if user_vote == -1 %}#f87171{% else %}rgba(248,113,113,0.4){% endif %};background:{% if user_vote == -1 %}rgba(248,113,113,0.15){% else %}transparent{% endif %};color:{% if user_vote == -1 %}#f87171{% else %}#aaa{% endif %};cursor:pointer;transition:all 0.15s;">
+          ▼ <span id="downvote-count">{{ downvotes }}</span>
+        </button>
+        <span style="font-size:0.72rem;color:#aaa;">Net: <strong id="net-votes" style="color:{% if net_votes > 0 %}#4ade80{% elif net_votes < 0 %}#f87171{% else %}#888{% endif %};">{{ net_votes }}</strong></span>
+      </div>
+      {% else %}
+      <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid #e5e7eb;">
+        <span style="font-size:0.72rem;color:#aaa;">▲ {{ upvotes }} &nbsp; ▼ {{ downvotes }} &nbsp;·&nbsp; Solve this challenge to vote.</span>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if already_solved %}
+    <div class="bg-green-100 border border-green-200 p-4 rounded-lg text-center">
+      <p class="font-semibold" style="color:#000000;">✅ You have already solved this challenge!</p>
+    </div>
+    {% else %}
+    <form method="POST" action="{{ url_for('challenges.submit_flag', challenge_id=challenge.id) }}">
+      <div class="mb-4">
+        <label for="flag" class="block text-gray-700 font-semibold mb-2">Submit Flag</label>
+        {% if challenge.is_regex %}
+        <p class="text-xs mb-2" style="color:#7b1fa2;font-weight:600;">⚡ This challenge uses regex flag matching — multiple valid answers may exist.</p>
+        {% endif %}
+        <div class="flex space-x-2">
+          <input type="text" id="flag" name="flag" required
+                 {% if not challenge.is_regex %}pattern="CSIA\{.+\}" title="Flag must be in the format CSIA{...}"{% endif %}
+                 class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 placeholder="CSIA{...}">
+          <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">Submit</button>
+        </div>
+      </div>
+    </form>
+    {% endif %}
+
+    {% if submission_files %}
+    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+      <h4 class="font-semibold text-gray-800 mb-3">📎 Challenge Files</h4>
+      <ul class="space-y-2">
+        {% for sf in submission_files %}
+        <li>
+          <a href="{{ url_for('submissions.download_file', file_id=sf.id) }}"
+             class="inline-flex items-center space-x-2 hover:underline text-sm font-medium" style="color:#2563eb;">
+            <span>⬇</span>
+            <span style="color:#2563eb;">{{ sf.original_name }}</span>
+            <span style="color:#2563eb;opacity:0.7;">({{ (sf.file_size / 1048576) | round(2) }} MB)</span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if challenge.category == 'Reverse Engineering' and challenge.nc_challenge %}
+    <div class="mt-6 p-5 rounded-lg" style="background:#0a0a0a;border:2px solid rgba(139,0,0,0.4);">
+      <h4 class="font-black uppercase text-sm mb-1" style="color:#e0e0e0;letter-spacing:0.08em;">🔌 REVERSE ENGINEERING INSTANCE</h4>
+      <p class="text-xs mb-4" style="color:#888;">Your own isolated instance — 15 min session, extendable up to 60 min total. Connect with <code style="color:#ccc;background:#1a1a1a;padding:2px 6px;border-radius:3px;">nc &lt;host&gt; &lt;port&gt;</code>. Each connection spawns a fresh process.</p>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <button id="nc-launch-btn" onclick="ncLaunch()"
+                style="padding:10px 28px;background:#8b0000;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;font-size:0.85rem;letter-spacing:0.06em;">▶ LAUNCH</button>
+        <button id="nc-stop-btn" onclick="ncStop()" style="display:none;padding:10px 20px;background:#222;color:#aaa;font-weight:900;text-transform:uppercase;border:1px solid #444;cursor:pointer;font-size:0.8rem;">■ STOP</button>
+        <button id="nc-extend-btn" onclick="ncExtend()" style="display:none;padding:10px 20px;background:#1a3a1a;color:#4caf50;font-weight:900;text-transform:uppercase;border:1px solid #2e6b2e;cursor:pointer;font-size:0.8rem;">⏱ EXTEND</button>
+        <span id="nc-status" style="font-size:0.8rem;font-weight:700;color:#666;"></span>
+      </div>
+      <div id="nc-timer-row" style="display:none;margin-top:0.9rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+          <span style="font-size:0.75rem;color:#888;">TIME REMAINING</span>
+          <span id="nc-countdown" style="font-size:1.1rem;font-weight:900;font-family:monospace;color:#4caf50;"></span>
+          <div style="flex:1;min-width:120px;background:#1a1a1a;border-radius:9999px;height:6px;overflow:hidden;">
+            <div id="nc-timer-bar" style="height:6px;border-radius:9999px;background:#4caf50;transition:width 1s linear,background 1s;"></div>
+          </div>
+        </div>
+        <div id="nc-extend-msg" style="font-size:0.72rem;margin-top:0.4rem;color:#666;"></div>
+      </div>
+      <div id="nc-connect-info" style="display:none;margin-top:1rem;padding:0.75rem 1rem;background:#111;border:1px solid #333;border-radius:4px;">
+        <p class="text-xs mb-1" style="color:#888;">Connect using:</p>
+        <code id="nc-connect-cmd" style="color:#4caf50;font-size:0.9rem;font-weight:700;"></code>
+      </div>
+      <!-- Dynamic flag banner -->
+      <div id="nc-flag-banner" style="display:none;margin-top:1rem;padding:0.85rem 1rem;background:#0d1f0d;border:1px solid #2e6b2e;border-radius:4px;">
+        <p style="font-size:0.72rem;color:#aaa;margin-bottom:0.35rem;">⚠️ <strong style="color:#ffcc00;">This challenge has a dynamically generated flag</strong> — it is unique to your instance and will be lost if you stop or let it expire. Extend your session to keep it.</p>
+        <p style="font-size:0.72rem;color:#888;margin-bottom:0.5rem;">Your flag for this instance (pre-filled in the submit box below):</p>
+        <code id="nc-flag-value" style="color:#4caf50;font-size:0.95rem;font-weight:900;word-break:break-all;"></code>
+      </div>
+    </div>
+    <script>
+    (function(){
+      const CID = {{ challenge.id }};
+      const LS_KEY = `dyn_flag_nc_${CID}_{{ current_user.id }}`;
+      const INITIAL_TTL = 15 * 60;
+      let _expiresAt = null, _ticker = null;
+
+      function setStatus(msg, color) {
+        const el = document.getElementById('nc-status');
+        el.textContent = msg; el.style.color = color || '#888';
+      }
+      function fmtTime(secs) {
+        const m = Math.floor(secs / 60), s = secs % 60;
+        return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      }
+      function updateTimer(remaining) {
+        const pct = Math.max(0, Math.min(100, (remaining / INITIAL_TTL) * 100));
+        const color = remaining <= 120 ? '#f44336' : remaining <= 600 ? '#ffaa00' : '#4caf50';
+        document.getElementById('nc-countdown').textContent = fmtTime(remaining);
+        document.getElementById('nc-countdown').style.color = color;
+        document.getElementById('nc-timer-bar').style.width = pct + '%';
+        document.getElementById('nc-timer-bar').style.background = color;
+      }
+      function showFlag(flag) {
+        if (!flag) return;
+        // Store HMAC-SHA256 digest in localStorage for reference
+        crypto.subtle.importKey('raw', new TextEncoder().encode(flag), {name:'HMAC',hash:'SHA-256'}, false, ['sign'])
+          .then(k => crypto.subtle.sign('HMAC', k, new TextEncoder().encode(`csia-ctf-${CID}`)))
+          .then(sig => {
+            const hex = Array.from(new Uint8Array(sig)).map(b=>b.toString(16).padStart(2,'0')).join('');
+            localStorage.setItem(LS_KEY, JSON.stringify({flag, hmac: hex}));
+          });
+        document.getElementById('nc-flag-value').textContent = flag;
+        document.getElementById('nc-flag-banner').style.display = 'block';
+        const flagInput = document.getElementById('flag');
+        if (flagInput) flagInput.value = flag;
+      }
+      function clearFlag() {
+        localStorage.removeItem(LS_KEY);
+        document.getElementById('nc-flag-banner').style.display = 'none';
+        document.getElementById('nc-flag-value').textContent = '';
+      }
+      function restoreFlag() {
+        try {
+          const stored = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+          if (stored && stored.flag) showFlag(stored.flag);
+        } catch(e) {}
+      }
+      function startTicker() {
+        if (_ticker) clearInterval(_ticker);
+        _ticker = setInterval(() => {
+          const rem = Math.max(0, Math.round(_expiresAt - Date.now() / 1000));
+          updateTimer(rem);
+          const canExtend = rem <= 30 * 60;
+          document.getElementById('nc-extend-btn').style.display = canExtend ? '' : 'none';
+          document.getElementById('nc-extend-msg').textContent = canExtend
+            ? '⚠️ Extend now to keep your flag — stopping or expiring will lose it!'
+            : '';
+          document.getElementById('nc-extend-msg').style.color = canExtend ? '#ffcc00' : '#666';
+          if (rem <= 0) { clearInterval(_ticker); onExpired(); }
+        }, 1000);
+      }
+      function onExpired() {
+        setStatus('Instance expired.', '#888');
+        document.getElementById('nc-timer-row').style.display = 'none';
+        document.getElementById('nc-connect-info').style.display = 'none';
+        document.getElementById('nc-stop-btn').style.display = 'none';
+        document.getElementById('nc-extend-btn').style.display = 'none';
+        clearFlag();
+        const btn = document.getElementById('nc-launch-btn');
+        btn.disabled = false; btn.textContent = '▶ LAUNCH';
+      }
+      function showRunning(port, host, expiresAt, dynamicFlag) {
+        _expiresAt = expiresAt;
+        document.getElementById('nc-launch-btn').style.display = 'none';
+        document.getElementById('nc-stop-btn').style.display = '';
+        document.getElementById('nc-timer-row').style.display = '';
+        document.getElementById('nc-connect-cmd').textContent = `nc ${host} ${port}`;
+        document.getElementById('nc-connect-info').style.display = 'block';
+        setStatus(`Listening on port ${port}`, '#4caf50');
+        if (dynamicFlag) showFlag(dynamicFlag); else restoreFlag();
+        startTicker();
+      }
+      window.ncLaunch = function() {
+        const btn = document.getElementById('nc-launch-btn');
+        btn.disabled = true; btn.textContent = '⏳ STARTING...';
+        setStatus('Starting listener...', '#ffaa00');
+        fetch(`/challenges/${CID}/launch-nc`, {method:'POST'})
+          .then(r => r.json()).then(d => {
+            if (d.ok) { showRunning(d.port, d.host, d.expires_at, d.dynamic_flag); }
+            else { setStatus('Error: ' + d.error, '#f44336'); btn.disabled = false; btn.textContent = '▶ LAUNCH'; }
+          }).catch(() => { setStatus('Network error', '#f44336'); btn.disabled = false; btn.textContent = '▶ LAUNCH'; });
+      };
+      window.ncStop = function() {
+        if (!confirm('Stopping will permanently lose your dynamically generated flag. Are you sure?')) return;
+        fetch(`/challenges/${CID}/stop-nc`, {method:'POST'}).then(r => r.json()).then(d => {
+          if (d.ok) {
+            if (_ticker) clearInterval(_ticker);
+            document.getElementById('nc-launch-btn').style.display = ''; document.getElementById('nc-launch-btn').disabled = false; document.getElementById('nc-launch-btn').textContent = '▶ LAUNCH';
+            document.getElementById('nc-stop-btn').style.display = 'none';
+            document.getElementById('nc-extend-btn').style.display = 'none';
+            document.getElementById('nc-timer-row').style.display = 'none';
+            document.getElementById('nc-connect-info').style.display = 'none';
+            clearFlag();
+            setStatus('Instance stopped.', '#888');
+          }
+        });
+      };
+      window.ncExtend = function() {
+        fetch(`/challenges/${CID}/extend-nc`, {method:'POST'}).then(r => r.json()).then(d => {
+          if (d.ok) { _expiresAt = d.expires_at; setStatus('Extended!', '#4caf50'); setTimeout(() => setStatus(`Listening on port`, '#4caf50'), 2000); }
+          else { document.getElementById('nc-extend-msg').textContent = d.error; document.getElementById('nc-extend-msg').style.color = '#f44336'; }
+        });
+      };
+      fetch(`/challenges/${CID}/nc-status`).then(r => r.json()).then(d => {
+        if (d.running) showRunning(d.port, d.host, d.expires_at, d.dynamic_flag);
+      });
+    })();
+    </script>
+    {% endif %}
+
+    {% if challenge.category == 'Web' and challenge.web_challenge %}
+    <div class="mt-6 p-5 rounded-lg" style="background:#0a0a0a;border:2px solid rgba(139,0,0,0.4);">
+      <h4 class="font-black uppercase text-sm mb-1" style="color:#e0e0e0;letter-spacing:0.08em;">⚡ WEB CHALLENGE INSTANCE</h4>
+      <p class="text-xs mb-4" style="color:#888;">Your own isolated instance — 15 min session, extendable up to 60 min total.</p>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <button id="web-launch-btn" onclick="webLaunch()"
+                style="padding:10px 28px;background:#8b0000;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;font-size:0.85rem;letter-spacing:0.06em;">▶ LAUNCH</button>
+        <button id="web-stop-btn" onclick="webStop()" style="display:none;padding:10px 20px;background:#222;color:#aaa;font-weight:900;text-transform:uppercase;border:1px solid #444;cursor:pointer;font-size:0.8rem;">■ STOP</button>
+        <button id="web-extend-btn" onclick="webExtend()" style="display:none;padding:10px 20px;background:#1a3a1a;color:#4caf50;font-weight:900;text-transform:uppercase;border:1px solid #2e6b2e;cursor:pointer;font-size:0.8rem;">⏱ EXTEND</button>
+        <span id="web-status" style="font-size:0.8rem;font-weight:700;color:#666;"></span>
+      </div>
+      <div id="web-timer-row" style="display:none;margin-top:0.9rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+          <span style="font-size:0.75rem;color:#888;">TIME REMAINING</span>
+          <span id="web-countdown" style="font-size:1.1rem;font-weight:900;font-family:monospace;color:#4caf50;"></span>
+          <div style="flex:1;min-width:120px;background:#1a1a1a;border-radius:9999px;height:6px;overflow:hidden;">
+            <div id="web-timer-bar" style="height:6px;border-radius:9999px;background:#4caf50;transition:width 1s linear,background 1s;"></div>
+          </div>
+        </div>
+        <div id="web-extend-msg" style="font-size:0.72rem;margin-top:0.4rem;color:#666;"></div>
+      </div>
+      <div id="web-launch-link" style="display:none;margin-top:1rem;">
+        <a id="web-challenge-url" href="#" target="_blank" rel="noopener"
+           style="font-weight:900;font-size:0.9rem;color:#4caf50;text-decoration:underline;">→ Open Challenge in New Tab</a>
+      </div>
+      <!-- Dynamic flag banner -->
+      <div id="web-flag-banner" style="display:none;margin-top:1rem;padding:0.85rem 1rem;background:#0d1f0d;border:1px solid #2e6b2e;border-radius:4px;">
+        <p style="font-size:0.72rem;color:#aaa;margin-bottom:0.35rem;">⚠️ <strong style="color:#ffcc00;">This challenge has a dynamically generated flag</strong> — it is unique to your instance and will be lost if you stop or let it expire. Extend your session to keep it.</p>
+        <p style="font-size:0.72rem;color:#888;margin-bottom:0.5rem;">Your flag for this instance (pre-filled in the submit box below):</p>
+        <code id="web-flag-value" style="color:#4caf50;font-size:0.95rem;font-weight:900;word-break:break-all;"></code>
+      </div>
+    </div>
+    <script>
+    (function(){
+      const CID = {{ challenge.id }};
+      const LS_KEY = `dyn_flag_web_${CID}_{{ current_user.id }}`;
+      const INITIAL_TTL = 15 * 60;
+      let _expiresAt = null, _ticker = null;
+
+      function setStatus(msg, color) {
+        const el = document.getElementById('web-status');
+        el.textContent = msg; el.style.color = color || '#888';
+      }
+      function fmtTime(secs) {
+        const m = Math.floor(secs / 60), s = secs % 60;
+        return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      }
+      function updateTimer(remaining) {
+        const pct = Math.max(0, Math.min(100, (remaining / INITIAL_TTL) * 100));
+        const color = remaining <= 120 ? '#f44336' : remaining <= 600 ? '#ffaa00' : '#4caf50';
+        document.getElementById('web-countdown').textContent = fmtTime(remaining);
+        document.getElementById('web-countdown').style.color = color;
+        document.getElementById('web-timer-bar').style.width = pct + '%';
+        document.getElementById('web-timer-bar').style.background = color;
+      }
+      function showFlag(flag) {
+        if (!flag) return;
+        crypto.subtle.importKey('raw', new TextEncoder().encode(flag), {name:'HMAC',hash:'SHA-256'}, false, ['sign'])
+          .then(k => crypto.subtle.sign('HMAC', k, new TextEncoder().encode(`csia-ctf-${CID}`)))
+          .then(sig => {
+            const hex = Array.from(new Uint8Array(sig)).map(b=>b.toString(16).padStart(2,'0')).join('');
+            localStorage.setItem(LS_KEY, JSON.stringify({flag, hmac: hex}));
+          });
+        document.getElementById('web-flag-value').textContent = flag;
+        document.getElementById('web-flag-banner').style.display = 'block';
+        const flagInput = document.getElementById('flag');
+        if (flagInput) flagInput.value = flag;
+      }
+      function clearFlag() {
+        localStorage.removeItem(LS_KEY);
+        document.getElementById('web-flag-banner').style.display = 'none';
+        document.getElementById('web-flag-value').textContent = '';
+      }
+      function restoreFlag() {
+        try {
+          const stored = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+          if (stored && stored.flag) showFlag(stored.flag);
+        } catch(e) {}
+      }
+      function startTicker() {
+        if (_ticker) clearInterval(_ticker);
+        _ticker = setInterval(() => {
+          const rem = Math.max(0, Math.round(_expiresAt - Date.now() / 1000));
+          updateTimer(rem);
+          const canExtend = rem <= 30 * 60;
+          document.getElementById('web-extend-btn').style.display = canExtend ? '' : 'none';
+          document.getElementById('web-extend-msg').textContent = canExtend
+            ? '⚠️ Extend now to keep your flag — stopping or expiring will lose it!'
+            : '';
+          document.getElementById('web-extend-msg').style.color = canExtend ? '#ffcc00' : '#666';
+          if (rem <= 0) { clearInterval(_ticker); onExpired(); }
+        }, 1000);
+      }
+      function onExpired() {
+        setStatus('Instance expired.', '#888');
+        document.getElementById('web-timer-row').style.display = 'none';
+        document.getElementById('web-launch-link').style.display = 'none';
+        document.getElementById('web-stop-btn').style.display = 'none';
+        document.getElementById('web-extend-btn').style.display = 'none';
+        clearFlag();
+        const btn = document.getElementById('web-launch-btn');
+        btn.style.display = ''; btn.disabled = false; btn.textContent = '▶ LAUNCH';
+      }
+      function showRunning(port, url, expiresAt, dynamicFlag) {
+        _expiresAt = expiresAt;
+        document.getElementById('web-launch-btn').style.display = 'none';
+        document.getElementById('web-stop-btn').style.display = '';
+        document.getElementById('web-timer-row').style.display = '';
+        const anchor = document.getElementById('web-challenge-url');
+        anchor.href = url; anchor.textContent = `→ Open Challenge (${url})`;
+        document.getElementById('web-launch-link').style.display = 'block';
+        setStatus(`Running on port ${port}`, '#4caf50');
+        if (dynamicFlag) showFlag(dynamicFlag); else restoreFlag();
+        startTicker();
+      }
+      window.webLaunch = function() {
+        const btn = document.getElementById('web-launch-btn');
+        btn.disabled = true; btn.textContent = '⏳ STARTING...';
+        setStatus('Starting instance...', '#ffaa00');
+        fetch(`/challenges/${CID}/launch`, {method:'POST'})
+          .then(r => r.json()).then(d => {
+            if (d.ok) { showRunning(d.port, d.url, d.expires_at, d.dynamic_flag); }
+            else { setStatus('Error: ' + d.error, '#f44336'); btn.disabled = false; btn.textContent = '▶ LAUNCH'; }
+          }).catch(() => { setStatus('Network error', '#f44336'); btn.disabled = false; btn.textContent = '▶ LAUNCH'; });
+      };
+      window.webStop = function() {
+        if (!confirm('Stopping will permanently lose your dynamically generated flag. Are you sure?')) return;
+        fetch(`/challenges/${CID}/stop-web`, {method:'POST'}).then(r => r.json()).then(d => {
+          if (d.ok) {
+            if (_ticker) clearInterval(_ticker);
+            document.getElementById('web-launch-btn').style.display = ''; document.getElementById('web-launch-btn').disabled = false; document.getElementById('web-launch-btn').textContent = '▶ LAUNCH';
+            document.getElementById('web-stop-btn').style.display = 'none';
+            document.getElementById('web-extend-btn').style.display = 'none';
+            document.getElementById('web-timer-row').style.display = 'none';
+            document.getElementById('web-launch-link').style.display = 'none';
+            clearFlag();
+            setStatus('Instance stopped.', '#888');
+          }
+        });
+      };
+      window.webExtend = function() {
+        fetch(`/challenges/${CID}/extend-web`, {method:'POST'}).then(r => r.json()).then(d => {
+          if (d.ok) { _expiresAt = d.expires_at; setStatus('Extended!', '#4caf50'); }
+          else { document.getElementById('web-extend-msg').textContent = d.error; document.getElementById('web-extend-msg').style.color = '#f44336'; }
+        });
+      };
+      fetch(`/challenges/${CID}/web-status`).then(r => r.json()).then(d => {
+        if (d.running) showRunning(d.port, d.url, d.expires_at, d.dynamic_flag);
+      });
+    })();
+    </script>
+    {% endif %}
+  </div>
 </div>
 
+<!-- Solver Leaderboard -->
+<style>
+  @keyframes goldGlow {
+    0%,100% { box-shadow: 0 0 8px rgba(250,204,21,0.5), 0 0 20px rgba(250,204,21,0.2); }
+    50%      { box-shadow: 0 0 16px rgba(250,204,21,0.9), 0 0 36px rgba(250,204,21,0.4); }
+  }
+  @keyframes silverGlow {
+    0%,100% { box-shadow: 0 0 6px rgba(203,213,225,0.4), 0 0 14px rgba(203,213,225,0.15); }
+    50%      { box-shadow: 0 0 12px rgba(203,213,225,0.8), 0 0 26px rgba(203,213,225,0.3); }
+  }
+  @keyframes bronzeGlow {
+    0%,100% { box-shadow: 0 0 6px rgba(205,127,50,0.4), 0 0 14px rgba(205,127,50,0.15); }
+    50%      { box-shadow: 0 0 12px rgba(205,127,50,0.8), 0 0 26px rgba(205,127,50,0.3); }
+  }
+  .solver-row { transition: transform 0.15s ease, filter 0.15s ease; }
+  .solver-row:hover { transform: translateX(3px); filter: brightness(1.08); }
+</style>
+
+<div class="max-w-4xl mx-auto mt-4" id="solvers-section">
+  <div style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.06);border-radius:10px;overflow:hidden;">
+
+    <div style="padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:10px;">
+      <span style="font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:#888;">Solvers</span>
+      <span style="font-size:0.68rem;font-weight:700;padding:2px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#aaa;border-radius:20px;">{{ solvers|length }}</span>
+    </div>
+
+    {% if solvers %}
+    <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;">
+      {% for sv in solvers %}
+
+      {% if loop.index == 1 %}
+        {% set row_bg    = 'linear-gradient(135deg, rgba(250,204,21,0.13) 0%, rgba(250,204,21,0.05) 100%)' %}
+        {% set row_border= '1px solid rgba(250,204,21,0.45)' %}
+        {% set row_anim  = 'goldGlow 2.2s ease-in-out infinite' %}
+        {% set rank_color= '#facc15' %}
+        {% set rank_bg   = 'rgba(250,204,21,0.15)' %}
+        {% set rank_label= '🥇' %}
+        {% set name_color= '#fef08a' %}
+        {% set time_color= '#a16207' %}
+      {% elif loop.index == 2 %}
+        {% set row_bg    = 'linear-gradient(135deg, rgba(203,213,225,0.1) 0%, rgba(203,213,225,0.04) 100%)' %}
+        {% set row_border= '1px solid rgba(203,213,225,0.35)' %}
+        {% set row_anim  = 'silverGlow 2.4s ease-in-out infinite' %}
+        {% set rank_color= '#cbd5e1' %}
+        {% set rank_bg   = 'rgba(203,213,225,0.12)' %}
+        {% set rank_label= '🥈' %}
+        {% set name_color= '#e2e8f0' %}
+        {% set time_color= '#64748b' %}
+      {% elif loop.index == 3 %}
+        {% set row_bg    = 'linear-gradient(135deg, rgba(205,127,50,0.12) 0%, rgba(205,127,50,0.04) 100%)' %}
+        {% set row_border= '1px solid rgba(205,127,50,0.4)' %}
+        {% set row_anim  = 'bronzeGlow 2.4s ease-in-out infinite' %}
+        {% set rank_color= '#cd7f32' %}
+        {% set rank_bg   = 'rgba(205,127,50,0.12)' %}
+        {% set rank_label= '🥉' %}
+        {% set name_color= '#fcd9a0' %}
+        {% set time_color= '#92400e' %}
+      {% else %}
+        {% set row_bg    = 'rgba(255,255,255,0.02)' %}
+        {% set row_border= '1px solid rgba(255,255,255,0.05)' %}
+        {% set row_anim  = 'none' %}
+        {% set rank_color= '#555' %}
+        {% set rank_bg   = 'rgba(255,255,255,0.04)' %}
+        {% set rank_label= loop.index|string %}
+        {% set name_color= '#c0c0c0' %}
+        {% set time_color= '#4a4a4a' %}
+      {% endif %}
+
+      <div class="solver-row" style="background:{{ row_bg }};border:{{ row_border }};border-radius:8px;padding:11px 14px;display:flex;align-items:center;gap:12px;animation:{{ row_anim }};">
+
+        <!-- Rank badge -->
+        <div style="flex-shrink:0;width:34px;height:34px;border-radius:50%;background:{{ rank_bg }};border:1px solid {{ rank_color }};display:flex;align-items:center;justify-content:center;font-size:{% if loop.index <= 3 %}1rem{% else %}0.72rem{% endif %};font-weight:800;color:{{ rank_color }};font-family:monospace;">{{ rank_label }}</div>
+
+        <!-- Avatar -->
+        <img src="{{ url_for('settings.serve_avatar', username=sv.user.username) }}"
+             alt="" style="flex-shrink:0;width:32px;height:32px;object-fit:cover;border-radius:6px;"
+             class="av-border-{{ sv.user.get_top_border() or 'tier1' }}">
+
+        <!-- Username -->
+        <a href="{{ url_for('settings.public_profile', user_id=sv.user.id) }}"
+           style="flex:1;font-size:0.88rem;font-weight:700;color:{{ name_color }};text-decoration:none;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+           onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+          {{ sv.user.username }}
+        </a>
+
+        <!-- Solved at -->
+        <span style="flex-shrink:0;font-size:0.72rem;font-weight:600;color:{{ time_color }};font-family:monospace;letter-spacing:0.02em;">{{ sv.solved_at.strftime('%Y-%m-%d %H:%M') }}</span>
+
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="padding:2.5rem;text-align:center;font-size:0.8rem;font-weight:600;color:#333;">No solvers yet — be the first.</p>
+    {% endif %}
+
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/page-tour.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tour-challenge-detail.js') }}"></script>
+<script>
+var _bookmarked = {{ 'true' if is_bookmarked else 'false' }};
+var _subscribed = {{ 'true' if is_subscribed else 'false' }};
+
+function toggleBookmark() {
+  fetch('/challenges/{{ challenge.id }}/bookmark', {method:'POST'})
+    .then(r => r.json()).then(d => {
+      _bookmarked = d.bookmarked;
+      var btn = document.getElementById('bm-btn');
+      var lbl = document.getElementById('bm-label');
+      btn.style.borderColor = _bookmarked ? '#facc15' : 'rgba(250,204,21,0.3)';
+      btn.style.background  = _bookmarked ? 'rgba(250,204,21,0.12)' : 'transparent';
+      btn.style.color       = _bookmarked ? '#facc15' : '#aaa';
+      lbl.textContent       = _bookmarked ? 'Saved' : 'Save';
+    });
+}
+
+function toggleSubscribe() {
+  fetch('/challenges/{{ challenge.id }}/subscribe', {method:'POST'})
+    .then(r => r.json()).then(d => {
+      _subscribed = d.subscribed;
+      var btn = document.getElementById('sub-btn');
+      var lbl = document.getElementById('sub-label');
+      btn.style.borderColor = _subscribed ? '#60a5fa' : 'rgba(96,165,250,0.3)';
+      btn.style.background  = _subscribed ? 'rgba(96,165,250,0.12)' : 'transparent';
+      btn.style.color       = _subscribed ? '#60a5fa' : '#aaa';
+      lbl.textContent       = _subscribed ? 'Subscribed' : 'Subscribe';
+    });
+}
+
+function castVote(value) {
+  fetch('/challenges/{{ challenge.id }}/vote', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({value: value})
+  }).then(function(r){ return r.json(); }).then(function(d) {
+    if (!d.ok) return;
+    document.getElementById('upvote-count').textContent = d.upvotes;
+    document.getElementById('downvote-count').textContent = d.downvotes;
+    var net = d.upvotes - d.downvotes;
+    var netEl = document.getElementById('net-votes');
+    netEl.textContent = net;
+    netEl.style.color = net > 0 ? '#4ade80' : net < 0 ? '#f87171' : '#888';
+    var up = document.getElementById('upvote-btn');
+    var dn = document.getElementById('downvote-btn');
+    up.style.borderColor = d.user_vote===1 ? '#4ade80' : 'rgba(74,222,128,0.4)';
+    up.style.background  = d.user_vote===1 ? 'rgba(74,222,128,0.15)' : 'transparent';
+    up.style.color       = d.user_vote===1 ? '#4ade80' : '#aaa';
+    dn.style.borderColor = d.user_vote===-1 ? '#f87171' : 'rgba(248,113,113,0.4)';
+    dn.style.background  = d.user_vote===-1 ? 'rgba(248,113,113,0.15)' : 'transparent';
+    dn.style.color       = d.user_vote===-1 ? '#f87171' : '#aaa';
+  });
+}
+</script>
 {% endblock %}

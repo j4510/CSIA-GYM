@@ -26,10 +26,87 @@
     
     {% block extra_css %}{% endblock %}
     
+    <style>
+    /* ── Avatar tier border classes ─────────────────────────────────────────── */
 
+    /* tier1 – Common: plain dim border, no glow */
+    .av-border-tier1 { border:2px solid #4a4a4a !important; }
+
+    /* tier2 – Uncommon: silver shimmer, slow breathe */
+    .av-border-tier2 { border:2px solid #b0b8c8 !important; animation:avUncommon 3s ease-in-out infinite; }
+    @keyframes avUncommon { 0%,100%{box-shadow:0 0 4px rgba(176,184,200,0.4)} 50%{box-shadow:0 0 9px rgba(176,184,200,0.85)} }
+
+    /* tier3 – Rare: green pulse */
+    .av-border-tier3 { border:2px solid #4ade80 !important; animation:avRare 2.5s ease-in-out infinite; }
+    @keyframes avRare { 0%,100%{box-shadow:0 0 5px rgba(74,222,128,0.5)} 50%{box-shadow:0 0 13px rgba(74,222,128,0.95)} }
+
+    /* tier4 – Epic: blue electric double-ring */
+    .av-border-tier4 { border:2px solid #60a5fa !important; animation:avEpic 2s ease-in-out infinite; }
+    @keyframes avEpic { 0%,100%{box-shadow:0 0 6px rgba(96,165,250,0.6),0 0 12px rgba(96,165,250,0.2)} 50%{box-shadow:0 0 14px rgba(96,165,250,1),0 0 26px rgba(96,165,250,0.45)} }
+
+    /* tier5 – Legendary: purple with slow rotation-like shimmer */
+    .av-border-tier5 { border:2px solid #a78bfa !important; animation:avLegendary 1.8s ease-in-out infinite; }
+    @keyframes avLegendary { 0%,100%{box-shadow:0 0 8px rgba(167,139,250,0.6),0 0 16px rgba(167,139,250,0.2)} 50%{box-shadow:0 0 18px rgba(167,139,250,1),0 0 32px rgba(167,139,250,0.5)} }
+
+    /* tier6 – Mythical: pink + cyan alternating dual-color */
+    .av-border-tier6 { border:2px solid #f472b6 !important; animation:avMythical 1.6s ease-in-out infinite; }
+    @keyframes avMythical {
+      0%   {box-shadow:0 0 8px rgba(244,114,182,0.8),0 0 18px rgba(244,114,182,0.3);}
+      50%  {box-shadow:0 0 14px rgba(34,211,238,0.9),0 0 28px rgba(34,211,238,0.4);border-color:#22d3ee;}
+      100% {box-shadow:0 0 8px rgba(244,114,182,0.8),0 0 18px rgba(244,114,182,0.3);}
+    }
+
+    /* tier7 – Ancient: fire flicker orange→red */
+    .av-border-tier7 { border:2px solid #fb923c !important; animation:avAncient 1.2s ease-in-out infinite; }
+    @keyframes avAncient {
+      0%   {box-shadow:0 0 8px rgba(251,146,60,0.8),0 0 16px rgba(251,146,60,0.3);}
+      40%  {box-shadow:0 0 18px rgba(239,68,68,1),0 0 32px rgba(239,68,68,0.5);border-color:#ef4444;}
+      70%  {box-shadow:0 0 12px rgba(251,146,60,0.9),0 0 22px rgba(251,146,60,0.4);}
+      100% {box-shadow:0 0 8px rgba(251,146,60,0.8),0 0 16px rgba(251,146,60,0.3);}
+    }
+
+    /* tier8 – Divine: gold with inward inner glow */
+    .av-border-tier8 { border:2px solid #facc15 !important; animation:avDivine 1.8s ease-in-out infinite; }
+    @keyframes avDivine {
+      0%,100%{box-shadow:0 0 10px rgba(250,204,21,0.8),0 0 22px rgba(250,204,21,0.3),inset 0 0 6px rgba(250,204,21,0.15);}
+      50%    {box-shadow:0 0 22px rgba(250,204,21,1),0 0 44px rgba(250,204,21,0.6),inset 0 0 12px rgba(250,204,21,0.3);}
+    }
+
+    /* tier9 – Celestial: red→white strobe */
+    .av-border-tier9 { border:2px solid #f87171 !important; animation:avCelestial 1.1s ease-in-out infinite; }
+    @keyframes avCelestial {
+      0%   {box-shadow:0 0 12px rgba(248,113,113,0.9),0 0 28px rgba(248,113,113,0.4),0 0 50px rgba(248,113,113,0.15);}
+      50%  {box-shadow:0 0 20px rgba(255,255,255,0.9),0 0 40px rgba(248,113,113,0.8),0 0 70px rgba(248,113,113,0.4);border-color:#fff;}
+      100% {box-shadow:0 0 12px rgba(248,113,113,0.9),0 0 28px rgba(248,113,113,0.4),0 0 50px rgba(248,113,113,0.15);}
+    }
+
+    /* tier10 – GOD: animated rainbow conic border + multi-layer pulse */
+    .av-border-tier10 { border:2px solid transparent !important; position:relative; animation:avGod 1.5s ease-in-out infinite; outline:none; }
+    .av-border-tier10::after { content:''; position:absolute; inset:-2px; border-radius:inherit; background:conic-gradient(from 0deg,#ff0040,#ff8c00,#facc15,#4ade80,#00fff7,#60a5fa,#a78bfa,#f472b6,#ff0040); animation:avGodSpin 1.2s linear infinite; z-index:-1; pointer-events:none; }
+    @keyframes avGodSpin { to{transform:rotate(360deg)} }
+    @keyframes avGod { 0%,100%{box-shadow:0 0 14px rgba(224,64,251,0.7),0 0 28px rgba(0,255,247,0.4)} 50%{box-shadow:0 0 28px rgba(224,64,251,1),0 0 56px rgba(0,255,247,0.8),0 0 80px rgba(255,0,64,0.5)} }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col">
     
+    <!-- Announcement Banner -->
+    {% if active_announcements %}
+    {% for ann in active_announcements %}
+    {% set ann_colors = {
+      'red':    ('rgba(139,0,0,0.95)', '#fca5a5', 'rgba(139,0,0,0.4)'),
+      'yellow': ('rgba(92,40,0,0.95)', '#fcd34d', 'rgba(180,100,0,0.4)'),
+      'green':  ('rgba(0,60,20,0.95)', '#86efac', 'rgba(0,100,40,0.4)'),
+      'blue':   ('rgba(0,30,80,0.95)', '#93c5fd', 'rgba(0,60,160,0.4)'),
+    } %}
+    {% set bg, fg, border = ann_colors.get(ann.color, ann_colors['red']) %}
+    <div id="ann-{{ ann.id }}" data-ends="{{ ann.ends_at.isoformat() }}Z"
+         style="background:{{ bg }};border-bottom:2px solid {{ border }};padding:8px 16px;text-align:center;position:relative;z-index:100;">
+      <span style="font-size:0.82rem;font-weight:700;color:{{ fg }};">📢 {{ ann.message }}</span>
+      <span id="ann-timer-{{ ann.id }}" style="font-size:0.7rem;color:{{ fg }};opacity:0.6;margin-left:10px;"></span>
+    </div>
+    {% endfor %}
+    {% endif %}
+
     <!-- Particles.js background -->
     <div id="particles-js"></div>
     
@@ -42,122 +119,105 @@
     3. Add active state styling if needed
     ======================================== -->
     
-    <nav class="bg-red-600 text-black shadow-lg border-b border-gray-800">
-        <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                
-                <!-- Logo/Brand -->
-                <a href="{{ url_for('auth.index') }}" class="text-2xl font-black hover:text-white transition px-3 py-1">
-                    CSIA GYM
-                </a>
-                
-                <!-- Navigation Links -->
-                <div class="flex items-center space-x-2">
-                    {% if current_user.is_authenticated %}
-                        <!-- Logged-in user navigation -->
-                        
-                        <a href="{{ url_for('challenges.list') }}" 
-                           class="hover:bg-black hover:text-white transition font-bold px-3 py-2 border-2 border-black uppercase text-sm">
-                            CHALLENGES
-                        </a>
-                        
-                        <a href="{{ url_for('challenges.scoreboard') }}" 
-                           class="hover:bg-black hover:text-white transition font-bold px-3 py-2 border-2 border-black uppercase text-sm">
-                            SCOREBOARD
-                        </a>
-                        
-                        <a href="{{ url_for('submissions.new') }}" 
-                           class="hover:bg-black hover:text-white transition font-bold px-3 py-2 border-2 border-black uppercase text-sm">
-                            SUBMIT
-                        </a>
-                        
-                        <a href="{{ url_for('community.list') }}" 
-                           class="hover:bg-black hover:text-white transition font-bold px-3 py-2 border-2 border-black uppercase text-sm">
-                            COMMUNITY
-                        </a>
-                        
-                        {% if current_user.is_admin %}
-                        <a href="{{ url_for('admin.dashboard') }}" 
-                           class="bg-black text-white hover:bg-white hover:text-black transition font-black px-3 py-2 border-2 border-black uppercase text-sm animate-pulse">
-                            ADMIN
-                        </a>
+    <nav class="site-nav">
+        <a href="{{ url_for('auth.index') }}" class="site-nav-logo">CSIA <span>GYM</span></a>
+
+        <!-- Mobile hamburger -->
+        <button class="nav-hamburger" id="nav-hamburger" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+
+        <div class="site-nav-links" id="site-nav-links">
+            {% if current_user.is_authenticated %}
+
+                <a href="{{ url_for('challenges.list') }}" class="site-nav-link">Challenges</a>
+                <a href="{{ url_for('challenges.scoreboard') }}" class="site-nav-link">Scoreboard</a>
+                <a href="{{ url_for('submissions.new') }}" class="site-nav-link">Submit</a>
+                <a href="{{ url_for('community.list') }}" class="site-nav-link">Community</a>
+
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin.dashboard') }}" class="site-nav-link" style="color:#cc0000;animation:pulse 2s infinite;">Admin</a>
+                {% elif current_user.is_moderator %}
+                <a href="{{ url_for('community.list') }}" class="site-nav-link" style="color:#38bdf8;">Mod</a>
+                {% endif %}
+
+                <!-- Notification Bell -->
+                <div style="position:relative;" x-data="{ open: false }" @click.outside="open = false">
+                    <button @click="open = !open"
+                            style="position:relative;background:none;border:none;cursor:pointer;padding:0.4rem 0.6rem;color:#aaa;display:flex;align-items:center;transition:color 0.15s;"
+                            onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zm.995-14.901a1 1 0 1 0-1.99 0A5.002 5.002 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901z"/>
+                        </svg>
+                        {% if unread_count > 0 %}
+                        <span style="position:absolute;top:2px;right:2px;background:#cc0000;color:#fff;font-size:0.5rem;font-weight:900;border-radius:9999px;min-width:14px;height:14px;display:flex;align-items:center;justify-content:center;padding:0 2px;">{{ unread_count }}</span>
                         {% endif %}
-                        
-                        {# 
-                        TO ADD NEW NAVIGATION ITEMS:
-                        Copy this template and change the route
-                        
-                        <a href="{{ url_for('your_blueprint.your_route') }}" 
-                           class="hover:text-blue-200 transition font-medium">
-                            Your Section Name
-                        </a>
-                        #}
-                        
-                        <!-- User dropdown menu with better hover behavior -->
-                        <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
-                            <button class="hover:text-white transition font-medium flex items-center px-3 py-2 hover:bg-black rounded" @click="open = !open">
-                                {{ current_user.username }} ▾
-                            </button>
-                            
-                            <!-- Dropdown content -->
-                            <div x-show="open" 
-                                 x-transition
-                                 class="absolute right-0 mt-1 w-48 bg-black border border-gray-700 rounded-md shadow-lg z-10"
-                                 style="display: none;">
-                                <a href="{{ url_for('settings.account') }}" 
-                                   class="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition">
-                                    👤 Account
-                                </a>
-                                
-                                <a href="{{ url_for('settings.index') }}" 
-                                   class="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition">
-                                    ⚙️ Settings
-                                </a>
-                                
-                                <a href="{{ url_for('submissions.my_submissions') }}" 
-                                   class="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition">
-                                    📝 My Submissions
-                                </a>
-                                
-                                {# 
-                                TO ADD MORE DROPDOWN ITEMS:
-                                <a href="{{ url_for('blueprint.route') }}" 
-                                   class="block px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white transition">
-                                    🔧 Your Item
-                                </a>
-                                #}
-                                
-                                <hr class="my-1 border-gray-700">
-                                
-                                <a href="{{ url_for('auth.logout') }}" 
-                                   class="block px-4 py-2 text-red-500 hover:bg-red-600 hover:text-white transition">
-                                    🚪 Logout
-                                </a>
-                            </div>
+                    </button>
+                    <div x-show="open" x-transition
+                         style="display:none;position:absolute;right:0;top:calc(100% + 8px);width:340px;background:#0d0d0d;border:1px solid rgba(139,0,0,0.4);box-shadow:0 8px 32px rgba(0,0,0,0.7);z-index:9999;max-height:440px;overflow-y:auto;">
+                        <div style="padding:10px 14px;border-bottom:1px solid rgba(139,0,0,0.3);display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#e5e5e5;">Notifications</span>
+                            {% if unread_count > 0 %}
+                            <button onclick="markAllRead()" style="font-size:0.65rem;font-weight:700;text-transform:uppercase;color:#cc0000;background:none;border:none;cursor:pointer;">Mark all read</button>
+                            {% endif %}
                         </div>
-                        
-                    {% else %}
-                        <!-- Guest navigation -->
-                        <a href="{{ url_for('auth.login') }}" 
-                           class="hover:text-white transition font-medium px-3 py-2 hover:bg-black rounded">
-                            Login
-                        </a>
-                        
-                        <a href="{{ url_for('auth.register') }}" 
-                           class="hover:text-white transition font-medium px-3 py-2 hover:bg-black rounded">
-                            Register
-                        </a>
-                    {% endif %}
+                        {% for n in notifications %}
+                        {% set cat_color = {'challenge':'#60a5fa','community':'#4ade80','submission':'#fb923c','system':'#a78bfa'}.get(n.category, '#888') %}
+                        <div id="unotif-{{ n.id }}"
+                             style="padding:11px 14px;border-bottom:1px solid rgba(139,0,0,0.12);{% if not n.is_read %}background:rgba(139,0,0,0.07);{% endif %}cursor:pointer;"
+                             onclick="markUserRead({{ n.id }}{% if n.link %}, '{{ n.link }}'{% endif %})">
+                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+                                <span style="font-size:0.58rem;font-weight:900;text-transform:uppercase;color:{{ cat_color }};border:1px solid {{ cat_color }};padding:1px 5px;">{{ n.category }}</span>
+                                <p style="font-size:0.78rem;font-weight:900;color:#f5f5f5;margin:0;">{{ n.title }}</p>
+                            </div>
+                            <p style="font-size:0.72rem;color:#888;line-height:1.4;margin:0;">{{ n.body }}</p>
+                            <p style="font-size:0.6rem;color:#444;margin-top:4px;">{{ n.created_at.strftime('%b %d, %Y') }}</p>
+                        </div>
+                        {% endfor %}
+                        {% for n in global_notifications %}
+                        <div id="notif-{{ n.id }}"
+                             style="padding:11px 14px;border-bottom:1px solid rgba(139,0,0,0.12);{% if n.id not in read_notification_ids %}background:rgba(139,0,0,0.06);{% endif %}cursor:pointer;"
+                             onclick="markRead({{ n.id }})">
+                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+                                <span style="font-size:0.58rem;font-weight:900;text-transform:uppercase;color:#facc15;border:1px solid #facc15;padding:1px 5px;">admin</span>
+                                <p style="font-size:0.78rem;font-weight:900;color:#f5f5f5;margin:0;">{{ n.title }}</p>
+                            </div>
+                            <p style="font-size:0.72rem;color:#888;line-height:1.4;margin:0;">{{ n.body }}</p>
+                            <p style="font-size:0.6rem;color:#444;margin-top:4px;">{{ n.created_at.strftime('%b %d, %Y') }}</p>
+                        </div>
+                        {% endfor %}
+                        {% if not notifications and not global_notifications %}
+                        <p style="padding:16px 14px;font-size:0.72rem;color:#444;text-transform:uppercase;font-weight:700;">No notifications</p>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
+
+                <!-- User dropdown -->
+                <div style="position:relative;" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
+                    <button style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:0.4rem 0.75rem;color:#aaa;font-size:0.78rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;transition:color 0.15s;"
+                            onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'"
+                            @click="open = !open">
+                        <img src="{{ url_for('settings.serve_avatar', username=current_user.username) }}"
+                             alt="" style="width:22px;height:22px;object-fit:cover;border-radius:3px;flex-shrink:0;"
+                             class="{% if user_top_border %}av-border-{{ user_top_border }}{% else %}av-border-tier1{% endif %}">
+                        {{ current_user.username }} ▾
+                    </button>
+                    <div x-show="open" x-transition
+                         style="display:none;position:absolute;right:0;top:calc(100% + 8px);width:180px;background:#0d0d0d;border:1px solid rgba(139,0,0,0.4);box-shadow:0 8px 32px rgba(0,0,0,0.7);z-index:9999;">
+                        <a href="{{ url_for('settings.account') }}" style="display:block;padding:10px 14px;font-size:0.78rem;color:#aaa;text-decoration:none;border-bottom:1px solid rgba(139,0,0,0.12);transition:color 0.15s,background 0.15s;" onmouseover="this.style.color='#fff';this.style.background='rgba(139,0,0,0.08)'" onmouseout="this.style.color='#aaa';this.style.background=''">👤 Account</a>
+                        <a href="{{ url_for('settings.index') }}" style="display:block;padding:10px 14px;font-size:0.78rem;color:#aaa;text-decoration:none;border-bottom:1px solid rgba(139,0,0,0.12);transition:color 0.15s,background 0.15s;" onmouseover="this.style.color='#fff';this.style.background='rgba(139,0,0,0.08)'" onmouseout="this.style.color='#aaa';this.style.background=''">⚙️ Settings</a>
+                        <a href="{{ url_for('submissions.my_submissions') }}" style="display:block;padding:10px 14px;font-size:0.78rem;color:#aaa;text-decoration:none;border-bottom:1px solid rgba(139,0,0,0.12);transition:color 0.15s,background 0.15s;" onmouseover="this.style.color='#fff';this.style.background='rgba(139,0,0,0.08)'" onmouseout="this.style.color='#aaa';this.style.background=''">📝 My Submissions</a>
+                        <a href="{{ url_for('auth.logout') }}" style="display:block;padding:10px 14px;font-size:0.78rem;color:#cc0000;text-decoration:none;transition:color 0.15s,background 0.15s;" onmouseover="this.style.color='#fff';this.style.background='rgba(204,0,0,0.15)'" onmouseout="this.style.color='#cc0000';this.style.background=''">🚪 Logout</a>
+                    </div>
+                </div>
+
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="site-nav-link">Login</a>
+                <a href="{{ url_for('auth.register') }}" class="site-nav-cta">Join Free</a>
+            {% endif %}
         </div>
     </nav>
 
-    <!-- ========================================
-    FLASH MESSAGES
-    Shows success/error/info messages to users
-    ======================================== -->
-    
     <div class="container mx-auto px-4 mt-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -170,26 +230,19 @@
         {% endwith %}
     </div>
 
-    <!-- ========================================
-    MAIN CONTENT
-    Page-specific content goes here
-    ======================================== -->
-    
     <main class="container mx-auto px-4 py-8 flex-grow">
         {% block content %}{% endblock %}
     </main>
 
-    <!-- ========================================
-    FOOTER
-    ======================================== -->
-    
-    <footer class="bg-gray-800 text-gray-300 mt-auto">
-        <div class="container mx-auto px-4 py-6">
-            <div class="flex justify-between items-center">
-                <p>&copy; 2026 CSIA GYM. Built with ❤️ by v4mp & ssecca.</p>
-                <div class="flex items-center space-x-4">
-                    <a href="{{ url_for('auth.whats_new') }}" class="hover:text-white text-sm font-mono" style="color: #9ca3af;">{{ app_version }}</a>
-                </div>
+    <footer class="site-footer">
+        <div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+            <span style="font-size:0.78rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#333;">CSIA <span style="color:#cc0000;">GYM</span></span>
+            <span style="font-size:0.72rem;color:#444;">© 2026 · Built by v4mp &amp; ssecca</span>
+            <div style="display:flex;gap:1.5rem;align-items:center;">
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('settings.bug_report') }}" class="site-footer-link">Bug Reports</a>
+                {% endif %}
+                <a href="{{ url_for('auth.whats_new') }}" class="site-footer-link" style="font-family:monospace;">{{ app_version }}</a>
             </div>
         </div>
     </footer>
@@ -314,6 +367,61 @@
     -->
     
     {% block extra_js %}{% endblock %}
+
+    <script>
+    // Announcement countdown timers
+    document.querySelectorAll('[data-ends]').forEach(function(el) {
+      var id = el.id.replace('ann-', '');
+      var timerEl = document.getElementById('ann-timer-' + id);
+      var endsAt = new Date(el.dataset.ends).getTime();
+      function tick() {
+        var rem = Math.max(0, Math.round((endsAt - Date.now()) / 1000));
+        if (rem <= 0) { el.style.display = 'none'; return; }
+        var h = Math.floor(rem / 3600), m = Math.floor((rem % 3600) / 60), s = rem % 60;
+        timerEl.textContent = '(' + (h ? h + 'h ' : '') + (m ? m + 'm ' : '') + s + 's)';
+        setTimeout(tick, 1000);
+      }
+      tick();
+    });
+
+    // Notification read helpers
+    function markRead(id) {
+      var el = document.getElementById('notif-' + id);
+      if (el) el.style.background = '';
+      fetch('/api/notifications/' + id + '/read', { method: 'POST', credentials: 'same-origin' });
+    }
+    function markUserRead(id, link) {
+      var el = document.getElementById('unotif-' + id);
+      if (el) el.style.background = '';
+      fetch('/api/user-notifications/' + id + '/read', { method: 'POST', credentials: 'same-origin' });
+      if (link) { setTimeout(function(){ window.location.href = link; }, 150); }
+    }
+    function markAllRead() {
+      document.querySelectorAll('[id^="unotif-"]').forEach(function(el) { el.style.background = ''; });
+      document.querySelectorAll('[id^="notif-"]').forEach(function(el) { el.style.background = ''; });
+      fetch('/api/user-notifications/read-all', { method: 'POST', credentials: 'same-origin' });
+      fetch('/api/notifications/read-all', { method: 'POST', credentials: 'same-origin' });
+    }
+    </script>
+    <script>
+    // Mobile nav hamburger toggle
+    (function() {
+      var btn = document.getElementById('nav-hamburger');
+      var links = document.getElementById('site-nav-links');
+      if (!btn || !links) return;
+      btn.addEventListener('click', function() {
+        var open = links.classList.toggle('mobile-open');
+        btn.classList.toggle('open', open);
+      });
+      // Close on outside click
+      document.addEventListener('click', function(e) {
+        if (!btn.contains(e.target) && !links.contains(e.target)) {
+          links.classList.remove('mobile-open');
+          btn.classList.remove('open');
+        }
+      });
+    })();
+    </script>
     
 </body>
 </html>

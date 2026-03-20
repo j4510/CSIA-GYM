@@ -1,70 +1,69 @@
 {% extends "base.html" %}
-
 {% block title %}Edit Challenge - Admin{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto fade-in">
-    <div class="mb-6 flex justify-between items-center">
-        <h1 class="text-3xl font-bold" style="color:#000;">Edit Challenge</h1>
-        <a href="{{ url_for('admin.challenges') }}" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300">
-            ← Back
-        </a>
-    </div>
+  <div class="mb-6 flex justify-between items-center">
+    <h1 class="text-3xl font-bold" style="color:#000;">Edit Challenge</h1>
+    <a href="{{ url_for('admin.challenges') }}" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300">← Back</a>
+  </div>
 
-    <div class="bg-black border-4 border-red-600 p-8 shadow-lg">
-        <form method="POST" action="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}">
-            <div class="mb-4">
-                <label class="block text-sm opacity-60 uppercase font-bold mb-1">Title</label>
-                <input type="text" name="title" value="{{ challenge.title }}" required
-                       class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm opacity-60 uppercase font-bold mb-1">Description</label>
-                <textarea name="description" required rows="6"
-                          class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">{{ challenge.description }}</textarea>
-            </div>
-            <div class="grid md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Category</label>
-                    <select name="category" class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">
-                        {% for cat in ['Web','Cryptography','Binary','Reverse Engineering','Forensics','OSINT','Steganography','Networking','Misc'] %}
-                        <option value="{{ cat }}" {% if challenge.category == cat %}selected{% endif %}>{{ cat }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Difficulty</label>
-                    <select name="difficulty" class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">
-                        <option value="easy" {% if challenge.difficulty == 'easy' %}selected{% endif %}>Easy</option>
-                        <option value="medium" {% if challenge.difficulty == 'medium' %}selected{% endif %}>Medium</option>
-                        <option value="hard" {% if challenge.difficulty == 'hard' %}selected{% endif %}>Hard</option>
-                    </select>
-                </div>
-            </div>
-            <div class="grid md:grid-cols-2 gap-4 mb-6">
-                <div>
-                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Flag</label>
-                    <input type="text" name="flag" value="{{ challenge.flag }}" required
-                           class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">
-                    <p class="text-xs opacity-40 mt-1">Must start with CSIA{</p>
-                </div>
-                <div>
-                    <label class="block text-sm opacity-60 uppercase font-bold mb-1">Points</label>
-                    <input type="number" name="points" value="{{ challenge.points }}" required min="1"
-                           class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">
-                </div>
-            </div>
-            <div class="flex gap-4">
-                <button type="submit"
-                        style="padding:12px 32px; background:#8b0000; color:#fff; font-weight:900; text-transform:uppercase; border:none; cursor:pointer;">
-                    SAVE CHANGES
-                </button>
-                <a href="{{ url_for('admin.challenges') }}"
-                   style="padding:12px 32px; background:#222; color:#fff; font-weight:900; text-transform:uppercase; text-decoration:none; border:2px solid #8b0000;">
-                    CANCEL
-                </a>
-            </div>
-        </form>
-    </div>
+  <div class="bg-black border-4 border-red-600 p-8 shadow-lg">
+    <form method="POST" action="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}">
+      <div class="mb-4">
+        <label class="block text-sm opacity-60 uppercase font-bold mb-1">Title</label>
+        <input type="text" name="title" value="{{ challenge.title }}" required
+               class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm opacity-60 uppercase font-bold mb-1">Description</label>
+        <textarea name="description" required rows="6"
+                  class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">{{ challenge.description }}</textarea>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm opacity-60 uppercase font-bold mb-1">Category</label>
+          <select name="category" class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">
+            {% for cat in ['Web','Cryptography','Binary','Reverse Engineering','Forensics','OSINT','Steganography','Networking','Misc'] %}
+            <option value="{{ cat }}" {% if challenge.category == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm opacity-60 uppercase font-bold mb-1">Difficulty</label>
+          <select name="difficulty" class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">
+            <option value="easy" {% if challenge.difficulty == 'easy' %}selected{% endif %}>Easy</option>
+            <option value="medium" {% if challenge.difficulty == 'medium' %}selected{% endif %}>Medium</option>
+            <option value="hard" {% if challenge.difficulty == 'hard' %}selected{% endif %}>Hard</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm opacity-60 uppercase font-bold mb-1">Flag</label>
+          <input type="text" name="flag" value="{{ challenge.flag }}" required
+                 class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">
+          <p class="text-xs opacity-40 mt-1">Plain flag or Python regex pattern</p>
+        </div>
+        <div>
+          <label class="block text-sm opacity-60 uppercase font-bold mb-1">Points</label>
+          <input type="number" name="points" value="{{ challenge.points }}" required min="1"
+                 class="w-full px-4 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500" style="background:#1a1a1a;color:#fff;">
+        </div>
+      </div>
+      <div class="mb-6">
+        <label style="display:inline-flex;align-items:center;gap:0.6rem;cursor:pointer;">
+          <input type="checkbox" name="is_regex" {% if challenge.is_regex %}checked{% endif %}
+                 style="width:16px;height:16px;accent-color:#8b0000;cursor:pointer;">
+          <span class="text-sm font-bold uppercase opacity-70">Regex flag matching</span>
+        </label>
+        <p class="text-xs opacity-40 mt-1 ml-6">When enabled, the flag field is treated as a Python <code>re.fullmatch</code> pattern.</p>
+      </div>
+      <div class="flex gap-4">
+        <button type="submit" style="padding:12px 32px;background:#8b0000;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;">SAVE CHANGES</button>
+        <a href="{{ url_for('admin.challenges') }}" style="padding:12px 32px;background:#222;color:#fff;font-weight:900;text-transform:uppercase;text-decoration:none;border:2px solid #8b0000;">CANCEL</a>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}

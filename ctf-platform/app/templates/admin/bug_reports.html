@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Bug Reports - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+  <div class="mb-6 flex justify-between items-center flex-wrap gap-3">
+    <div>
+      <h1 class="text-3xl font-black uppercase" style="color:#fff;">■ BUG REPORTS</h1>
+      <p class="text-sm font-bold uppercase mt-1" style="color:#555;">{{ reports|length }} total reports</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}"
+       style="padding:8px 20px;background:transparent;color:#555;font-weight:700;font-size:0.8rem;text-transform:uppercase;border:2px solid #333;text-decoration:none;">← BACK</a>
+  </div>
+
+  <!-- Status filter tabs -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;" id="status-tabs">
+    {% for s, label, color in [('all','All','#e5e5e5'),('open','Open','#f87171'),('in_progress','In Progress','#fb923c'),('resolved','Resolved','#4ade80'),('wontfix','Won\'t Fix','#888')] %}
+    <button onclick="filterStatus('{{ s }}')" id="stab-{{ s }}"
+            style="padding:5px 14px;font-size:0.72rem;font-weight:900;text-transform:uppercase;border:2px solid {{ color }};background:{% if s == 'all' %}rgba(229,229,229,0.15){% else %}transparent{% endif %};color:{{ color }};cursor:pointer;">{{ label }}</button>
+    {% endfor %}
+  </div>
+
+  <div class="mb-4">
+    <input type="text" id="bug-search" placeholder="Search reports..."
+           oninput="applyBugFilters()"
+           style="width:100%;padding:10px 14px;background:#111;color:#e5e5e5;border:2px solid #333;font-size:0.85rem;outline:none;">
+  </div>
+
+  {% if reports %}
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    {% for r in reports %}
+    {% set sev_colors = {'low':'#4ade80','medium':'#fb923c','high':'#f87171','critical':'#ff0040'} %}
+    {% set stat_colors = {'open':'#f87171','in_progress':'#fb923c','resolved':'#4ade80','wontfix':'#888'} %}
+    {% set sc = sev_colors.get(r.severity, '#888') %}
+    {% set stc = stat_colors.get(r.status, '#888') %}
+    <div class="bug-row" data-status="{{ r.status }}"
+         style="background:#0a0a0a;border:1px solid rgba(139,0,0,0.3);padding:16px 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+            <span style="font-size:0.65rem;font-weight:900;text-transform:uppercase;color:{{ sc }};border:1px solid {{ sc }};padding:2px 7px;">{{ r.severity }}</span>
+            <span style="font-size:0.65rem;font-weight:900;text-transform:uppercase;color:{{ stc }};border:1px solid {{ stc }};padding:2px 7px;">{{ r.status.replace('_',' ') }}</span>
+            <span style="font-size:0.65rem;color:#555;font-family:monospace;">#{{ r.id }}</span>
+          </div>
+          <p style="font-size:0.95rem;font-weight:900;color:#e5e5e5;margin-bottom:4px;">{{ r.title }}</p>
+          <p style="font-size:0.8rem;color:#aaa;line-height:1.5;white-space:pre-wrap;">{{ r.description }}</p>
+          {% if r.page_url %}
+          <p style="font-size:0.72rem;color:#555;margin-top:6px;">Page: <span style="color:#60a5fa;">{{ r.page_url }}</span></p>
+          {% endif %}
+          <p style="font-size:0.68rem;color:#444;margin-top:6px;">
+            Reported by <strong style="color:#888;">{{ r.reporter.username if r.reporter else 'Anonymous' }}</strong>
+            &nbsp;·&nbsp; {{ r.created_at.strftime('%b %d, %Y %H:%M UTC') }}
+          </p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:160px;">
+          <form method="POST" action="{{ url_for('admin.update_bug_status', report_id=r.id) }}" style="display:flex;gap:4px;">
+            <select name="status" style="flex:1;padding:5px 8px;background:#1a1a1a;color:#e5e5e5;border:1px solid #333;font-size:0.75rem;">
+              <option value="open" {% if r.status=='open' %}selected{% endif %}>Open</option>
+              <option value="in_progress" {% if r.status=='in_progress' %}selected{% endif %}>In Progress</option>
+              <option value="resolved" {% if r.status=='resolved' %}selected{% endif %}>Resolved</option>
+              <option value="wontfix" {% if r.status=='wontfix' %}selected{% endif %}>Won't Fix</option>
+            </select>
+            <button type="submit" style="padding:5px 10px;background:#8b0000;color:#fff;font-weight:900;font-size:0.72rem;border:none;cursor:pointer;">SET</button>
+          </form>
+          <form method="POST" action="{{ url_for('admin.delete_bug_report', report_id=r.id) }}"
+                onsubmit="return confirm('Delete this report?')">
+            <button type="submit" style="width:100%;padding:5px 10px;background:transparent;color:#f87171;font-weight:900;font-size:0.72rem;border:1px solid rgba(248,113,113,0.4);cursor:pointer;text-transform:uppercase;">Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:4rem 1rem;border:2px dashed rgba(139,0,0,0.3);">
+    <p style="font-size:1.1rem;font-weight:900;text-transform:uppercase;color:#555;">No bug reports yet</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var _activeStatus = 'all';
+function filterStatus(s) {
+  _activeStatus = s;
+  document.querySelectorAll('#status-tabs button').forEach(function(b) {
+    b.style.background = b.id === 'stab-' + s ? 'rgba(229,229,229,0.15)' : 'transparent';
+  });
+  applyBugFilters();
+}
+function applyBugFilters() {
+  var q = document.getElementById('bug-search').value.toLowerCase();
+  document.querySelectorAll('.bug-row').forEach(function(r) {
+    var sm = _activeStatus === 'all' || r.dataset.status === _activeStatus;
+    var tm = !q || r.textContent.toLowerCase().includes(q);
+    r.style.display = (sm && tm) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

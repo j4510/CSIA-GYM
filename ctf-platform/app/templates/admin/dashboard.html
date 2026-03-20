@@ -5,8 +5,9 @@
 {% block content %}
 <div class="max-w-7xl mx-auto">
     <div class="mb-8">
-        <h1 class="text-4xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p class="text-gray-600 mt-2">Manage users, challenges, and community content</p>
+        <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">Admin</p>
+        <h1 class="text-4xl font-bold" style="color:#fff;">Admin Dashboard</h1>
+        <p style="color:#666;margin-top:0.4rem;">Manage users, challenges, and community content</p>
     </div>
     
     <!-- Statistics Cards -->
@@ -16,23 +17,30 @@
             <div class="text-gray-600">Total Users</div>
             <a href="{{ url_for('admin.users') }}" class="text-sm text-red-600 hover:underline mt-2 inline-block">Manage →</a>
         </div>
-        
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="text-3xl font-bold text-blue-600 mb-2">{{ stats.total_moderators }}</div>
+            <div class="text-gray-600">Moderators</div>
+            <a href="{{ url_for('admin.users') }}" class="text-sm text-blue-600 hover:underline mt-2 inline-block">Manage →</a>
+        </div>
         <div class="bg-white p-6 rounded-lg shadow-md">
             <div class="text-3xl font-bold text-green-600 mb-2">{{ stats.total_challenges }}</div>
             <div class="text-gray-600">Live Challenges</div>
             <a href="{{ url_for('challenges.list') }}" class="text-sm text-green-600 hover:underline mt-2 inline-block">View →</a>
         </div>
-        
         <div class="bg-white p-6 rounded-lg shadow-md">
             <div class="text-3xl font-bold text-yellow-600 mb-2">{{ stats.pending_submissions }}</div>
             <div class="text-gray-600">Pending Approval</div>
             <a href="{{ url_for('admin.challenges') }}" class="text-sm text-yellow-600 hover:underline mt-2 inline-block">Review →</a>
         </div>
-        
         <div class="bg-white p-6 rounded-lg shadow-md">
             <div class="text-3xl font-bold text-purple-600 mb-2">{{ stats.total_posts }}</div>
             <div class="text-gray-600">Community Posts</div>
             <a href="{{ url_for('admin.posts') }}" class="text-sm text-purple-600 hover:underline mt-2 inline-block">Manage →</a>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="text-3xl font-bold text-yellow-500 mb-2">{{ stats.total_badges }}</div>
+            <div class="text-gray-600">Badges Awarded</div>
+            <a href="{{ url_for('admin.badges') }}" class="text-sm text-yellow-500 hover:underline mt-2 inline-block">Manage →</a>
         </div>
     </div>
     
@@ -64,8 +72,32 @@
 
         <a href="{{ url_for('admin.audit_log') }}" class="bg-gray-700 text-white p-6 rounded-lg hover:bg-gray-800 transition text-center">
             <div class="text-3xl mb-2">📋</div>
-            <div class="font-semibold text-lg">Download Audit Log</div>
-            <div class="text-sm opacity-90">Export admin actions as CSV</div>
+            <div class="font-semibold text-lg">Audit Log</div>
+            <div class="text-sm opacity-90">View & export admin actions</div>
+        </a>
+
+        <a href="{{ url_for('admin.notifications') }}" class="bg-red-900 text-white p-6 rounded-lg hover:bg-red-800 transition text-center">
+            <div class="text-3xl mb-2">📣</div>
+            <div class="font-semibold text-lg">Notifications & Announcements</div>
+            <div class="text-sm opacity-90">Send notifications or schedule banners</div>
+        </a>
+
+        <a href="{{ url_for('admin.bug_reports') }}" class="bg-gray-900 text-white p-6 rounded-lg hover:bg-gray-800 transition text-center" style="border:1px solid rgba(248,113,113,0.3);">
+            <div class="text-3xl mb-2">🐛</div>
+            <div class="font-semibold text-lg">Bug Reports</div>
+            <div class="text-sm opacity-90">Review user-submitted bug reports</div>
+        </a>
+
+        <a href="{{ url_for('admin.flag_submissions') }}" class="bg-gray-900 text-white p-6 rounded-lg hover:bg-gray-800 transition text-center" style="border:1px solid rgba(74,222,128,0.3);">
+            <div class="text-3xl mb-2">🚩</div>
+            <div class="font-semibold text-lg">Flag Submissions</div>
+            <div class="text-sm opacity-90">Review all flag attempts</div>
+        </a>
+
+        <a href="{{ url_for('admin.stats') }}" class="bg-gray-900 text-white p-6 rounded-lg hover:bg-gray-800 transition text-center" style="border:1px solid rgba(96,165,250,0.3);">
+            <div class="text-3xl mb-2">📊</div>
+            <div class="font-semibold text-lg">Platform Stats</div>
+            <div class="text-sm opacity-90">Detailed analytics &amp; graphs</div>
         </a>
     </div>
     
@@ -94,4 +126,8 @@
     </div>
     {% endif %}
 </div>
+
+<script src="{{ url_for('static', filename='js/page-tour.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tour-admin.js') }}"></script>
+
 {% endblock %}

@@ -4,8 +4,16 @@ services:
   web:
     build: .
     container_name: ctf-platform
-    expose:
-      - "5050"
+    ports:
+      - "5050:5050"
+      - "10000-10099:10000-10099"
+      - "11000-11099:11000-11099"
+    cap_add:
+      - SYS_PTRACE
+      - SYS_ADMIN
+      - NET_ADMIN
+    security_opt:
+      - seccomp:unconfined
     env_file:
       - .env
     environment:
@@ -14,7 +22,15 @@ services:
       - FLASK_ENV=production
     volumes:
       - instance_data:/app/instance
+      - avatar_data:/app/app/static/avatars
+      - post_images_data:/app/app/static/post_images
+      - web_challenges_data:/app/instance/web_challenges
+      - nc_challenges_data:/app/instance/nc_challenges
     restart: unless-stopped
 
 volumes:
   instance_data:
+  avatar_data:
+  post_images_data:
+  web_challenges_data:
+  nc_challenges_data:

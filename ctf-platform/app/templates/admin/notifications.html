@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Notifications & Announcements - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+  <div class="mb-6 flex justify-between items-center">
+    <div>
+      <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">Admin</p>
+      <h1 class="text-3xl font-black uppercase" style="color:#fff;">■ NOTIFICATIONS &amp; ANNOUNCEMENTS</h1>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" style="padding:8px 18px;background:transparent;color:#555;font-weight:700;font-size:0.8rem;text-transform:uppercase;border:2px solid #333;text-decoration:none;">← BACK</a>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-8 mb-10">
+
+    <!-- Create Notification -->
+    <div class="bg-black border-4 border-red-600 p-6 shadow-lg">
+      <h2 class="text-lg font-black uppercase mb-4 border-b-2 border-red-600 pb-2">📣 NEW NOTIFICATION</h2>
+      <p class="text-xs opacity-50 uppercase mb-4">Appears in the navbar bell dropdown for all users.</p>
+      <form method="POST" action="{{ url_for('admin.create_notification') }}">
+        <div class="mb-3">
+          <label class="block text-xs font-bold uppercase opacity-60 mb-1">Title</label>
+          <input type="text" name="title" required placeholder="Short title"
+                 class="w-full px-3 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
+                 style="background:#1a1a1a;color:#fff;">
+        </div>
+        <div class="mb-4">
+          <label class="block text-xs font-bold uppercase opacity-60 mb-1">Body</label>
+          <textarea name="body" required rows="3" placeholder="Notification message..."
+                    class="w-full px-3 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
+                    style="background:#1a1a1a;color:#fff;resize:vertical;"></textarea>
+        </div>
+        <button type="submit" style="padding:8px 24px;background:#8b0000;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;">
+          SEND
+        </button>
+      </form>
+    </div>
+
+    <!-- Create Announcement -->
+    <div class="bg-black border-4 border-yellow-500 p-6 shadow-lg">
+      <h2 class="text-lg font-black uppercase mb-4 border-b-2 border-yellow-500 pb-2">📢 NEW ANNOUNCEMENT</h2>
+      <p class="text-xs opacity-50 uppercase mb-4">Timed banner shown on all pages. Times are in your local timezone — converted to UTC automatically.</p>
+      <form method="POST" action="{{ url_for('admin.create_announcement') }}" id="ann-form">
+        <div class="mb-3">
+          <label class="block text-xs font-bold uppercase opacity-60 mb-1">Message</label>
+          <input type="text" name="message" required placeholder="Announcement text"
+                 class="w-full px-3 py-2 border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                 style="background:#1a1a1a;color:#fff;">
+        </div>
+        <div class="mb-3">
+          <label class="block text-xs font-bold uppercase opacity-60 mb-1">Color</label>
+          <select name="color" class="w-full px-3 py-2 border border-gray-600 rounded" style="background:#1a1a1a;color:#fff;">
+            <option value="red">Red</option>
+            <option value="yellow">Yellow</option>
+            <option value="green">Green</option>
+            <option value="blue">Blue</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label class="block text-xs font-bold uppercase opacity-60 mb-1">Start (local time)</label>
+            <input type="datetime-local" id="starts_local" required
+                   class="w-full px-3 py-2 border border-gray-600 rounded" style="background:#1a1a1a;color:#fff;">
+            <input type="hidden" name="starts_at" id="starts_utc">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase opacity-60 mb-1">End (local time)</label>
+            <input type="datetime-local" id="ends_local" required
+                   class="w-full px-3 py-2 border border-gray-600 rounded" style="background:#1a1a1a;color:#fff;">
+            <input type="hidden" name="ends_at" id="ends_utc">
+          </div>
+        </div>
+        <button type="submit" style="padding:8px 24px;background:#92400e;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;">
+          SCHEDULE
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Existing Notifications -->
+  <div class="mb-10">
+    <h2 class="text-xl font-black uppercase mb-4" style="color:#fff;">Active Notifications ({{ notifications|length }})</h2>
+    {% if notifications %}
+    <div class="space-y-3">
+      {% for n in notifications %}
+      <div class="bg-black border border-red-600 p-4 flex justify-between items-start gap-4">
+        <div>
+          <p class="font-black uppercase text-sm">{{ n.title }}</p>
+          <p class="text-xs opacity-60 mt-1">{{ n.body }}</p>
+          <p class="text-xs opacity-40 mt-1">{{ n.created_at.strftime('%b %d, %Y %H:%M UTC') }}</p>
+        </div>
+        <form method="POST" action="{{ url_for('admin.delete_notification', notif_id=n.id) }}" onsubmit="return confirm('Delete this notification?');">
+          <button type="submit" style="padding:4px 12px;background:#7f1d1d;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;border:none;cursor:pointer;white-space:nowrap;">
+            DELETE
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="opacity-40 uppercase text-sm">No notifications yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- Existing Announcements -->
+  <div>
+    <h2 class="text-xl font-black uppercase mb-4" style="color:#fff;">Announcements ({{ announcements|length }})</h2>
+    {% if announcements %}
+    <div class="space-y-3">
+      {% for a in announcements %}
+      {% set color_map = {'red':'#8b0000','yellow':'#92400e','green':'#14532d','blue':'#1e3a5f'} %}
+      <div class="border p-4 flex justify-between items-start gap-4"
+           style="background:#0a0a0a;border-color:{{ color_map.get(a.color,'#8b0000') }};">
+        <div>
+          <p class="text-sm font-bold" style="color:#e5e5e5;">{{ a.message }}</p>
+          <p class="text-xs opacity-50 mt-1">
+            {{ a.starts_at.strftime('%b %d %H:%M') }} → {{ a.ends_at.strftime('%b %d %H:%M') }} UTC
+            &nbsp;·&nbsp;
+            {% if a.is_active() %}<span style="color:#4ade80;font-weight:900;">ACTIVE</span>{% else %}<span style="color:#666;">INACTIVE</span>{% endif %}
+          </p>
+        </div>
+        <form method="POST" action="{{ url_for('admin.delete_announcement', ann_id=a.id) }}" onsubmit="return confirm('Delete this announcement?');">
+          <button type="submit" style="padding:4px 12px;background:#7f1d1d;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;border:none;cursor:pointer;white-space:nowrap;">
+            DELETE
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="opacity-40 uppercase text-sm">No announcements yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+// Convert local datetime-local inputs to UTC ISO strings before submit
+document.getElementById('ann-form').addEventListener('submit', function() {
+  function toUTC(localVal) {
+    if (!localVal) return '';
+    const d = new Date(localVal);
+    return d.toISOString().slice(0, 16);
+  }
+  document.getElementById('starts_utc').value = toUTC(document.getElementById('starts_local').value);
+  document.getElementById('ends_utc').value   = toUTC(document.getElementById('ends_local').value);
+});
+</script>
+{% endblock %}

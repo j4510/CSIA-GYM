@@ -1,111 +1,384 @@
 {% extends "base.html" %}
-
 {% block title %}{{ post.title }} - Community{% endblock %}
 
-{% block content %}
-<!-- SINGLE POST VIEW PAGE -->
+{% block extra_css %}
+<style>
+{{ rank_keyframes }}
+#post-body, #post-body p, #post-body span, #post-body div { color:#111111 !important; }
+#post-body h1, #post-body h2, #post-body h3 { color:#111111 !important; font-weight:700; margin:1rem 0 0.5rem; }
+#post-body strong { font-weight:700; color:#111111 !important; }
+#post-body em { font-style:italic; }
+#post-body u { text-decoration:underline; }
+#post-body s { text-decoration:line-through; }
+#post-body a { color:#8b0000 !important; text-decoration:underline; }
+#post-body blockquote { border-left:4px solid #8b0000; padding-left:1rem; color:#333 !important; margin:0.75rem 0; font-style:italic; }
+#post-body pre { background:#1a1a1a !important; color:#f5f5f5 !important; padding:1rem; border-radius:4px; overflow-x:auto; margin:0.75rem 0; }
+#post-body code { background:#f0f0f0 !important; color:#8b0000 !important; padding:0.1rem 0.35rem; border-radius:3px; }
+#post-body ul { list-style-type:disc !important; padding-left:1.5rem !important; margin-bottom:0.75rem; }
+#post-body ol { list-style-type:decimal !important; padding-left:1.5rem !important; margin-bottom:0.75rem; }
+#post-body li { display:list-item !important; color:#111111 !important; margin:0.25rem 0; }
+#post-body img { max-width:100%; border-radius:4px; margin:0.5rem 0; }
+#post-body p { margin-bottom:0.6rem; }
 
+.flair-badge {
+  display:inline-flex; align-items:center; gap:0.25rem;
+  padding:0.2rem 0.65rem;
+  font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em;
+  border-radius:999px; border:1.5px solid transparent;
+}
+.flair-badge[data-flair="Challenge Discussion"] { background:#1e3a5f; color:#93c5fd; border-color:#1e40af; }
+.flair-badge[data-flair="Writeups"]             { background:#1a3a1a; color:#86efac; border-color:#166534; }
+.flair-badge[data-flair="For Beginners"]        { background:#3b1f00; color:#fcd34d; border-color:#92400e; }
+.flair-badge[data-flair="Need Help"]            { background:#3b0a0a; color:#fca5a5; border-color:#991b1b; }
+
+.rxn-wrap { position:relative; display:inline-block; }
+.rxn-trigger {
+  display:inline-flex; align-items:center; gap:0.35rem;
+  padding:0.28rem 0.75rem;
+  font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;
+  border:1.5px solid #555; background:#f3f4f6;
+  color:#333333; cursor:pointer; border-radius:999px;
+  transition:all 0.12s; user-select:none;
+}
+.rxn-trigger:hover, .rxn-trigger.locked { border-color:#cc0000; color:#8b0000; background:#fee2e2; }
+.rxn-popover {
+  display:none; opacity:0;
+  position:absolute; bottom:calc(100% + 8px); left:0;
+  background:#ffffff; border:1.5px solid #d1d5db;
+  border-radius:999px; padding:0.35rem 0.55rem;
+  box-shadow:0 4px 20px rgba(0,0,0,0.15);
+  white-space:nowrap; z-index:100;
+  transition:opacity 0.18s ease;
+}
+.rxn-popover.visible { display:flex; align-items:center; gap:0.15rem; opacity:1; }
+.rxn-popover.fading  { display:flex; align-items:center; gap:0.15rem; opacity:0; }
+.rxn-opt {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:2.1rem; height:2.1rem; font-size:1.2rem;
+  border-radius:50%; cursor:pointer; border:none; background:transparent;
+  transition:transform 0.1s, background 0.1s;
+}
+.rxn-opt:hover { transform:scale(1.35); background:rgba(0,0,0,0.06); }
+.rxn-opt.active { background:rgba(139,0,0,0.12); outline:2px solid #cc0000; }
+.rxn-chips { display:inline-flex; flex-wrap:wrap; gap:0.3rem; margin-left:0.4rem; vertical-align:middle; }
+.rxn-chip {
+  display:inline-flex; align-items:center; gap:0.25rem;
+  padding:0.2rem 0.55rem;
+  font-size:0.75rem; font-weight:700;
+  border:1.5px solid #d1d5db; background:#f3f4f6;
+  color:#333333; border-radius:999px; cursor:pointer; transition:all 0.12s;
+  user-select:none;
+}
+.rxn-chip:hover { border-color:#cc0000; color:#8b0000; background:#fee2e2; }
+.rxn-chip.active { border-color:#cc0000; background:#fee2e2; color:#8b0000; }
+.rxn-chip-count { font-size:0.7rem; color:inherit; }
+</style>
+{% endblock %}
+
+{% block content %}
 <div class="max-w-4xl mx-auto">
-    <!-- Back Button -->
-    <a href="{{ url_for('community.list') }}" 
-       class="inline-block mb-4 text-red-600 hover:underline">
-        ← Back to Community
-    </a>
-    
-    <!-- Post Content -->
-    <div class="bg-white rounded-lg shadow-md p-8 mb-6">
-        <!-- Post Header -->
-        <h1 class="text-3xl font-bold text-gray-900 mb-4">
-            {{ post.title }}
-        </h1>
-        
-        <!-- Post Meta -->
-        <div class="flex items-center justify-between space-x-4 text-sm mb-6 pb-6 border-b" style="color:#111111;">
-            <div class="flex items-center space-x-4">
-                {% if post.author.profile_picture %}
-                <img src="{{ url_for('static', filename='avatars/' + post.author.profile_picture) }}"
-                     alt="" style="width:28px;height:28px;object-fit:cover;border:2px solid #8b0000;">
-                {% endif %}
-                <span style="color:#111111; font-weight:600;">{{ post.author.username }}</span>
-                <span style="color:#444444;">📅 {{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
-            </div>
-            
-            <!-- Upvote Button -->
-            <form method="POST" action="{{ url_for('community.upvote_post', post_id=post.id) }}" class="inline">
-                <button type="submit" class="flex items-center space-x-2 px-4 py-2" style="background:#8b0000; color:#fff; border:none; cursor:pointer; font-weight:700;">
-                    <span>▲</span>
-                    <span>{{ post.upvotes }}</span>
-                </button>
-            </form>
-        </div>
-        
-        <!-- Post Body -->
-        <div class="prose max-w-none text-gray-700 whitespace-pre-wrap">
-            {{ post.content }}
-        </div>
+  <a href="{{ url_for('community.list') }}" class="inline-block mb-4 text-red-600 hover:underline">← Back to Community</a>
+
+  <div class="bg-white rounded-lg shadow-md p-8 mb-6">
+    <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+      {% if post.flair %}
+      <span class="flair-badge" data-flair="{{ post.flair }}">{{ post.flair }}</span>
+      {% endif %}
+      {% if post.is_pinned %}
+      <span style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#d97706;">📌 Pinned</span>
+      {% endif %}
     </div>
-    
-    <!-- Comments Section -->
-    <div class="bg-white rounded-lg shadow-md p-8">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">
-            Comments ({{ post.comments|length }})
-        </h2>
-        
-        <!-- Add Comment Form -->
-        <form method="POST" action="{{ url_for('community.add_comment', post_id=post.id) }}" class="mb-8">
-            <div class="mb-4">
-                <label for="content" class="block text-gray-700 font-semibold mb-2">
-                    Add a Comment
-                </label>
-                <textarea id="content" 
-                          name="content" 
-                          required
-                          rows="4"
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Share your thoughts..."></textarea>
-            </div>
-            
-            <button type="submit" 
-                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">
-                Post Comment
-            </button>
+    <h1 class="text-3xl font-bold mb-4" style="color:#111111;">{{ post.title }}</h1>
+
+    <div class="flex items-center justify-between flex-wrap gap-3 text-sm mb-6 pb-6 border-b" style="color:#111111;">
+      <div class="flex items-center gap-3">
+        <img src="{{ url_for('settings.serve_avatar', username=post.author.username) }}"
+             alt="" style="width:32px;height:32px;object-fit:cover;border-radius:3px;position:relative;"
+             class="av-border-{{ post.author.get_top_border() or 'tier1' }}">
+        <div>
+          <span style="color:#111111;font-weight:600;"><a href="{{ url_for('settings.public_profile', user_id=post.author.id) }}" style="color:inherit;text-decoration:none;">{{ post.author.username }}</a></span>
+          <a href="{{ url_for('settings.ranks') }}" style="display:block;text-decoration:none;line-height:1.2;">
+            <span style="font-size:0.72rem;{{ post_rank_style }}">{{ post_rank_title }}</span>
+          </a>
+        </div>
+        <span style="color:#666;">{{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:0.5rem;">
+          <!-- Subscribe to post -->
+          <button id="post-sub-btn" onclick="togglePostSubscribe()"
+                  style="display:inline-flex;align-items:center;gap:5px;padding:0.4rem 0.9rem;font-size:0.75rem;font-weight:900;text-transform:uppercase;border:2px solid {% if is_subscribed %}#60a5fa{% else %}rgba(96,165,250,0.3){% endif %};background:{% if is_subscribed %}rgba(96,165,250,0.12){% else %}transparent{% endif %};color:{% if is_subscribed %}#60a5fa{% else %}#aaa{% endif %};cursor:pointer;border-radius:4px;">
+            🔔 <span id="post-sub-label">{% if is_subscribed %}Subscribed{% else %}Subscribe{% endif %}</span>
+          </button>
+        <form method="POST" action="{{ url_for('community.upvote_post', post_id=post.id) }}" class="inline">
+          <button type="submit" {% if user_upvoted %}disabled{% endif %}
+                  style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;background:{% if user_upvoted %}#555{% else %}#8b0000{% endif %};color:#fff;border:none;cursor:{% if user_upvoted %}default{% else %}pointer{% endif %};font-weight:700;border-radius:4px;opacity:{% if user_upvoted %}0.7{% else %}1{% endif %};">
+            ▲ {{ post.upvotes }}
+          </button>
         </form>
-        
-        <!-- Comments List -->
-        <div class="space-y-6">
-            {% for comment in post.comments|sort(attribute='created_at') %}
-                <div class="border-l-4 border-blue-500 pl-4 py-2">
-                    <!-- Comment Header -->
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="flex items-center space-x-2">
-                            <span class="font-semibold text-gray-900">
-                                {{ comment.author.username }}
-                            </span>
-                            <span class="text-sm text-gray-500">
-                                {{ comment.created_at.strftime('%b %d, %Y at %I:%M %p') }}
-                            </span>
-                        </div>
-                        
-                        <!-- 
-                        TO ADD: Delete button for comment author
-                        {% if comment.author.id == current_user.id %}
-                        <button class="text-red-600 text-sm hover:underline">Delete</button>
-                        {% endif %}
-                        -->
-                    </div>
-                    
-                    <!-- Comment Content -->
-                    <p class="text-gray-700">
-                        {{ comment.content }}
-                    </p>
-                </div>
-            {% else %}
-                <p class="text-gray-500 text-center py-8">
-                    No comments yet. Be the first to comment!
-                </p>
-            {% endfor %}
-        </div>
+        {% if current_user.is_admin or current_user.is_moderator or post.author_id == current_user.id %}
+          {% if post.is_pinned %}
+          <form method="POST" action="{{ url_for('community.unpin_post', post_id=post.id) }}" class="inline">
+            <button type="submit" style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.4rem 0.9rem;background:#92400e;color:#fcd34d;border:none;cursor:pointer;font-weight:700;border-radius:4px;font-size:0.8rem;">📌 Unpin</button>
+          </form>
+          {% elif current_user.is_admin or current_user.is_moderator %}
+          <form method="POST" action="{{ url_for('community.pin_post', post_id=post.id) }}" class="inline">
+            <button type="submit" style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.4rem 0.9rem;background:#1e3a5f;color:#93c5fd;border:none;cursor:pointer;font-weight:700;border-radius:4px;font-size:0.8rem;">📌 Pin Post</button>
+          </form>
+          {% endif %}
+          <form method="POST" action="{{ url_for('community.toggle_comments', post_id=post.id) }}" class="inline">
+            <button type="submit" style="padding:0.4rem 0.9rem;background:{% if post.comments_disabled %}rgba(251,146,60,0.15){% else %}rgba(74,222,128,0.1){% endif %};color:{% if post.comments_disabled %}#fb923c{% else %}#4ade80{% endif %};border:1.5px solid {% if post.comments_disabled %}#fb923c{% else %}#4ade80{% endif %};cursor:pointer;font-weight:700;border-radius:4px;font-size:0.75rem;text-transform:uppercase;">
+              {% if post.comments_disabled %}💬 Enable Comments{% else %}🚫 Disable Comments{% endif %}
+            </button>
+          </form>
+          <form method="POST" action="{{ url_for('community.toggle_reactions', post_id=post.id) }}" class="inline">
+            <button type="submit" style="padding:0.4rem 0.9rem;background:{% if post.reactions_disabled %}rgba(251,146,60,0.15){% else %}rgba(167,139,250,0.1){% endif %};color:{% if post.reactions_disabled %}#fb923c{% else %}#a78bfa{% endif %};border:1.5px solid {% if post.reactions_disabled %}#fb923c{% else %}#a78bfa{% endif %};cursor:pointer;font-weight:700;border-radius:4px;font-size:0.75rem;text-transform:uppercase;">
+              {% if post.reactions_disabled %}😮 Enable Reactions{% else %}🚫 Disable Reactions{% endif %}
+            </button>
+          </form>
+          <form method="POST" action="{{ url_for('community.archive_post', post_id=post.id) }}" class="inline">
+            <button type="submit" style="padding:0.4rem 0.9rem;background:rgba(100,100,100,0.1);color:#888;border:1.5px solid #555;cursor:pointer;font-weight:700;border-radius:4px;font-size:0.75rem;text-transform:uppercase;">
+              {% if post.is_archived %}📂 Unarchive{% else %}📁 Archive{% endif %}
+            </button>
+          </form>
+        {% endif %}
+      </div>
     </div>
+
+    <div id="post-body">{{ post.content | safe }}</div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-md p-8">
+    <h2 class="text-2xl font-bold mb-6" style="color:#111111;">Comments ({{ post.comments|length }})</h2>
+
+    {% if post.comments_disabled and not can_moderate %}
+    <div style="padding:14px 18px;background:rgba(251,146,60,0.1);border:1.5px solid #fb923c;border-radius:6px;margin-bottom:20px;">
+      <p style="font-size:0.85rem;font-weight:700;color:#fb923c;margin:0;">💬 Comments are disabled on this post.</p>
+    </div>
+    {% else %}
+    <form method="POST" action="{{ url_for('community.add_comment', post_id=post.id) }}" class="mb-8">
+      <div class="mb-3">
+        <label for="content" class="block font-semibold mb-2" style="color:#111111;">Add a Comment</label>
+        <textarea id="content" name="content" required rows="3"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder="Share your thoughts..."></textarea>
+      </div>
+      <button type="submit" class="bg-red-700 text-white px-6 py-2 rounded-lg hover:bg-red-800 transition font-semibold">Post Comment</button>
+    </form>
+    {% endif %}
+
+    <div class="space-y-5">
+      {% for comment in post.comments | sort(attribute='created_at') %}
+      {% set counts = comment.reaction_counts() %}
+      {% set c_rank_title, c_rank_style = comment_ranks[comment.id] %}
+      <div class="border-l-4 border-red-700 pl-4 py-2" id="comment-{{ comment.id }}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem;margin-bottom:0.5rem;">
+          <div class="flex items-center gap-2">
+            <img src="{{ url_for('settings.serve_avatar', username=comment.author.username) }}"
+                 alt="" style="width:28px;height:28px;object-fit:cover;border-radius:3px;flex-shrink:0;position:relative;"
+                 class="av-border-{{ comment.author.get_top_border() or 'tier1' }}">
+            <div>
+              <span class="font-semibold" style="color:#f0f0f0;"><a href="{{ url_for('settings.public_profile', user_id=comment.author.id) }}" style="color:inherit;text-decoration:none;">{{ comment.author.username }}</a></span>
+              <a href="{{ url_for('settings.ranks') }}" style="display:block;text-decoration:none;line-height:1.2;">
+                <span style="font-size:0.68rem;{{ c_rank_style }}">{{ c_rank_title }}</span>
+              </a>
+            </div>
+            <span class="text-sm" style="color:#666;">{{ comment.created_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+          </div>
+          <!-- Edit / Delete icons (own comment or mod/admin) -->
+          {% if can_moderate or comment.author_id == current_user.id %}
+          <div style="display:flex;gap:0.4rem;flex-shrink:0;">
+            <button onclick="openEditModal({{ comment.id }}, this)"
+                    data-content="{{ comment.content | e }}"
+                    title="Edit comment"
+                    style="background:none;border:none;cursor:pointer;padding:4px;color:#888;transition:color 0.15s;"
+                    onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+              </svg>
+            </button>
+            <form method="POST" action="{{ url_for('community.delete_comment', comment_id=comment.id) }}" class="inline" onsubmit="return confirm('Delete this comment?');">
+              <button type="submit" title="Delete comment"
+                      style="background:none;border:none;cursor:pointer;padding:4px;color:#888;transition:color 0.15s;"
+                      onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#888'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                  <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                </svg>
+              </button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+
+        <p style="color:#d0d0d0;margin-bottom:0.6rem;">{{ comment.content }}</p>
+
+        {% if comment.edited_at %}
+        <p style="font-size:0.65rem;color:#444;margin-bottom:0.4rem;font-style:italic;">
+          {% if comment.edited_by and comment.edited_by_id != comment.author_id %}
+            Edited by <span style="color:#f87171;font-weight:700;">{{ comment.edited_by.username }}</span> on {{ comment.edited_at.strftime('%b %d, %Y at %I:%M %p') }}
+          {% else %}
+            Edited {{ comment.edited_at.strftime('%b %d, %Y at %I:%M %p') }}
+          {% endif %}
+        </p>
+        {% endif %}
+
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0.4rem;">
+          <div class="rxn-wrap">
+            <button class="rxn-trigger">😮 React</button>
+            <div class="rxn-popover">
+              {% set rxn_list = [('heart','❤️'),('haha','😂'),('wow','😮'),('sad','😢'),('like','👍'),('dislike','👎')] %}
+              {% for key, emoji in rxn_list %}
+              <button class="rxn-opt {% if (comment.id, key) in user_reactions %}active{% endif %}"
+                      data-comment="{{ comment.id }}" data-reaction="{{ key }}"
+                      title="{{ key }}" onclick="toggleReaction(this)">{{ emoji }}</button>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="rxn-chips" id="chips-{{ comment.id }}">
+            {% set rxn_list = [('heart','❤️'),('haha','😂'),('wow','😮'),('sad','😢'),('like','👍'),('dislike','👎')] %}
+            {% for key, emoji in rxn_list %}
+            {% set c = counts.get(key, 0) %}
+            {% if c > 0 %}
+            <span class="rxn-chip {% if (comment.id, key) in user_reactions %}active{% endif %}"
+                  data-comment="{{ comment.id }}" data-reaction="{{ key }}"
+                  onclick="toggleReaction(this)">
+              {{ emoji }} <span class="rxn-chip-count">{{ c }}</span>
+            </span>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <p class="text-center py-8" style="color:#666;">No comments yet. Be the first to comment!</p>
+      {% endfor %}
+    </div>
+  </div>
 </div>
 
+<!-- Edit Comment Modal -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div style="background:#0d0d0d;border:1px solid rgba(139,0,0,0.5);padding:1.5rem;width:100%;max-width:520px;margin:1rem;">
+    <p style="font-size:0.75rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#e5e5e5;margin-bottom:0.75rem;">Edit Comment</p>
+    <form id="edit-form" method="POST">
+      <textarea id="edit-content" name="content" rows="4"
+                style="width:100%;background:#111;color:#f0f0f0;border:1px solid rgba(139,0,0,0.4);padding:0.6rem;font-size:0.9rem;resize:vertical;"></textarea>
+      <div style="display:flex;gap:0.5rem;margin-top:0.75rem;justify-content:flex-end;">
+        <button type="button" onclick="closeEditModal()"
+                style="padding:0.4rem 1rem;background:transparent;color:#888;border:1px solid #444;cursor:pointer;font-size:0.8rem;font-weight:700;text-transform:uppercase;">Cancel</button>
+        <button type="submit"
+                style="padding:0.4rem 1rem;background:#8b0000;color:#fff;border:none;cursor:pointer;font-size:0.8rem;font-weight:700;text-transform:uppercase;">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/page-tour.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tour-community-post.js') }}"></script>
+<script>
+const EMOJI_MAP = { heart:'❤️', haha:'😂', wow:'😮', sad:'😢', like:'👍', dislike:'👎' };
+
+var _postSubscribed = {{ 'true' if is_subscribed else 'false' }};
+function togglePostSubscribe() {
+  fetch('/community/{{ post.id }}/subscribe', {method:'POST'})
+    .then(r => r.json()).then(d => {
+      _postSubscribed = d.subscribed;
+      var btn = document.getElementById('post-sub-btn');
+      var lbl = document.getElementById('post-sub-label');
+      btn.style.borderColor = _postSubscribed ? '#60a5fa' : 'rgba(96,165,250,0.3)';
+      btn.style.background  = _postSubscribed ? 'rgba(96,165,250,0.12)' : 'transparent';
+      btn.style.color       = _postSubscribed ? '#60a5fa' : '#888';
+      lbl.textContent       = _postSubscribed ? 'Subscribed' : 'Subscribe';
+    });
+}
+
+document.querySelectorAll('.rxn-wrap').forEach(wrap => {
+  const trigger = wrap.querySelector('.rxn-trigger');
+  const popover = wrap.querySelector('.rxn-popover');
+  let hideTimer = null;
+  let locked = false;
+
+  function showPopover() {
+    clearTimeout(hideTimer);
+    popover.classList.remove('fading');
+    popover.classList.add('visible');
+  }
+  function scheduleHide() {
+    if (locked) return;
+    hideTimer = setTimeout(() => {
+      popover.classList.add('fading');
+      setTimeout(() => { if (!locked) popover.classList.remove('visible', 'fading'); }, 180);
+    }, 400);
+  }
+  trigger.addEventListener('click', e => {
+    e.stopPropagation();
+    locked = !locked;
+    trigger.classList.toggle('locked', locked);
+    if (locked) showPopover(); else scheduleHide();
+  });
+  wrap.addEventListener('mouseenter', () => showPopover());
+  wrap.addEventListener('mouseleave', () => scheduleHide());
+  popover.addEventListener('mouseenter', () => clearTimeout(hideTimer));
+  popover.addEventListener('mouseleave', () => scheduleHide());
+});
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.rxn-wrap').forEach(wrap => {
+    wrap.querySelector('.rxn-trigger').classList.remove('locked');
+    const p = wrap.querySelector('.rxn-popover');
+    p.classList.remove('visible', 'fading');
+  });
+});
+
+function openEditModal(commentId, btn) {
+  var content = btn.getAttribute('data-content');
+  document.getElementById('edit-content').value = content;
+  document.getElementById('edit-form').action = '/community/comment/' + commentId + '/edit';
+  var modal = document.getElementById('edit-modal');
+  modal.style.display = 'flex';
+}
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+}
+document.getElementById('edit-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeEditModal();
+});
+
+function toggleReaction(btn) {
+  const commentId = btn.dataset.comment;
+  const reaction  = btn.dataset.reaction;
+  fetch(`/community/comment/${commentId}/react/${reaction}`, {
+    method:'POST', credentials:'same-origin',
+    headers:{'X-Requested-With':'XMLHttpRequest'},
+  })
+  .then(r => r.json())
+  .then(data => {
+    const chips = document.getElementById(`chips-${commentId}`);
+    document.querySelectorAll(`.rxn-opt[data-comment="${commentId}"]`).forEach(el => {
+      el.classList.toggle('active', el.dataset.reaction === data.reaction && data.active);
+    });
+    Object.keys(EMOJI_MAP).forEach(key => {
+      const count = data.all_counts[key] || 0;
+      let chip = chips.querySelector(`[data-reaction="${key}"]`);
+      const isActive = key === data.reaction && data.active;
+      if (count > 0) {
+        if (!chip) {
+          chip = document.createElement('span');
+          chip.className = 'rxn-chip';
+          chip.dataset.comment  = commentId;
+          chip.dataset.reaction = key;
+          chip.onclick = function() { toggleReaction(this); };
+          chip.innerHTML = `${EMOJI_MAP[key]} <span class="rxn-chip-count">${count}</span>`;
+          chips.appendChild(chip);
+        } else {
+          chip.querySelector('.rxn-chip-count').textContent = count;
+        }
+        chip.classList.toggle('active', isActive);
+      } else if (chip) {
+        chip.remove();
+      }
+    });
+  });
+}
+</script>
 {% endblock %}
