@@ -137,6 +137,8 @@ def create_app(config_class=Config):
     with app.app_context():
         from sqlalchemy import text
 
+        db.create_all()
+
         with db.engine.connect() as conn:
             # users base table
             conn.execute(text(
@@ -464,8 +466,6 @@ def create_app(config_class=Config):
                 "FOREIGN KEY(challenge_id) REFERENCES challenges(id))"
             ))
             conn.commit()
-
-        db.create_all()
 
         from app.models import User
         if not User.query.filter_by(username='admin').first():
