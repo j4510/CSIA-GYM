@@ -94,14 +94,14 @@ def new():
         # ── RE binary/archive validation ──────────────────────────────────
         nc_binary = request.files.get('nc_binary')
         nc_binary_data = None
-        if category == 'Reverse Engineering' and nc_binary and nc_binary.filename:
+        if category == 'Binary Exploitation' and nc_binary and nc_binary.filename:
             nc_binary_data = nc_binary.read()
             if len(nc_binary_data) > MAX_NC_BINARY_BYTES:
-                flash('RE challenge file exceeds the 100 MB limit.', 'danger')
+                flash('Binary Exploitation challenge file exceeds the 100 MB limit.', 'danger')
                 return redirect(url_for('submissions.new'))
             nc_binary.seek(0)
-        elif category == 'Reverse Engineering':
-            flash('Reverse Engineering challenges require an executable or .tar.gz archive.', 'danger')
+        elif category == 'Binary Exploitation':
+            flash('Binary Exploitation challenges require an executable or .tar.gz archive.', 'danger')
             return redirect(url_for('submissions.new'))
 
         uploaded_files = request.files.getlist('attachments')
@@ -169,7 +169,7 @@ def new():
             # Store path on submission for admin to pick up on approval
             submission.web_archive_path = archive_path
 
-        # Save RE binary if this is a Reverse Engineering challenge
+        # Save binary if this is a Binary Exploitation challenge
         if nc_binary_data is not None:
             os.makedirs(NC_CHALLENGES_DIR, exist_ok=True)
             binary_name = f'nc_{submission.id}_{uuid.uuid4().hex}_{secure_filename(nc_binary.filename)}'

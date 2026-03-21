@@ -126,9 +126,9 @@
     </div>
     {% endif %}
 
-    {% if challenge.category == 'Reverse Engineering' and challenge.nc_challenge %}
+    {% if challenge.category == 'Binary Exploitation' and challenge.nc_challenge %}
     <div class="mt-6 p-5 rounded-lg" style="background:#0a0a0a;border:2px solid rgba(139,0,0,0.4);">
-      <h4 class="font-black uppercase text-sm mb-1" style="color:#e0e0e0;letter-spacing:0.08em;">🔌 REVERSE ENGINEERING INSTANCE</h4>
+      <h4 class="font-black uppercase text-sm mb-1" style="color:#e0e0e0;letter-spacing:0.08em;">🔌 BINARY EXPLOITATION INSTANCE</h4>
       <p class="text-xs mb-4" style="color:#888;">Your own isolated instance — 15 min session, extendable up to 60 min total. Connect with <code style="color:#ccc;background:#1a1a1a;padding:2px 6px;border-radius:3px;">nc &lt;host&gt; &lt;port&gt;</code>. Each connection spawns a fresh process.</p>
       <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
         <button id="nc-launch-btn" onclick="ncLaunch()"

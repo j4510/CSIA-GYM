@@ -146,6 +146,10 @@ def delete_user(user_id):
         flash('You cannot delete your own account!', 'danger')
         return redirect(url_for('admin.users'))
     
+    from app.models import UserNotification
+    UserNotification.query.filter_by(user_id=user.id).delete()
+    db.session.flush()
+
     log_action('delete_user', user.username)
     db.session.delete(user)
     db.session.commit()
@@ -559,7 +563,7 @@ def delete_challenge(challenge_id):
             cleanup_serve_dir(challenge_id)
         except Exception:
             pass
-    if challenge.category == 'Reverse Engineering' and challenge.nc_challenge:
+    if challenge.category == 'Binary Exploitation' and challenge.nc_challenge:
         try:
             from app.nc_runner import cleanup_nc_dir
             cleanup_nc_dir(challenge_id)

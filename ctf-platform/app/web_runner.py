@@ -17,6 +17,7 @@ Port range: 10000–10999 (must be exposed in docker-compose.yml).
 
 import os
 import secrets
+import hashlib
 import socket
 import tarfile
 import shutil
@@ -111,11 +112,9 @@ def _free_port() -> int:
 
 # ── Flag generation ──────────────────────────────────────────────────────────
 
-_FLAG_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*-_=+?'
-
 
 def _generate_flag() -> str:
-    body = ''.join(secrets.choice(_FLAG_CHARSET) for _ in range(32))
+    body = hashlib.md5(secrets.token_bytes(16)).hexdigest()
     return f'CSIA{{{body}}}'
 
 

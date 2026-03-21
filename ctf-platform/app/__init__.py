@@ -2,7 +2,7 @@ import os
 import re
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
+from flask_login import LoginManager, logout_user
 from config import Config
 
 db = SQLAlchemy()
@@ -94,13 +94,25 @@ def create_app(config_class=Config):
     # Endpoints fully accessible on mobile
     _MOBILE_ALLOWED = {
         'static',
-        'auth.index', 'auth.login', 'auth.register', 'auth.logout',
+        'auth.index', 'auth.login', 'auth.register', 'auth.logout', 'auth.whats_new',
         'challenges.scoreboard',
-        'community.list',
+        'community.list', 'community.detail', 'community.new_post',
         'settings.account', 'settings.index', 'settings.serve_avatar',
         'settings.public_profile', 'settings.badges', 'settings.ranks',
     }
     from flask import request, render_template
+
+    @app.before_request
+    def enforce_ban():
+        from flask_login import current_user
+        from flask import request, redirect, url_for, render_template
+        if current_user.is_authenticated and current_user.is_banned:
+            if request.endpoint not in ('auth.logout', 'static'):
+                reason = current_user.ban_reason or 'No reason provided.'
+                logout_user()
+                return render_template('error.html', code=403,
+                    title='Account Banned',
+                    message=f'Your account has been banned. Reason: {reason}'), 403
 
     @app.before_request
     def restrict_mobile():

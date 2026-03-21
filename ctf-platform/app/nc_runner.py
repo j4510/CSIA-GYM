@@ -12,6 +12,7 @@ Port range: 11000–11999 (must be exposed in docker-compose.yml).
 
 import os
 import secrets
+import hashlib
 import shlex
 import stat
 import glob
@@ -41,11 +42,8 @@ NC_CHALLENGES_DIR = os.path.join(
 _running: dict[tuple[int, int], dict] = {}
 _lock = threading.Lock()
 
-_FLAG_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*-_=+?'
-
-
 def _generate_flag() -> str:
-    body = ''.join(secrets.choice(_FLAG_CHARSET) for _ in range(32))
+    body = hashlib.md5(secrets.token_bytes(16)).hexdigest()
     return f'CSIA{{{body}}}'
 
 

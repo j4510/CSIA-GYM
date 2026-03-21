@@ -326,8 +326,8 @@ def scoreboard():
 @login_required
 def launch_nc(challenge_id):
     challenge = Challenge.query.get_or_404(challenge_id)
-    if challenge.category != 'Reverse Engineering':
-        return jsonify(ok=False, error='Not a reverse engineering challenge'), 400
+    if challenge.category != 'Binary Exploitation':
+        return jsonify(ok=False, error='Not a binary exploitation challenge'), 400
     nc = NcChallenge.query.filter_by(challenge_id=challenge_id).first()
     if not nc:
         return jsonify(ok=False, error='No binary attached to this challenge.'), 404

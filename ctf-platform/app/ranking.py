@@ -495,8 +495,11 @@ def get_user_rank(user) -> tuple[float, str]:
     my_score = scores.get(user.id, 0.0)
     all_scores = sorted(scores.values())
     n = len(all_scores)
-    beats = sum(1 for s in all_scores if s <= my_score)
-    percentile = (beats / n) * 100.0
+    if my_score <= 0.0:
+        percentile = 0.0
+    else:
+        beats = sum(1 for s in all_scores if s < my_score)
+        percentile = (beats / n) * 100.0
 
     for threshold, title in RANK_TIERS:
         if percentile >= threshold:

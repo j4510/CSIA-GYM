@@ -168,8 +168,8 @@ def login():
                 log_event(actor=username, action='login_blocked_banned', target=reason, category='auth')
                 flash(f'Your account has been banned. Reason: {reason}', 'danger')
                 return redirect(url_for('auth.login'))
-            # Log user in (creates session)
-            login_user(user)
+            remember = 'remember' in request.form
+            login_user(user, remember=remember, duration=__import__('datetime').timedelta(days=30))
             log_event(actor=username, action='login_success', category='auth')
             flash('Login successful!', 'success')
             
