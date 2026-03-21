@@ -88,6 +88,9 @@ class User(UserMixin, db.Model):
     notif_badge_earned = db.Column(db.Boolean, default=True)      # badge awarded
     notif_first_blood = db.Column(db.Boolean, default=True)       # first blood on a challenge
 
+    # Passkey
+    passkey_enabled = db.Column(db.Boolean, default=False)
+
     # Relationships
     challenges = db.relationship('Challenge', backref='author', lazy=True)
     solves = db.relationship('UserChallengeSolve', backref='user', lazy=True)
@@ -632,6 +635,50 @@ class UserMilestone(db.Model):
 
     def __repr__(self):
         return f'<UserMilestone user={self.user_id} milestone={self.milestone_id}>'
+
+
+# ========================================
+# PASSKEY (WebAuthn) MODEL
+# ========================================
+
+class UserPasskey(db.Model):
+    """Stores WebAuthn credential per user."""
+    __tablename__ = 'user_passkeys'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    credential_id = db.Column(db.Text, nullable=False, unique=True)  # base64url
+    public_key = db.Column(db.Text, nullable=False)                  # base64url COSE key
+    sign_count = db.Column(db.Integer, default=0)
+    device_name = db.Column(db.String(100), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('passkeys', lazy=True))
+
+
+# ========================================
+# MAIL / MESSAGING MODELS
+# ========================================
+
+class MailMessage(db.Model):
+    """Direct message between two users."""
+    __tablename__ = 'mail_messages'
+
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    subject = db.Column(db.String(200), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    is_deleted_by_sender = db.Column(db.Boolean, default=False)
+    is_deleted_by_recipient = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    sender = db.relationship('User', foreign_keys=[sender_id], backref=db.backref('sent_messages', lazy=True))
+    recipient = db.relationship('User', foreign_keys=[recipient_id], backref=db.backref('received_messages', lazy=True))
+
+    def __repr__(self):
+        return f'<MailMessage {self.sender_id}->{self.recipient_id}: {self.subject}>'
 
 
 class Announcement(db.Model):

@@ -569,6 +569,15 @@ def delete_challenge(challenge_id):
             cleanup_nc_dir(challenge_id)
         except Exception:
             pass
+    from sqlalchemy import text
+    with db.engine.connect() as conn:
+        conn.execute(text('DELETE FROM flag_attempts WHERE challenge_id=:c'), {'c': challenge_id})
+        conn.execute(text('DELETE FROM user_challenge_solves WHERE challenge_id=:c'), {'c': challenge_id})
+        conn.execute(text('DELETE FROM challenge_opens WHERE challenge_id=:c'), {'c': challenge_id})
+        conn.execute(text('DELETE FROM challenge_bookmarks WHERE challenge_id=:c'), {'c': challenge_id})
+        conn.execute(text('DELETE FROM challenge_subscriptions WHERE challenge_id=:c'), {'c': challenge_id})
+        conn.execute(text('DELETE FROM challenge_votes WHERE challenge_id=:c'), {'c': challenge_id})
+        conn.commit()
     db.session.delete(challenge)
     db.session.commit()
     log_action('delete_challenge', title)

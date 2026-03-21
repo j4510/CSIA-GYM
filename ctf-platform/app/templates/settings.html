@@ -271,4 +271,95 @@
 <script src="{{ url_for('static', filename='js/page-tour.js') }}"></script>
 <script src="{{ url_for('static', filename='js/tour-settings.js') }}"></script>
 
+    <!-- Passkey Management -->
+    <div class="bg-black border-4 border-red-600 p-8 mt-6 shadow-lg hover-brutal">
+        <h2 class="text-2xl font-black uppercase mb-2 border-b-2 border-red-600 pb-2">PASSKEY / BIOMETRIC LOGIN</h2>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <img src="{{ url_for('static', filename='img/DUO_LOGO.png') }}" alt="Duo" style="height:28px;object-fit:contain;opacity:0.8;">
+          <p class="text-xs opacity-40 uppercase">Passwordless login using your device's biometrics or PIN</p>
+        </div>
+        {% if current_user.passkeys %}
+        <div style="margin-bottom:16px;">
+          {% for pk in current_user.passkeys %}
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#111;border:1px solid #222;margin-bottom:6px;">
+            <div>
+              <p style="font-size:0.82rem;font-weight:700;color:#e5e5e5;">🔑 {{ pk.device_name or 'Passkey Device' }}</p>
+              <p style="font-size:0.65rem;color:#555;">Registered {{ pk.created_at.strftime('%b %d, %Y') }}</p>
+            </div>
+            <button onclick="removePasskey({{ pk.id }}, this)"
+                    style="padding:6px 14px;background:transparent;color:#666;font-size:0.7rem;font-weight:700;text-transform:uppercase;border:1px solid #333;cursor:pointer;"
+                    onmouseover="this.style.color='#f87171';this.style.borderColor='#f87171'" onmouseout="this.style.color='#666';this.style.borderColor='#333'">
+              REMOVE
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p style="font-size:0.8rem;color:#555;margin-bottom:16px;">No passkeys registered yet.</p>
+        {% endif %}
+        <div id="passkey-settings-status" style="font-size:0.75rem;color:#888;margin-bottom:10px;min-height:18px;"></div>
+        <button onclick="addPasskeyFromSettings()" id="add-passkey-btn"
+                style="padding:10px 24px;background:#8b0000;color:#fff;font-weight:900;font-size:0.78rem;text-transform:uppercase;border:none;cursor:pointer;transition:background 0.15s;"
+                onmouseover="this.style.background='#cc0000'" onmouseout="this.style.background='#8b0000'">
+          + ADD PASSKEY
+        </button>
+    </div>
+
+<script>
+async function addPasskeyFromSettings() {
+  var btn = document.getElementById('add-passkey-btn');
+  var status = document.getElementById('passkey-settings-status');
+  btn.disabled = true;
+  function b64dec(s) {
+    s = s.replace(/-/g,'+').replace(/_/g,'/');
+    var pad = 4 - s.length % 4; if (pad !== 4) s += '='.repeat(pad);
+    var bin = atob(s), arr = new Uint8Array(bin.length);
+    for (var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    return arr;
+  }
+  function b64enc(buf) {
+    return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  }
+  try {
+    var res = await fetch('/passkey/register/begin', {method:'POST', credentials:'same-origin'});
+    var opts = await res.json();
+    var cred = await navigator.credentials.create({
+      publicKey: {
+        rp: opts.rp,
+        user: { id: b64dec(opts.user.id), name: opts.user.name, displayName: opts.user.displayName },
+        challenge: b64dec(opts.challenge),
+        pubKeyCredParams: opts.pubKeyCredParams,
+        timeout: opts.timeout,
+        attestation: opts.attestation,
+        authenticatorSelection: opts.authenticatorSelection,
+        excludeCredentials: (opts.excludeCredentials||[]).map(function(c){ return {type:c.type, id:b64dec(c.id)}; }),
+      }
+    });
+    var completeRes = await fetch('/passkey/register/complete', {
+      method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin',
+      body: JSON.stringify({
+        clientDataJSON: b64enc(cred.response.clientDataJSON),
+        attestationObject: b64enc(cred.response.attestationObject),
+        deviceName: navigator.userAgent.substring(0,80),
+      })
+    });
+    var result = await completeRes.json();
+    if (result.ok) { status.style.color='#4ade80'; status.textContent='✓ Passkey added!'; setTimeout(()=>location.reload(),1200); }
+    else throw new Error(result.error);
+  } catch(e) {
+    status.style.color='#f87171'; status.textContent=e.message||'Failed';
+    btn.disabled=false;
+  }
+}
+async function removePasskey(id, btn) {
+  if (!confirm('Remove this passkey?')) return;
+  var res = await fetch('/passkey/remove', {
+    method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin',
+    body: JSON.stringify({id: id})
+  });
+  var r = await res.json();
+  if (r.ok) location.reload();
+}
+</script>
+
 {% endblock %}

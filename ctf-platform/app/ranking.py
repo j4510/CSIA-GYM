@@ -364,7 +364,7 @@ def compute_all_scores() -> dict:
     if hasattr(g, '_rank_scores'):
         return g._rank_scores
 
-    users = User.query.filter_by(is_hidden_from_scoreboard=False, is_admin=False).all()
+    users = User.query.filter_by(is_hidden_from_scoreboard=False).all()
     if not users:
         g._rank_scores = {}
         return {}

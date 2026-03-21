@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Compose - CSIA GYM{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto fade-in">
+  <div class="mb-6">
+    <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">Messages</p>
+    <h1 class="text-4xl font-black uppercase" style="color:#fff;">■ COMPOSE</h1>
+  </div>
+
+  <div style="background:#0d0d0d;border:2px solid #8b0000;padding:32px;">
+    <form method="POST" action="{{ url_for('mail.compose') }}">
+      <div style="margin-bottom:20px;">
+        <label style="display:block;font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin-bottom:6px;">To</label>
+        <input type="text" name="to" value="{{ to_user }}" placeholder="Username"
+               style="width:100%;background:#111;border:2px solid #333;color:#fff;padding:10px 14px;font-size:0.88rem;font-weight:600;outline:none;transition:border-color 0.15s;"
+               onfocus="this.style.borderColor='#8b0000'" onblur="this.style.borderColor='#333'" required>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="display:block;font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin-bottom:6px;">Subject</label>
+        <input type="text" name="subject" placeholder="Subject"
+               style="width:100%;background:#111;border:2px solid #333;color:#fff;padding:10px 14px;font-size:0.88rem;font-weight:600;outline:none;transition:border-color 0.15s;"
+               onfocus="this.style.borderColor='#8b0000'" onblur="this.style.borderColor='#333'" required>
+      </div>
+      <div style="margin-bottom:24px;">
+        <label style="display:block;font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin-bottom:6px;">Message</label>
+        <textarea name="body" rows="10" placeholder="Write your message..."
+                  style="width:100%;background:#111;border:2px solid #333;color:#fff;padding:10px 14px;font-size:0.88rem;line-height:1.6;resize:vertical;outline:none;transition:border-color 0.15s;"
+                  onfocus="this.style.borderColor='#8b0000'" onblur="this.style.borderColor='#333'" required></textarea>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <button type="submit"
+                style="padding:12px 32px;background:#8b0000;color:#fff;font-weight:900;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.08em;border:none;cursor:pointer;transition:background 0.15s;"
+                onmouseover="this.style.background='#cc0000'" onmouseout="this.style.background='#8b0000'">
+          ✉ SEND MESSAGE
+        </button>
+        <a href="{{ url_for('mail.inbox') }}"
+           style="padding:12px 24px;background:transparent;color:#888;font-weight:700;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.08em;border:2px solid #333;text-decoration:none;transition:color 0.15s,border-color 0.15s;"
+           onmouseover="this.style.color='#fff';this.style.borderColor='#666'" onmouseout="this.style.color='#888';this.style.borderColor='#333'">
+          CANCEL
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

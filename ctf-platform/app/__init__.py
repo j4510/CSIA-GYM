@@ -36,6 +36,8 @@ def create_app(config_class=Config):
     from app.routes.community import community_bp
     from app.routes.settings import settings_bp
     from app.routes.admin import admin_bp
+    from app.routes.passkey import passkey_bp
+    from app.routes.mail import mail_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(challenges_bp)
@@ -43,6 +45,8 @@ def create_app(config_class=Config):
     app.register_blueprint(community_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(passkey_bp)
+    app.register_blueprint(mail_bp)
 
     @app.context_processor
     def inject_globals():
@@ -74,6 +78,10 @@ def create_app(config_class=Config):
                     Announcement.ends_at >= now
                 ).order_by(Announcement.created_at.desc()).all()
                 ctx['user_top_border'] = current_user.get_top_border()
+                from app.models import MailMessage
+                ctx['mail_unread_count'] = MailMessage.query.filter_by(
+                    recipient_id=current_user.id, is_read=False, is_deleted_by_recipient=False
+                ).count()
             else:
                 ctx['notifications'] = []
                 ctx['global_notifications'] = []
@@ -81,6 +89,7 @@ def create_app(config_class=Config):
                 ctx['read_notification_ids'] = set()
                 ctx['active_announcements'] = []
                 ctx['user_top_border'] = None
+                ctx['mail_unread_count'] = 0
         except Exception:
             ctx['notifications'] = []
             ctx['global_notifications'] = []
@@ -88,6 +97,7 @@ def create_app(config_class=Config):
             ctx['read_notification_ids'] = set()
             ctx['active_announcements'] = []
             ctx['user_top_border'] = None
+            ctx['mail_unread_count'] = 0
         return ctx
 
     _MOBILE_RE = re.compile(r'(iPhone|Android.*Mobile|Android.*Firefox|Mobile.*Safari|Opera Mini|IEMobile)', re.IGNORECASE)
@@ -102,6 +112,8 @@ def create_app(config_class=Config):
         'community.edit_comment', 'community.delete_comment',
         'settings.account', 'settings.index', 'settings.serve_avatar',
         'settings.public_profile', 'settings.badges', 'settings.ranks',
+        'mail.inbox', 'mail.compose', 'mail.view_message', 'mail.delete_message',
+        'passkey.register_begin', 'passkey.register_complete', 'passkey.auth_begin', 'passkey.auth_complete',
     }
     from flask import request, render_template
 
@@ -518,6 +530,37 @@ def create_app(config_class=Config):
                 "challenge_id INTEGER NOT NULL, opened_at DATETIME, "
                 "FOREIGN KEY(user_id) REFERENCES users(id), "
                 "FOREIGN KEY(challenge_id) REFERENCES challenges(id))"
+            ))
+            conn.commit()
+
+            # user_passkeys
+            conn.execute(text(
+                "CREATE TABLE IF NOT EXISTS user_passkeys "
+                "(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, "
+                "credential_id TEXT NOT NULL UNIQUE, public_key TEXT NOT NULL, "
+                "sign_count INTEGER DEFAULT 0, device_name VARCHAR(100), "
+                "created_at DATETIME, "
+                "FOREIGN KEY(user_id) REFERENCES users(id))"
+            ))
+            conn.commit()
+
+            # passkey_enabled column on users
+            user_cols3 = {row[1] for row in conn.execute(text("PRAGMA table_info(users)"))}
+            if 'passkey_enabled' not in user_cols3:
+                conn.execute(text('ALTER TABLE users ADD COLUMN passkey_enabled BOOLEAN DEFAULT 0'))
+            conn.commit()
+
+            # mail_messages
+            conn.execute(text(
+                "CREATE TABLE IF NOT EXISTS mail_messages "
+                "(id INTEGER PRIMARY KEY, sender_id INTEGER NOT NULL, "
+                "recipient_id INTEGER NOT NULL, subject VARCHAR(200) NOT NULL, "
+                "body TEXT NOT NULL, is_read BOOLEAN DEFAULT 0, "
+                "is_deleted_by_sender BOOLEAN DEFAULT 0, "
+                "is_deleted_by_recipient BOOLEAN DEFAULT 0, "
+                "created_at DATETIME, "
+                "FOREIGN KEY(sender_id) REFERENCES users(id), "
+                "FOREIGN KEY(recipient_id) REFERENCES users(id))"
             ))
             conn.commit()
 

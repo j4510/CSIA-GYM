@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Messages - CSIA GYM{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto fade-in">
+  <div class="mb-6">
+    <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">Inbox</p>
+    <h1 class="text-4xl font-black uppercase" style="color:#fff;">■ MESSAGES</h1>
+  </div>
+
+  <div style="display:grid;grid-template-columns:200px 1fr;gap:0;border:2px solid #8b0000;">
+
+    <!-- Sidebar -->
+    <div style="background:#0a0a0a;border-right:2px solid #8b0000;padding:0;">
+      <a href="{{ url_for('mail.compose') }}"
+         style="display:block;margin:16px;padding:10px 16px;background:#8b0000;color:#fff;font-weight:900;font-size:0.78rem;text-transform:uppercase;text-decoration:none;text-align:center;letter-spacing:0.08em;">
+        ✉ COMPOSE
+      </a>
+      <div style="border-top:1px solid rgba(139,0,0,0.3);">
+        <a href="{{ url_for('mail.inbox', folder='inbox') }}"
+           style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;font-size:0.78rem;font-weight:700;text-transform:uppercase;text-decoration:none;border-bottom:1px solid rgba(139,0,0,0.15);
+                  {% if folder == 'inbox' %}color:#fff;background:rgba(139,0,0,0.12);border-left:3px solid #cc0000;{% else %}color:#888;{% endif %}">
+          <span>📥 Inbox</span>
+          {% set unread = messages|selectattr('is_read','equalto',false)|list|length if folder == 'inbox' else 0 %}
+          {% if folder == 'inbox' and unread > 0 %}
+          <span style="background:#cc0000;color:#fff;font-size:0.55rem;font-weight:900;border-radius:9999px;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;padding:0 4px;">{{ unread }}</span>
+          {% endif %}
+        </a>
+        <a href="{{ url_for('mail.inbox', folder='sent') }}"
+           style="display:flex;align-items:center;padding:12px 16px;font-size:0.78rem;font-weight:700;text-transform:uppercase;text-decoration:none;border-bottom:1px solid rgba(139,0,0,0.15);
+                  {% if folder == 'sent' %}color:#fff;background:rgba(139,0,0,0.12);border-left:3px solid #cc0000;{% else %}color:#888;{% endif %}">
+          📤 Sent
+        </a>
+      </div>
+    </div>
+
+    <!-- Message list -->
+    <div style="background:#0d0d0d;min-height:400px;">
+      {% if messages %}
+      {% for msg in messages %}
+      {% set is_unread = (folder == 'inbox' and not msg.is_read) %}
+      <a href="{{ url_for('mail.view_message', msg_id=msg.id) }}"
+         style="display:grid;grid-template-columns:1fr auto;align-items:center;padding:14px 20px;border-bottom:1px solid rgba(139,0,0,0.15);text-decoration:none;transition:background 0.15s;
+                {% if is_unread %}background:rgba(139,0,0,0.07);{% endif %}"
+         onmouseover="this.style.background='rgba(139,0,0,0.1)'" onmouseout="this.style.background='{% if is_unread %}rgba(139,0,0,0.07){% endif %}'">
+        <div style="min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+            {% if is_unread %}
+            <span style="width:7px;height:7px;border-radius:50%;background:#cc0000;flex-shrink:0;"></span>
+            {% endif %}
+            <span style="font-size:0.82rem;font-weight:{% if is_unread %}900{% else %}600{% endif %};color:{% if is_unread %}#fff{% else %}#aaa{% endif %};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              {{ msg.subject }}
+            </span>
+          </div>
+          <div style="font-size:0.7rem;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            {% if folder == 'inbox' %}From: <span style="color:#888;">{{ msg.sender.username }}</span>{% else %}To: <span style="color:#888;">{{ msg.recipient.username }}</span>{% endif %}
+            &nbsp;·&nbsp;{{ msg.body[:60] }}{% if msg.body|length > 60 %}…{% endif %}
+          </div>
+        </div>
+        <span style="font-size:0.65rem;color:#444;white-space:nowrap;margin-left:16px;">{{ msg.created_at.strftime('%b %d') }}</span>
+      </a>
+      {% endfor %}
+      {% else %}
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;opacity:0.3;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#888" viewBox="0 0 16 16"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.708 2.825L15 11.105V5.383zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z"/></svg>
+        <p style="margin-top:12px;font-size:0.8rem;font-weight:700;text-transform:uppercase;color:#666;">No messages</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

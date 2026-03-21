@@ -27,11 +27,12 @@
 .border-tier10::before { content:''; position:absolute; inset:-3px; border-radius:6px; background:linear-gradient(90deg,#ff0040,#e040fb,#00fff7,#facc15,#ff0040); background-size:300% 100%; animation:rainbowShift 2s linear infinite; z-index:-1; }
 @keyframes rainbowShift { 0%{background-position:0% 50%} 100%{background-position:300% 50%} }
 @keyframes godPulse { 0%,100%{box-shadow:0 0 20px rgba(224,64,251,0.6),0 0 40px rgba(0,255,247,0.4)} 50%{box-shadow:0 0 40px rgba(224,64,251,1),0 0 80px rgba(0,255,247,0.8)} }
-.hive-grid { display:flex; flex-wrap:wrap; width:calc(4 * 74px); }
-.hive-cell { position:relative; width:72px; height:83px; margin:0 1px; margin-bottom:-21px; flex-shrink:0; }
-.hive-cell.hive-odd { margin-top:42px; }
-.hive-cell img { width:72px; height:83px; object-fit:cover; clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display:block; }
-.hive-cell span { position:absolute; bottom:18px; left:0; right:0; text-align:center; font-size:0.42rem; font-weight:900; text-transform:uppercase; color:#fff; text-shadow:0 1px 3px #000; line-height:1.1; padding:0 4px; pointer-events:none; }
+/* Honeycomb hive grid */
+.hive-grid { display:flex; flex-wrap:wrap; width:296px; line-height:0; }
+.hive-cell { position:relative; width:72px; height:62px; margin:0 2px; margin-bottom:-15px; flex-shrink:0; }
+.hive-cell.hive-odd { margin-top:31px; }
+.hive-cell img { width:72px; height:62px; object-fit:cover; clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%); display:block; }
+.hive-cell span { position:absolute; top:50%; left:0; right:0; transform:translateY(-50%); text-align:center; font-size:0.4rem; font-weight:900; text-transform:uppercase; color:#fff; text-shadow:0 1px 3px #000; line-height:1.1; padding:0 4px; pointer-events:none; }
 </style>
 {% endblock %}
 

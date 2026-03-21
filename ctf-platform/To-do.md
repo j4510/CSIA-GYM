@@ -50,9 +50,9 @@
 
 
 March 22, 2026:
-- Hexagonal Tiles (presentation not yet fixed)
-- XP Numerical Value (not fixed)
-- Let's have passkeys via WebAuthn enabled as well, after registration, ask users if they want to enable passkey so that in the login page it can either be a password or via passkey. Put the fido logo as well `FIDO_logo_black.svg` or `FIDO_logo_white.svg` depending on the background of the login. Currently registered users can enable passkey when their passkey is not yet enabled, on their login, they will automatically receive a prompt to enable passkey.
+- Hexagonal Tiles, still doesn't look like a hive. It should look like a honeycomb, it currently looks like shit.
+- XP Numerical Value (not fixed), I have a test account that has 9 challenges solved, 2 community posts, 14 accepted submissions, and 2250 total score, why is my XP 0? Fix this.
+- Let's have passkeys via WebAuthn enabled as well, after registration, ask users if they want to enable passkey so that in the login page it can either be a password or via passkey. Put the duo logo as well `DUO_LOGO.png`. Currently registered users can enable passkey when their passkey is not yet enabled, on their login, they will automatically receive a prompt to enable passkey.
 
 - Create a "mail" system where all notifications will be sent there as well as a digest (daily GMT+8). The mail system will be a mail icon next to the notification bell (on mobile navbar it will be a full word "Messages"), the mail function will be able to send and receive messages to other users from other users. (Make sure the design of this is well-professional and is in accordance to our current design templates). 
 

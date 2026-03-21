@@ -1,65 +1,132 @@
 {% extends "base.html" %}
-
 {% block title %}Login - CSIA GYM{% endblock %}
 
 {% block content %}
-<!-- LOGIN PAGE -->
+<div class="max-w-md mx-auto fade-in">
+  <div style="background:#0d0d0d;border:2px solid #8b0000;padding:40px 36px;">
 
-<div class="max-w-md mx-auto">
-    <div class="bg-white rounded-lg shadow-md p-8">
-        <h2 class="text-3xl font-bold text-center mb-6" style="color: #f5f5f5;">Login</h2>
-        
-        <form method="POST" action="{{ url_for('auth.login') }}">
-            <!-- Username Field -->
-            <div class="mb-4">
-                <label for="username" class="block font-semibold mb-2" style="color:#e5e5e5;">
-                    Username
-                </label>
-                <input type="text" 
-                       id="username" 
-                       name="username" 
-                       required
-                       autofocus
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                       placeholder="Enter your username">
-            </div>
-            
-            <!-- Password Field -->
-            <div class="mb-6">
-                <label for="password" class="block font-semibold mb-2" style="color:#e5e5e5;">
-                    Password
-                </label>
-                <input type="password" 
-                       id="password" 
-                       name="password" 
-                       required
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                       placeholder="Enter your password">
-            </div>
-            
-            <!-- Remember me -->
-            <div class="mb-4">
-                <label class="flex items-center gap-2" style="cursor:pointer;">
-                    <input type="checkbox" name="remember" style="width:16px;height:16px;accent-color:#8b0000;cursor:pointer;">
-                    <span style="color:#111111;font-size:0.875rem;">Keep me logged in for 30 days</span>
-                </label>
-            </div>
-
-            <!-- Submit Button -->
-            <button type="submit" 
-                    class="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition">
-                Login
-            </button>
-        </form>
-        
-        <!-- Registration Link -->
-        <p class="text-center mt-6" style="color:#888;">
-            Don't have an account? 
-            <a href="{{ url_for('auth.register') }}" class="text-red-600 hover:underline">
-                Register here
-            </a>
-        </p>
+    <!-- DUO logo + title -->
+    <div style="text-align:center;margin-bottom:28px;">
+      <img src="{{ url_for('static', filename='img/DUO_LOGO.png') }}" alt="Duo Security"
+           style="height:32px;object-fit:contain;margin-bottom:16px;opacity:0.85;">
+      <h2 style="font-size:1.6rem;font-weight:900;text-transform:uppercase;color:#fff;letter-spacing:0.05em;">Sign In</h2>
+      <p style="font-size:0.72rem;color:#555;text-transform:uppercase;letter-spacing:0.1em;margin-top:4px;">CSIA GYM Platform</p>
     </div>
+
+    <!-- Password form -->
+    <form method="POST" action="{{ url_for('auth.login') }}" id="login-form">
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-size:0.68rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#666;margin-bottom:6px;">Username</label>
+        <input type="text" id="username" name="username" required autofocus placeholder="Enter your username"
+               style="width:100%;background:#111;border:2px solid #2a2a2a;color:#fff;padding:11px 14px;font-size:0.9rem;outline:none;transition:border-color 0.15s;"
+               onfocus="this.style.borderColor='#8b0000'" onblur="this.style.borderColor='#2a2a2a'">
+      </div>
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-size:0.68rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#666;margin-bottom:6px;">Password</label>
+        <input type="password" id="password" name="password" required placeholder="Enter your password"
+               style="width:100%;background:#111;border:2px solid #2a2a2a;color:#fff;padding:11px 14px;font-size:0.9rem;outline:none;transition:border-color 0.15s;"
+               onfocus="this.style.borderColor='#8b0000'" onblur="this.style.borderColor='#2a2a2a'">
+      </div>
+      <div style="margin-bottom:22px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" name="remember" style="width:15px;height:15px;accent-color:#8b0000;cursor:pointer;">
+          <span style="font-size:0.78rem;color:#666;">Keep me logged in for 30 days</span>
+        </label>
+      </div>
+      <button type="submit"
+              style="width:100%;padding:13px;background:#8b0000;color:#fff;font-weight:900;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;border:none;cursor:pointer;transition:background 0.15s;"
+              onmouseover="this.style.background='#cc0000'" onmouseout="this.style.background='#8b0000'">
+        LOGIN
+      </button>
+    </form>
+
+    <!-- Divider -->
+    <div style="display:flex;align-items:center;gap:12px;margin:20px 0;">
+      <div style="flex:1;height:1px;background:#222;"></div>
+      <span style="font-size:0.65rem;font-weight:700;text-transform:uppercase;color:#444;letter-spacing:0.1em;">or</span>
+      <div style="flex:1;height:1px;background:#222;"></div>
+    </div>
+
+    <!-- Passkey login -->
+    <button onclick="loginWithPasskey()" id="passkey-login-btn"
+            style="width:100%;padding:12px;background:#111;color:#aaa;font-weight:700;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.08em;border:2px solid #2a2a2a;cursor:pointer;transition:color 0.15s,border-color 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;"
+            onmouseover="this.style.color='#fff';this.style.borderColor='#555'" onmouseout="this.style.color='#aaa';this.style.borderColor='#2a2a2a'">
+      🔑 SIGN IN WITH PASSKEY
+    </button>
+    <div id="passkey-login-status" style="font-size:0.72rem;text-align:center;margin-top:8px;min-height:18px;color:#888;"></div>
+
+    <p style="text-align:center;margin-top:24px;font-size:0.78rem;color:#555;">
+      Don't have an account?
+      <a href="{{ url_for('auth.register') }}" style="color:#cc0000;text-decoration:none;font-weight:700;"
+         onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Register here</a>
+    </p>
+  </div>
 </div>
 
+<script>
+async function loginWithPasskey() {
+  var btn = document.getElementById('passkey-login-btn');
+  var status = document.getElementById('passkey-login-status');
+  var username = document.getElementById('username').value.trim();
+  btn.disabled = true;
+  status.textContent = 'Waiting for passkey...';
+  status.style.color = '#888';
+
+  function b64dec(s) {
+    s = s.replace(/-/g,'+').replace(/_/g,'/');
+    var pad = 4 - s.length % 4; if (pad !== 4) s += '='.repeat(pad);
+    var bin = atob(s), arr = new Uint8Array(bin.length);
+    for (var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    return arr;
+  }
+  function b64enc(buf) {
+    return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  }
+
+  try {
+    var res = await fetch('/passkey/auth/begin', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      credentials: 'same-origin',
+      body: JSON.stringify({username: username}),
+    });
+    var opts = await res.json();
+
+    var getOpts = {
+      publicKey: {
+        challenge: b64dec(opts.challenge),
+        timeout: opts.timeout,
+        rpId: opts.rpId,
+        allowCredentials: (opts.allowCredentials||[]).map(function(c){ return {type:c.type, id:b64dec(c.id)}; }),
+        userVerification: opts.userVerification,
+      }
+    };
+    var cred = await navigator.credentials.get(getOpts);
+
+    var completeRes = await fetch('/passkey/auth/complete', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        id: cred.id,
+        clientDataJSON: b64enc(cred.response.clientDataJSON),
+        authenticatorData: b64enc(cred.response.authenticatorData),
+        signature: b64enc(cred.response.signature),
+      })
+    });
+    var result = await completeRes.json();
+    if (result.ok) {
+      status.style.color = '#4ade80';
+      status.textContent = '✓ Authenticated!';
+      window.location.href = '/challenges';
+    } else {
+      throw new Error(result.error || 'Authentication failed');
+    }
+  } catch(e) {
+    status.style.color = '#f87171';
+    status.textContent = e.message || 'Passkey authentication failed';
+    btn.disabled = false;
+  }
+}
+</script>
 {% endblock %}
