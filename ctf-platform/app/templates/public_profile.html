@@ -27,6 +27,11 @@
 .border-tier10::before { content:''; position:absolute; inset:-3px; border-radius:6px; background:linear-gradient(90deg,#ff0040,#e040fb,#00fff7,#facc15,#ff0040); background-size:300% 100%; animation:rainbowShift 2s linear infinite; z-index:-1; }
 @keyframes rainbowShift { 0%{background-position:0% 50%} 100%{background-position:300% 50%} }
 @keyframes godPulse { 0%,100%{box-shadow:0 0 20px rgba(224,64,251,0.6),0 0 40px rgba(0,255,247,0.4)} 50%{box-shadow:0 0 40px rgba(224,64,251,1),0 0 80px rgba(0,255,247,0.8)} }
+.hive-grid { display:flex; flex-wrap:wrap; width:calc(4 * 74px); }
+.hive-cell { position:relative; width:72px; height:83px; margin:0 1px; margin-bottom:-21px; flex-shrink:0; }
+.hive-cell.hive-odd { margin-top:42px; }
+.hive-cell img { width:72px; height:83px; object-fit:cover; clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display:block; }
+.hive-cell span { position:absolute; bottom:18px; left:0; right:0; text-align:center; font-size:0.42rem; font-weight:900; text-transform:uppercase; color:#fff; text-shadow:0 1px 3px #000; line-height:1.1; padding:0 4px; pointer-events:none; }
 </style>
 {% endblock %}
 
@@ -49,6 +54,7 @@
       <div>
         <p class="text-2xl font-black uppercase">{{ user.username }}</p>
         {% if user.full_name %}<p class="opacity-60 uppercase text-sm">{{ user.full_name.split()[0] }}</p>{% endif %}
+        <p style="font-size:0.7rem;opacity:0.5;text-transform:uppercase;letter-spacing:0.1em;margin-top:0.1rem;">XP {{ user_xp }}</p>
         <a href="{{ url_for('settings.ranks') }}" style="text-decoration:none;">
           <p style="margin-top:0.4rem;font-size:1rem;{{ rank_style }}">{{ rank_title }}</p>
         </a>
@@ -156,10 +162,6 @@
         <div class="text-5xl font-black text-red-600 mb-2">{{ user.get_score() }}</div>
         <div class="text-sm opacity-80 uppercase font-bold">TOTAL POINTS</div>
       </div>
-      <div class="text-center p-6 bg-black border-3 border-yellow-500 hover-brutal">
-        <div class="text-5xl font-black mb-2" style="color:#facc15;">{{ rank_percentile }}</div>
-        <div class="text-sm opacity-80 uppercase font-bold">XP</div>
-      </div>
       <div class="text-center p-6 bg-black border-3 border-green-500 hover-brutal">
         <div class="text-5xl font-black text-green-500 mb-2">{{ user.solves|length }}</div>
         <div class="text-sm opacity-80 uppercase font-bold">CHALLENGES SOLVED</div>
@@ -265,19 +267,12 @@
             <span class="text-red-600 mr-2">►</span> MILESTONES
           </h3>
           {% if user_milestones %}
-          <div style="display:flex;flex-wrap:wrap;gap:0;">
+          <div class="hive-grid">
             {% for um in user_milestones %}
-            {% set odd_row = (loop.index0 // 3) % 2 %}
-            {% set col = loop.index0 % 3 %}
-            <div title="{{ um.milestone.title }}: {{ um.milestone.description }}"
-                 style="width:72px;height:83px;position:relative;margin-right:2px;margin-bottom:{% if odd_row %}2px{% else %}-10px{% endif %};
-                        {% if odd_row and col == 0 %}margin-left:37px;{% endif %}">
+            <div class="hive-cell {% if (loop.index0 // 4) % 2 == 1 %}hive-odd{% endif %}" title="{{ um.milestone.title }}: {{ um.milestone.description }}">
               <img src="{{ url_for('settings.serve_milestone', filename=um.milestone.image_filename) }}"
-                   alt="{{ um.milestone.title }}"
-                   style="width:72px;height:83px;object-fit:cover;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);">
-              <div style="position:absolute;bottom:14px;left:0;right:0;text-align:center;">
-                <span style="font-size:0.45rem;font-weight:900;text-transform:uppercase;color:#fff;text-shadow:0 1px 3px #000;line-height:1.1;display:block;padding:0 4px;">{{ um.milestone.title[:12] }}</span>
-              </div>
+                   alt="{{ um.milestone.title }}">
+              <span>{{ um.milestone.title[:12] }}</span>
             </div>
             {% endfor %}
           </div>

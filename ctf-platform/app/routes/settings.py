@@ -142,7 +142,7 @@ def api_radar():
 
 def _rank_context(user):
     """Shared helper for account and public_profile — avoids duplicated imports."""
-    from app.ranking import get_user_rank, ALL_RANK_CSS, RANK_KEYFRAMES, get_category_radar_data
+    from app.ranking import get_user_rank, ALL_RANK_CSS, RANK_KEYFRAMES, get_category_radar_data, compute_all_scores
     from app.models import ChallengeSubmission, FlagAttempt
     percentile, rank_title = get_user_rank(user)
     rank_style = ALL_RANK_CSS.get(rank_title, '')
@@ -154,6 +154,8 @@ def _rank_context(user):
     wrong_attempts = FlagAttempt.query.filter_by(user_id=user.id, correct=False).count()
     from app.models import UserMilestone
     user_milestones = UserMilestone.query.filter_by(user_id=user.id).order_by(UserMilestone.awarded_at).all()
+    scores = compute_all_scores()
+    user_xp = round(scores.get(user.id, 0.0))
     return dict(
         rank_title=rank_title, rank_style=rank_style,
         rank_percentile=percentile, rank_keyframes=RANK_KEYFRAMES,
@@ -162,6 +164,7 @@ def _rank_context(user):
         accepted=accepted, rejected=rejected, wrong_attempts=wrong_attempts,
         top_border=user.get_top_border(),
         user_milestones=user_milestones,
+        user_xp=user_xp,
     )
 
 

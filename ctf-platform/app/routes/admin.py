@@ -10,7 +10,12 @@ import secrets
 from datetime import datetime, timedelta
 from sqlalchemy import func, case
 from app import db
-from app.models import (\n    User, Challenge, ChallengeSubmission, SubmissionFile, CommunityPost, Comment,\n    Badge, UserBadge, WebChallenge, NcChallenge, Notification, NotificationRead,\n    Announcement, BadgeRule, BadgeClaim, BugReport, FlagAttempt, UserChallengeSolve,\n    ChallengeOpen, Milestone, UserMilestone\n)
+from app.models import (
+    User, Challenge, ChallengeSubmission, SubmissionFile, CommunityPost, Comment,
+    Badge, UserBadge, WebChallenge, NcChallenge, Notification, NotificationRead,
+    Announcement, BadgeRule, BadgeClaim, BugReport, FlagAttempt, UserChallengeSolve,
+    ChallengeOpen, Milestone, UserMilestone
+)
 
 SUBMISSION_FILES_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'instance', 'submission_files')
 
