@@ -209,7 +209,13 @@
                  alt="{{ ub.badge.title }}" title="{{ ub.badge.description }}"
                  class="badge-img border-{{ ub.badge.border_style or 'tier1' }}">
             <p class="text-xs font-black uppercase mt-1" style="word-break:break-word;color:#e5e5e5;">{{ ub.badge.title }}</p>
-            {% if ub.badge.is_limited %}<p class="text-xs" style="color:#facc15;">LIMITED</p>{% endif %}
+            {% if ub.badge.is_limited %}
+            {% set badge_pos = namespace(n=0) %}
+            {% for other in ub.badge.recipients | sort(attribute='awarded_at') %}
+              {% if other.user_id == current_user.id %}{% set badge_pos.n = loop.index %}{% endif %}
+            {% endfor %}
+            <p class="text-xs" style="color:#facc15;">#{{ badge_pos.n }} / {{ ub.badge.recipients | length }}</p>
+            {% endif %}
           </div>
         </a>
         {% endfor %}

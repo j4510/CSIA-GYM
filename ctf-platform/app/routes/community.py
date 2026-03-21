@@ -198,6 +198,38 @@ def view_post(post_id):
                            rank_keyframes=RANK_KEYFRAMES)
 
 
+@community_bp.route('/community/<int:post_id>/delete', methods=['POST'])
+@login_required
+def delete_post(post_id):
+    post = CommunityPost.query.get_or_404(post_id)
+    if not _can_moderate(current_user, post):
+        abort(403)
+    db.session.delete(post)
+    db.session.commit()
+    log_event(actor=current_user.username, action='delete_post', target=f'post:{post_id}', category='community')
+    flash('Post deleted.', 'info')
+    return redirect(url_for('community.list'))
+
+
+@community_bp.route('/community/<int:post_id>/edit', methods=['POST'])
+@login_required
+def edit_post(post_id):
+    post = CommunityPost.query.get_or_404(post_id)
+    if not _can_moderate(current_user, post):
+        abort(403)
+    title = request.form.get('title', '').strip()
+    raw_content = request.form.get('content', '').strip()
+    if not title or not raw_content:
+        flash('Title and content are required.', 'danger')
+        return redirect(url_for('community.view_post', post_id=post_id))
+    post.title = title
+    post.content = bleach.clean(raw_content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, strip=True)
+    db.session.commit()
+    log_event(actor=current_user.username, action='edit_post', target=f'post:{post_id}', category='community')
+    flash('Post updated.', 'success')
+    return redirect(url_for('community.view_post', post_id=post_id))
+
+
 @community_bp.route('/community/<int:post_id>/pin', methods=['POST'])
 @login_required
 def pin_post(post_id):

@@ -164,8 +164,11 @@
                         {% for n in notifications %}
                         {% set cat_color = {'challenge':'#60a5fa','community':'#4ade80','submission':'#fb923c','system':'#a78bfa'}.get(n.category, '#888') %}
                         <div id="unotif-{{ n.id }}"
-                             style="padding:11px 14px;border-bottom:1px solid rgba(139,0,0,0.12);{% if not n.is_read %}background:rgba(139,0,0,0.07);{% endif %}cursor:pointer;"
+                             style="padding:11px 14px;border-bottom:1px solid rgba(139,0,0,0.12);{% if not n.is_read %}background:rgba(139,0,0,0.07);{% endif %}cursor:pointer;position:relative;"
                              onclick="markUserRead({{ n.id }}{% if n.link %}, '{{ n.link }}'{% endif %})">
+                            {% if not n.is_read %}
+                            <span style="position:absolute;top:10px;right:10px;width:7px;height:7px;border-radius:50%;background:#cc0000;animation:notifBlip 1.2s ease-in-out infinite;"></span>
+                            {% endif %}
                             <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
                                 <span style="font-size:0.58rem;font-weight:900;text-transform:uppercase;color:{{ cat_color }};border:1px solid {{ cat_color }};padding:1px 5px;">{{ n.category }}</span>
                                 <p style="font-size:0.78rem;font-weight:900;color:#f5f5f5;margin:0;">{{ n.title }}</p>
@@ -176,8 +179,11 @@
                         {% endfor %}
                         {% for n in global_notifications %}
                         <div id="notif-{{ n.id }}"
-                             style="padding:11px 14px;border-bottom:1px solid rgba(139,0,0,0.12);{% if n.id not in read_notification_ids %}background:rgba(139,0,0,0.06);{% endif %}cursor:pointer;"
+                             style="padding:11px 14px;border-bottom:1px solid rgba(139,0,0,0.12);{% if n.id not in read_notification_ids %}background:rgba(139,0,0,0.06);{% endif %}cursor:pointer;position:relative;"
                              onclick="markRead({{ n.id }})">
+                            {% if n.id not in read_notification_ids %}
+                            <span style="position:absolute;top:10px;right:10px;width:7px;height:7px;border-radius:50%;background:#facc15;animation:notifBlip 1.2s ease-in-out infinite;"></span>
+                            {% endif %}
                             <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
                                 <span style="font-size:0.58rem;font-weight:900;text-transform:uppercase;color:#facc15;border:1px solid #facc15;padding:1px 5px;">admin</span>
                                 <p style="font-size:0.78rem;font-weight:900;color:#f5f5f5;margin:0;">{{ n.title }}</p>
@@ -384,21 +390,44 @@
       tick();
     });
 
+    // Notification blip animation
+    (function() {
+      var style = document.createElement('style');
+      style.textContent = '@keyframes notifBlip { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }';
+      document.head.appendChild(style);
+    })();
+
     // Notification read helpers
     function markRead(id) {
       var el = document.getElementById('notif-' + id);
-      if (el) el.style.background = '';
+      if (el) {
+        el.style.transition = 'opacity 0.3s';
+        el.style.opacity = '0';
+        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+      }
       fetch('/api/notifications/' + id + '/read', { method: 'POST', credentials: 'same-origin' });
     }
     function markUserRead(id, link) {
       var el = document.getElementById('unotif-' + id);
-      if (el) el.style.background = '';
+      if (el) {
+        el.style.transition = 'opacity 0.3s';
+        el.style.opacity = '0';
+        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+      }
       fetch('/api/user-notifications/' + id + '/read', { method: 'POST', credentials: 'same-origin' });
       if (link) { setTimeout(function(){ window.location.href = link; }, 150); }
     }
     function markAllRead() {
-      document.querySelectorAll('[id^="unotif-"]').forEach(function(el) { el.style.background = ''; });
-      document.querySelectorAll('[id^="notif-"]').forEach(function(el) { el.style.background = ''; });
+      document.querySelectorAll('[id^="unotif-"]').forEach(function(el) {
+        el.style.transition = 'opacity 0.3s';
+        el.style.opacity = '0';
+        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+      });
+      document.querySelectorAll('[id^="notif-"]').forEach(function(el) {
+        el.style.transition = 'opacity 0.3s';
+        el.style.opacity = '0';
+        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+      });
       fetch('/api/user-notifications/read-all', { method: 'POST', credentials: 'same-origin' });
       fetch('/api/notifications/read-all', { method: 'POST', credentials: 'same-origin' });
     }

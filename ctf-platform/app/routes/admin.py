@@ -826,6 +826,40 @@ def accept_flag_submission(attempt_id):
     return redirect(url_for('admin.flag_submissions'))
 
 
+@admin_bp.route('/flag-submissions/<int:attempt_id>/delete', methods=['POST'])
+def delete_flag_submission(attempt_id):
+    """Delete a correct flag submission: remove solve record, revert points, remove first blood."""
+    attempt = FlagAttempt.query.get_or_404(attempt_id)
+    if not attempt.correct:
+        flash('Only correct submissions can be deleted.', 'danger')
+        return redirect(url_for('admin.flag_submissions'))
+
+    user_id = attempt.user_id
+    challenge_id = attempt.challenge_id
+
+    # Remove the UserChallengeSolve record (reverts scoreboard/points)
+    solve = UserChallengeSolve.query.filter_by(
+        user_id=user_id, challenge_id=challenge_id).first()
+    if solve:
+        db.session.delete(solve)
+
+    # Remove first-blood notification for this user+challenge if any
+    from app.models import UserNotification
+    UserNotification.query.filter(
+        UserNotification.user_id == user_id,
+        UserNotification.category == 'challenge',
+        UserNotification.title.like('%First Blood%'),
+        UserNotification.link.like(f'%/challenges/{challenge_id}%')
+    ).delete(synchronize_session=False)
+
+    db.session.delete(attempt)
+    db.session.commit()
+
+    log_action('delete_flag_submission', f'attempt:{attempt_id} user:{user_id} challenge:{challenge_id}')
+    flash('Submission deleted, solve reverted, and first blood removed (if applicable).', 'success')
+    return redirect(url_for('admin.flag_submissions'))
+
+
 # ========================================
 # EXTENDED DASHBOARD STATS
 # ========================================

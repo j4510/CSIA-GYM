@@ -1,6 +1,30 @@
-## Here's what's new with our current version: v2.0
+## Here's what's new with our current version: v2.0.1
 
-* v2.0 (March 20, 2026)
+* v2.0.2 (March 22, 2026)
+    - “Keep me logged in” label: Improved readability with dark text on the login page.
+    - Flag submission deletion: Admins can now delete correct flag submissions, which reverts scoreboard points and first-blood notifications. The template now shows a red ✕ Delete button.
+    - Notification blips: Unread notifications now display a pulsing dot. Clicking them marks as read and removes them from view.
+    - Improved span label readability: Labels on buttons and posts now inherit proper colors for better visibility.
+    - Comment username/body colors: Comments now display text in black for easier reading on white backgrounds.
+    - Admin actions dropdown: Post management actions (pin, disable comments/reactions, archive, edit, delete) are now in a single mobile-friendly dropdown.
+    - Post editing with QuillJS: Post editing and comment replies now use a rich-text Quill editor.
+    - Limited badge numbers: Account and public profiles now show badge numbers (e.g., #3/50) for limited badges.
+    - Mobile overflow fixes: Content no longer spills outside the screen; images, tables, and filters are fully responsive.
+    - Community & “What’s New” on mobile: All community and update pages are now fully accessible on mobile devices.
+
+### Older versions:
+* v2.0.1 (March 22, 2026)
+    - Category swap: `Reverse Engineering` → `Binary Exploitation (PWN)` for nc challenges
+    - Delete user bug
+    - Ranking bug (everyone starts as Master of the Nexus)
+    - Dynamic flag → MD5 hashes
+    - Keep me logged in (30 days)
+    - Banned user enforcement on navigation
+    - Mobile: community/whats-new visibility
+    - Post reply text color (white → black)
+    - Scoreboard button on indexd for hosted challenges to run safely on low-resource servers.
+
+* v2.0 
     - Revamped website design.
     - Full-blown website walkthrough is now available.
     - File uploads are now available and limited to 250 MB per user.
@@ -30,10 +54,7 @@
     - You can now subscribe to a post which will notify you when people replies to a post.
     - Bug reporting is now available.
     - Full-blown auditing is now enabled (it was previously only for administrators).
-    - Created a new role: Community Moderator for managing community posts.
-
----
-### Older versions:
+    - Created a new role: 
 
 * v1.5
     - Ready for server deployment

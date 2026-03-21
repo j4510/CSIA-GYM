@@ -1,5 +1,5 @@
-/* 
- * CSIA GYM — Dark Platform Styles
+﻿/* 
+ * CSIA GYM â€” Dark Platform Styles
  */
 
 :root {
@@ -927,10 +927,30 @@ pre {
 .ql-toolbar button:hover .ql-stroke, .ql-toolbar .ql-active .ql-stroke { stroke: #8b0000 !important; }
 .ql-toolbar button:hover .ql-fill, .ql-toolbar .ql-active .ql-fill { fill: #8b0000 !important; }
 
+
+/* ===== SPAN LABEL READABILITY ===== */
+/* post-sub-label, bm-label, sub-label and similar inline labels on white/light bg */
+#post-sub-label, #bm-label, #sub-label,
+[id$="-label"], [id$="-sub-label"] {
+    color: #111111 !important;
+}
+
+/* Comment usernames and body text in community view */
+.border-l-4.border-red-700 span.font-semibold,
+.border-l-4.border-red-700 a,
+.border-l-4.border-red-700 p {
+    color: #111111 !important;
+}
+
+/* Keep me logged in checkbox label */
+label[style*="cursor:pointer"] span {
+    color: #111111 !important;
+}
+
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 768px) {
 
-  /* ── Nav ── */
+  /* Nav */
   .site-nav { padding: 0 1rem; height: 56px; }
   .site-nav-logo { font-size: 0.95rem; }
 
@@ -981,45 +1001,64 @@ pre {
   .nav-hamburger.open span:nth-child(2) { opacity: 0; }
   .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); background: #fff; }
 
-  /* ── General layout ── */
+  /* General layout */
   .container { padding-left: 1rem !important; padding-right: 1rem !important; }
   main.container { padding-top: 1.25rem !important; padding-bottom: 2rem !important; }
 
-  /* ── Scoreboard ── */
+  /* Prevent horizontal overflow */
+  body { overflow-x: hidden; }
+  img { max-width: 100%; height: auto; }
+  table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  pre { overflow-x: auto; }
+
+  /* Scoreboard */
   .sb-page { padding: 0 0.5rem; }
   .sb-podium { gap: 0.35rem; }
   .podium-card { padding: 0.85rem 0.4rem 0.7rem; }
   .sb-row { grid-template-columns: 32px 1fr auto; gap: 0.4rem; padding: 0.7rem 0.75rem; }
 
-  /* ── Community list ── */
-  .comm-page { padding: 0; }
+  /* Community list */
+  .comm-page { padding: 0; max-width: 100%; }
   .comm-header h1 { font-size: 1.6rem; }
   .new-post-btn { padding: 0.45rem 0.9rem; font-size: 0.72rem; }
   .post-card { padding: 1rem 1rem; }
   .post-title { font-size: 0.92rem; }
+  .sort-btn { font-size: 0.7rem; padding: 0.4rem 0.7rem; }
 
-  /* ── Account ── */
+  /* Index / general max-width containers */
+  .max-w-4xl, .max-w-3xl, .max-w-2xl, .max-w-xl { max-width: 100% !important; }
+
+  /* Account */
   .max-w-5xl { max-width: 100% !important; }
   .bg-black.border-4 { padding: 1.25rem !important; }
   .grid.md\:grid-cols-3 { grid-template-columns: 1fr !important; }
 
-  /* ── Settings ── */
+  /* Settings */
   .max-w-2xl { max-width: 100% !important; }
 
-  /* ── Auth forms ── */
+  /* Auth forms */
   .max-w-md { max-width: 100% !important; }
   .bg-white.rounded-lg.shadow-md { padding: 1.5rem !important; }
 
-  /* ── Alerts ── */
+  /* Alerts */
   .alert { font-size: 0.85rem; padding: 0.75rem 1rem; }
 
-  /* ── Footer ── */
+  /* Footer */
   .site-footer { padding: 1.25rem 1rem; }
   .site-footer > div { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+
+  /* Admin tables */
+  .max-w-7xl { max-width: 100% !important; }
 }
 
 /* Show hamburger only on mobile */
 .nav-hamburger { display: none; }
 @media (max-width: 768px) {
   .nav-hamburger { display: flex; }
+}
+
+/* ===== BUTTON SPAN LABEL INHERITANCE ===== */
+/* Spans inside buttons should inherit the button's color, not the global span color */
+button span, a span {
+    color: inherit !important;
 }

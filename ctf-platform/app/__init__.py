@@ -96,7 +96,10 @@ def create_app(config_class=Config):
         'static',
         'auth.index', 'auth.login', 'auth.register', 'auth.logout', 'auth.whats_new',
         'challenges.scoreboard',
-        'community.list', 'community.detail', 'community.new_post',
+        'community.list', 'community.view_post', 'community.new_post',
+        'community.add_comment', 'community.upvote_post', 'community.toggle_post_subscribe',
+        'community.react_comment', 'community.edit_post', 'community.delete_post',
+        'community.edit_comment', 'community.delete_comment',
         'settings.account', 'settings.index', 'settings.serve_avatar',
         'settings.public_profile', 'settings.badges', 'settings.ranks',
     }
@@ -106,10 +109,20 @@ def create_app(config_class=Config):
     def enforce_ban():
         from flask_login import current_user
         from flask import request, redirect, url_for, render_template
-        if current_user.is_authenticated and current_user.is_banned:
-            if request.endpoint not in ('auth.logout', 'static'):
+        if current_user.is_authenticated:
+            try:
+                is_banned = current_user.is_banned
                 reason = current_user.ban_reason or 'No reason provided.'
+            except Exception:
+                db.session.rollback()
+                try:
+                    is_banned = current_user.is_banned
+                    reason = current_user.ban_reason or 'No reason provided.'
+                except Exception:
+                    return
+            if is_banned and request.endpoint not in ('auth.logout', 'static'):
                 logout_user()
+                db.session.rollback()
                 return render_template('error.html', code=403,
                     title='Account Banned',
                     message=f'Your account has been banned. Reason: {reason}'), 403
@@ -123,26 +136,31 @@ def create_app(config_class=Config):
 
     @app.errorhandler(400)
     def bad_request(e):
+        db.session.rollback()
         return render_template('error.html', code=400, title='Bad Request',
                                message='The server could not understand your request.'), 400
 
     @app.errorhandler(403)
     def forbidden(e):
+        db.session.rollback()
         return render_template('error.html', code=403, title='Access Forbidden',
                                message='You do not have permission to access this page.'), 403
 
     @app.errorhandler(404)
     def not_found(e):
+        db.session.rollback()
         return render_template('error.html', code=404, title='Page Not Found',
                                message='The page you are looking for does not exist or has been moved.'), 404
 
     @app.errorhandler(405)
     def method_not_allowed(e):
+        db.session.rollback()
         return render_template('error.html', code=405, title='Method Not Allowed',
                                message='This action is not allowed on the requested resource.'), 405
 
     @app.errorhandler(500)
     def internal_error(e):
+        db.session.rollback()
         return render_template('error.html', code=500, title='Server Error',
                                message='Something went wrong on our end. Please try again later.'), 500
 
