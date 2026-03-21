@@ -2,49 +2,89 @@
 
 {% block title %}Edit Post - Admin{% endblock %}
 
+{% block extra_css %}
+<link href="https://cdn.quilljs.com/1.3.7/quill.bubble.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<style>
+.ql-bubble .ql-tooltip { background:#1a1a1a !important; border:1px solid rgba(139,0,0,0.5) !important; color:#f0f0f0 !important; }
+.ql-bubble .ql-tooltip input[type=text] { background:#111 !important; color:#f0f0f0 !important; border:1px solid rgba(139,0,0,0.4) !important; }
+.ql-bubble .ql-tooltip a { color:#f87171 !important; }
+.ql-bubble .ql-stroke { stroke:#e0e0e0 !important; }
+.ql-bubble .ql-fill { fill:#e0e0e0 !important; }
+.ql-bubble .ql-picker-label { color:#e0e0e0 !important; }
+#post-content-quill .ql-editor blockquote { color:#e0e0e0 !important; border-left:4px solid #8b0000; padding-left:1rem; }
+.ql-spoiler { background:#333; color:#333; border-radius:3px; padding:0 4px; cursor:pointer; transition:color 0.2s; }
+.ql-spoiler:hover { color:#f0f0f0; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-3xl mx-auto">
     <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Edit Post</h1>
-        <p class="text-gray-600 mt-1">Editing post by {{ post.author.username }}</p>
+        <h1 class="text-3xl font-bold" style="color:#fff;">Edit Post</h1>
+        <p style="color:#aaa;margin-top:0.25rem;">Editing post by {{ post.author.username }}</p>
     </div>
-    
-    <div class="bg-white rounded-lg shadow-md p-8">
-        <form method="POST">
+
+    <div style="background:#0d0d0d;border:1px solid rgba(139,0,0,0.5);padding:2rem;">
+        <form method="POST" id="edit-post-form">
             <div class="mb-6">
-                <label for="title" class="block text-gray-700 font-semibold mb-2">
-                    Title
-                </label>
-                <input type="text" 
-                       id="title" 
-                       name="title" 
-                       value="{{ post.title }}"
-                       required
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                <label style="display:block;color:#e5e5e5;font-weight:700;text-transform:uppercase;font-size:0.8rem;margin-bottom:0.5rem;">Title</label>
+                <input type="text" name="title" value="{{ post.title }}" required
+                       style="width:100%;background:#1a1a1a;color:#f0f0f0;border:1px solid rgba(139,0,0,0.4);padding:0.6rem;font-size:0.95rem;">
             </div>
-            
+
             <div class="mb-6">
-                <label for="content" class="block text-gray-700 font-semibold mb-2">
-                    Content
-                </label>
-                <textarea id="content" 
-                          name="content" 
-                          required
-                          rows="12"
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">{{ post.content }}</textarea>
+                <label style="display:block;color:#e5e5e5;font-weight:700;text-transform:uppercase;font-size:0.8rem;margin-bottom:0.5rem;">Content</label>
+                <div id="post-content-quill" style="background:#1a1a1a;min-height:300px;border:1px solid rgba(139,0,0,0.4);border-radius:4px;padding:0.5rem;color:#f0f0f0;"></div>
+                <input type="hidden" name="content" id="post-content-hidden">
             </div>
-            
-            <div class="flex space-x-4">
-                <button type="submit" 
-                        class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 font-semibold">
+
+            <div style="display:flex;gap:0.75rem;">
+                <button type="submit"
+                        style="padding:0.6rem 1.5rem;background:#8b0000;color:#fff;border:none;cursor:pointer;font-weight:900;text-transform:uppercase;">
                     Save Changes
                 </button>
-                <a href="{{ url_for('admin.posts') }}" 
-                   class="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 font-semibold">
+                <a href="{{ url_for('admin.posts') }}"
+                   style="padding:0.6rem 1.5rem;background:transparent;color:#888;border:1px solid #444;font-weight:900;text-transform:uppercase;text-decoration:none;display:inline-block;">
                     Cancel
                 </a>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+var Inline = Quill.import('blots/inline');
+class SpoilerBlot extends Inline {
+  static create() { var node = super.create(); node.setAttribute('class','ql-spoiler'); return node; }
+  static formats() { return true; }
+}
+SpoilerBlot.blotName = 'spoiler';
+SpoilerBlot.tagName = 'span';
+SpoilerBlot.className = 'ql-spoiler';
+Quill.register(SpoilerBlot);
+
+var quill = new Quill('#post-content-quill', {
+    theme: 'bubble',
+    placeholder: 'Edit post content... (select text to format)',
+    modules: {
+        toolbar: {
+            container: [['bold','italic','underline','strike'],['blockquote','code-block'],['spoiler'],['link'],'clean'],
+            handlers: {
+                spoiler: function() {
+                    var range = this.quill.getSelection();
+                    if (range && range.length > 0) {
+                        var current = this.quill.getFormat(range);
+                        this.quill.format('spoiler', !current.spoiler);
+                    }
+                }
+            }
+        }
+    }
+});
+quill.root.innerHTML = {{ post.content | tojson }};
+document.getElementById('edit-post-form').addEventListener('submit', function() {
+    document.getElementById('post-content-hidden').value = quill.root.innerHTML;
+});
+</script>
 {% endblock %}

@@ -75,6 +75,34 @@
 .rxn-chip:hover { border-color:#cc0000; color:#8b0000; background:#fee2e2; }
 .rxn-chip.active { border-color:#cc0000; background:#fee2e2; color:#8b0000; }
 .rxn-chip-count { font-size:0.7rem; color:inherit; }
+
+/* Quill bubble dark-context overrides */
+/* Comment reply box — white bg, text must be black */
+#comment-quill .ql-editor { color:#111111 !important; }
+#comment-quill .ql-editor.ql-blank::before { color:#888 !important; }
+
+/* Dark modal editors (edit comment, edit post) */
+#edit-comment-quill .ql-editor,
+#post-edit-quill .ql-editor { color:#f0f0f0 !important; }
+#edit-comment-quill .ql-editor blockquote,
+#post-edit-quill .ql-editor blockquote { color:#e0e0e0 !important; border-left-color:#8b0000; }
+
+/* Quill bubble toolbar (dark bg for dark editors) */
+#edit-comment-quill .ql-bubble .ql-toolbar,
+#post-edit-quill .ql-bubble .ql-toolbar,
+.ql-bubble .ql-tooltip { background:#1a1a1a !important; border:1px solid rgba(139,0,0,0.5) !important; color:#f0f0f0 !important; }
+.ql-bubble .ql-tooltip input[type=text] { background:#111 !important; color:#f0f0f0 !important; border:1px solid rgba(139,0,0,0.4) !important; }
+.ql-bubble .ql-tooltip a { color:#f87171 !important; }
+.ql-bubble .ql-stroke { stroke:#e0e0e0 !important; }
+.ql-bubble .ql-fill { fill:#e0e0e0 !important; }
+.ql-bubble .ql-picker-label { color:#e0e0e0 !important; }
+
+/* Spoiler format */
+.ql-spoiler { background:#333; color:#333; border-radius:3px; padding:0 4px; cursor:pointer; transition:color 0.2s; }
+.ql-spoiler:hover { color:#f0f0f0; }
+/* On white bg (comment reply) */
+#comment-quill .ql-spoiler { background:#ccc; color:#ccc; }
+#comment-quill .ql-spoiler:hover { color:#111; }
 </style>
 {% endblock %}
 
@@ -304,10 +332,37 @@
 <script src="{{ url_for('static', filename='js/page-tour.js') }}"></script>
 <script src="{{ url_for('static', filename='js/tour-community-post.js') }}"></script>
 <script>
+// Spoiler custom blot
+var Inline = Quill.import('blots/inline');
+class SpoilerBlot extends Inline {
+  static create() { var node = super.create(); node.setAttribute('class','ql-spoiler'); return node; }
+  static formats() { return true; }
+}
+SpoilerBlot.blotName = 'spoiler';
+SpoilerBlot.tagName = 'span';
+SpoilerBlot.className = 'ql-spoiler';
+Quill.register(SpoilerBlot);
+
+var BUBBLE_MODULES = {
+  toolbar: {
+    container: [['bold','italic','underline','strike'],['blockquote','code-block'],['spoiler'],['link'],'clean'],
+    handlers: {
+      spoiler: function() {
+        var range = this.quill.getSelection();
+        if (range && range.length > 0) {
+          var current = this.quill.getFormat(range);
+          this.quill.format('spoiler', !current.spoiler);
+        }
+      }
+    }
+  }
+};
+
 // Quill for comment reply (bubble)
 var commentQuill = new Quill('#comment-quill', {
   theme: 'bubble',
-  placeholder: 'Share your thoughts... (select text to format)'
+  placeholder: 'Share your thoughts... (select text to format)',
+  modules: BUBBLE_MODULES
 });
 document.getElementById('comment-form') && document.getElementById('comment-form').addEventListener('submit', function() {
   document.getElementById('comment-content-hidden').value = commentQuill.root.innerHTML;
@@ -316,7 +371,8 @@ document.getElementById('comment-form') && document.getElementById('comment-form
 // Quill for edit comment modal (bubble)
 var editCommentQuill = new Quill('#edit-comment-quill', {
   theme: 'bubble',
-  placeholder: 'Edit your comment...'
+  placeholder: 'Edit your comment...',
+  modules: BUBBLE_MODULES
 });
 document.getElementById('edit-form').addEventListener('submit', function() {
   document.getElementById('edit-content').value = editCommentQuill.root.innerHTML;
@@ -329,7 +385,7 @@ function openPostEditModal() {
   document.getElementById('post-edit-title').value = {{ post.title | tojson }};
   modal.style.display = 'flex';
   if (!postEditQuill) {
-    postEditQuill = new Quill('#post-edit-quill', { theme: 'bubble', placeholder: 'Edit post content...' });
+    postEditQuill = new Quill('#post-edit-quill', { theme: 'bubble', placeholder: 'Edit post content...', modules: BUBBLE_MODULES });
   }
   postEditQuill.root.innerHTML = document.getElementById('post-body').innerHTML;
   document.getElementById('post-edit-form').addEventListener('submit', function() {

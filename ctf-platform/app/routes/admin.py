@@ -146,9 +146,12 @@ def delete_user(user_id):
         flash('You cannot delete your own account!', 'danger')
         return redirect(url_for('admin.users'))
     
-    from app.models import UserNotification
-    UserNotification.query.filter_by(user_id=user.id).delete()
-    db.session.flush()
+    from sqlalchemy import text
+    with db.engine.connect() as conn:
+        conn.execute(text('DELETE FROM user_notifications WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM flag_attempts WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM user_challenge_solves WHERE user_id=:u'), {'u': user.id})
+        conn.commit()
 
     log_action('delete_user', user.username)
     db.session.delete(user)
