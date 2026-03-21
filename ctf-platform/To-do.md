@@ -47,3 +47,16 @@
 **Docker (Production)**
 - docker-compose.prod.yml is correct for Linux (no network_mode: host needed)
 - Challenge instance ports (dynamic web/nc) are not mapped in prod compose — decide on port range and add mapping (e.g. 10000-12000:10000-12000)
+
+
+March 22, 2026:
+- Hexagonal Tiles (presentation not yet fixed)
+- XP Numerical Value (not fixed)
+- Let's have passkeys via WebAuthn enabled as well, after registration, ask users if they want to enable passkey so that in the login page it can either be a password or via passkey. Put the fido logo as well `FIDO_logo_black.svg` or `FIDO_logo_white.svg` depending on the background of the login. Currently registered users can enable passkey when their passkey is not yet enabled, on their login, they will automatically receive a prompt to enable passkey.
+
+- Create a "mail" system where all notifications will be sent there as well as a digest (daily GMT+8). The mail system will be a mail icon next to the notification bell (on mobile navbar it will be a full word "Messages"), the mail function will be able to send and receive messages to other users from other users. (Make sure the design of this is well-professional and is in accordance to our current design templates). 
+
+- Also can we achieve this on Binary Exploitation (PWN) (Formerly Reverse Engineering):
+Ah — that explains a lot. With **1 GB RAM and 1 vCPU**, running full Docker containers per challenge is too heavy. That’s why nsjail is a better choice: it’s **lightweight, fast, and doesn’t need a full container**.
+
+- Deleting a challenge returns 500 error.
