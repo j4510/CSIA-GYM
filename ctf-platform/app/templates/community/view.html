@@ -3,6 +3,7 @@
 
 {% block extra_css %}
 <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<link href="https://cdn.quilljs.com/1.3.7/quill.bubble.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <style>
 {{ rank_keyframes }}
@@ -118,45 +119,37 @@
           </button>
         </form>
         {% if current_user.is_admin or current_user.is_moderator or post.author_id == current_user.id %}
-        <!-- Admin/mod/author actions dropdown -->
-        <div style="position:relative;display:inline-block;" x-data="{open:false}" @click.outside="open=false">
-          <button @click="open=!open"
-                  style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.4rem 0.9rem;background:rgba(139,0,0,0.12);color:#e5e5e5;border:1.5px solid rgba(139,0,0,0.4);cursor:pointer;font-weight:700;border-radius:4px;font-size:0.78rem;text-transform:uppercase;">
-            ⚙ Actions ▾
-          </button>
-          <div x-show="open" x-transition
-               style="display:none;position:absolute;right:0;top:calc(100% + 4px);min-width:200px;background:#0d0d0d;border:1px solid rgba(139,0,0,0.4);box-shadow:0 8px 24px rgba(0,0,0,0.7);z-index:500;border-radius:4px;overflow:hidden;">
-            <!-- Edit post -->
-            <button onclick="openPostEditModal()" style="display:flex;align-items:center;gap:0.5rem;width:100%;padding:10px 14px;background:none;border:none;border-bottom:1px solid rgba(139,0,0,0.12);color:#e5e5e5;font-size:0.8rem;font-weight:700;text-transform:uppercase;cursor:pointer;text-align:left;"
-                    onmouseover="this.style.background='rgba(139,0,0,0.1)'" onmouseout="this.style.background='none'">✎ Edit Post</button>
-            <!-- Pin/Unpin (admin/mod only) -->
-            {% if current_user.is_admin or current_user.is_moderator %}
-            <form method="POST" action="{{ url_for('community.unpin_post' if post.is_pinned else 'community.pin_post', post_id=post.id) }}">
-              <button type="submit" style="display:flex;align-items:center;gap:0.5rem;width:100%;padding:10px 14px;background:none;border:none;border-bottom:1px solid rgba(139,0,0,0.12);color:#fcd34d;font-size:0.8rem;font-weight:700;text-transform:uppercase;cursor:pointer;text-align:left;"
-                      onmouseover="this.style.background='rgba(139,0,0,0.1)'" onmouseout="this.style.background='none'">📌 {{ 'Unpin' if post.is_pinned else 'Pin Post' }}</button>
-            </form>
-            <!-- Toggle comments -->
-            <form method="POST" action="{{ url_for('community.toggle_comments', post_id=post.id) }}">
-              <button type="submit" style="display:flex;align-items:center;gap:0.5rem;width:100%;padding:10px 14px;background:none;border:none;border-bottom:1px solid rgba(139,0,0,0.12);color:{% if post.comments_disabled %}#fb923c{% else %}#4ade80{% endif %};font-size:0.8rem;font-weight:700;text-transform:uppercase;cursor:pointer;text-align:left;"
-                      onmouseover="this.style.background='rgba(139,0,0,0.1)'" onmouseout="this.style.background='none'">💬 {{ 'Enable Comments' if post.comments_disabled else 'Disable Comments' }}</button>
-            </form>
-            <!-- Toggle reactions -->
-            <form method="POST" action="{{ url_for('community.toggle_reactions', post_id=post.id) }}">
-              <button type="submit" style="display:flex;align-items:center;gap:0.5rem;width:100%;padding:10px 14px;background:none;border:none;border-bottom:1px solid rgba(139,0,0,0.12);color:{% if post.reactions_disabled %}#fb923c{% else %}#a78bfa{% endif %};font-size:0.8rem;font-weight:700;text-transform:uppercase;cursor:pointer;text-align:left;"
-                      onmouseover="this.style.background='rgba(139,0,0,0.1)'" onmouseout="this.style.background='none'">😮 {{ 'Enable Reactions' if post.reactions_disabled else 'Disable Reactions' }}</button>
-            </form>
-            <!-- Archive -->
-            <form method="POST" action="{{ url_for('community.archive_post', post_id=post.id) }}">
-              <button type="submit" style="display:flex;align-items:center;gap:0.5rem;width:100%;padding:10px 14px;background:none;border:none;border-bottom:1px solid rgba(139,0,0,0.12);color:#888;font-size:0.8rem;font-weight:700;text-transform:uppercase;cursor:pointer;text-align:left;"
-                      onmouseover="this.style.background='rgba(139,0,0,0.1)'" onmouseout="this.style.background='none'">📁 {{ 'Unarchive' if post.is_archived else 'Archive' }}</button>
-            </form>
-            {% endif %}
-            <!-- Delete post -->
-            <form method="POST" action="{{ url_for('community.delete_post', post_id=post.id) }}" onsubmit="return confirm('Delete this post? This cannot be undone.');">
-              <button type="submit" style="display:flex;align-items:center;gap:0.5rem;width:100%;padding:10px 14px;background:none;border:none;color:#f87171;font-size:0.8rem;font-weight:700;text-transform:uppercase;cursor:pointer;text-align:left;"
-                      onmouseover="this.style.background='rgba(248,113,113,0.1)'" onmouseout="this.style.background='none'">🗑 Delete Post</button>
-            </form>
-          </div>
+        <div style="display:inline-flex;align-items:center;gap:0.3rem;">
+          <button onclick="openPostEditModal()" title="Edit post"
+                  style="background:none;border:none;cursor:pointer;padding:5px;font-size:1rem;color:#aaa;transition:color 0.15s;"
+                  onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">✎</button>
+          {% if current_user.is_admin or current_user.is_moderator %}
+          <form method="POST" action="{{ url_for('community.unpin_post' if post.is_pinned else 'community.pin_post', post_id=post.id) }}" class="inline">
+            <button type="submit" title="{{ 'Unpin' if post.is_pinned else 'Pin post' }}"
+                    style="background:none;border:none;cursor:pointer;padding:5px;font-size:1rem;color:{% if post.is_pinned %}#fcd34d{% else %}#aaa{% endif %};transition:color 0.15s;"
+                    onmouseover="this.style.color='#fcd34d'" onmouseout="this.style.color='{% if post.is_pinned %}#fcd34d{% else %}#aaa{% endif %}'">📌</button>
+          </form>
+          <form method="POST" action="{{ url_for('community.toggle_comments', post_id=post.id) }}" class="inline">
+            <button type="submit" title="{{ 'Enable Comments' if post.comments_disabled else 'Disable Comments' }}"
+                    style="background:none;border:none;cursor:pointer;padding:5px;font-size:1rem;color:{% if post.comments_disabled %}#fb923c{% else %}#aaa{% endif %};transition:color 0.15s;"
+                    onmouseover="this.style.color='{% if post.comments_disabled %}#fb923c{% else %}#4ade80{% endif %}'" onmouseout="this.style.color='{% if post.comments_disabled %}#fb923c{% else %}#aaa{% endif %}'">💬</button>
+          </form>
+          <form method="POST" action="{{ url_for('community.toggle_reactions', post_id=post.id) }}" class="inline">
+            <button type="submit" title="{{ 'Enable Reactions' if post.reactions_disabled else 'Disable Reactions' }}"
+                    style="background:none;border:none;cursor:pointer;padding:5px;font-size:1rem;color:{% if post.reactions_disabled %}#fb923c{% else %}#aaa{% endif %};transition:color 0.15s;"
+                    onmouseover="this.style.color='{% if post.reactions_disabled %}#fb923c{% else %}#a78bfa{% endif %}'" onmouseout="this.style.color='{% if post.reactions_disabled %}#fb923c{% else %}#aaa{% endif %}'">😮</button>
+          </form>
+          <form method="POST" action="{{ url_for('community.archive_post', post_id=post.id) }}" class="inline">
+            <button type="submit" title="{{ 'Unarchive' if post.is_archived else 'Archive' }}"
+                    style="background:none;border:none;cursor:pointer;padding:5px;font-size:1rem;color:{% if post.is_archived %}#60a5fa{% else %}#aaa{% endif %};transition:color 0.15s;"
+                    onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='{% if post.is_archived %}#60a5fa{% else %}#aaa{% endif %}'">📁</button>
+          </form>
+          {% endif %}
+          <form method="POST" action="{{ url_for('community.delete_post', post_id=post.id) }}" class="inline" onsubmit="return confirm('Delete this post? This cannot be undone.');">
+            <button type="submit" title="Delete post"
+                    style="background:none;border:none;cursor:pointer;padding:5px;font-size:1rem;color:#aaa;transition:color 0.15s;"
+                    onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#aaa'">🗑</button>
+          </form>
         </div>
         {% endif %}
       </div>
@@ -176,7 +169,7 @@
     <form method="POST" action="{{ url_for('community.add_comment', post_id=post.id) }}" class="mb-8" id="comment-form">
       <div class="mb-3">
         <label for="content" class="block font-semibold mb-2" style="color:#111111;">Add a Comment</label>
-        <div id="comment-quill" style="background:#fff;min-height:100px;border:1px solid #d1d5db;border-radius:0 0 4px 4px;"></div>
+        <div id="comment-quill" style="background:#fff;min-height:100px;border:1px solid #d1d5db;border-radius:4px;padding:0.5rem;"></div>
         <input type="hidden" name="content" id="comment-content-hidden">
       </div>
       <button type="submit" class="bg-red-700 text-white px-6 py-2 rounded-lg hover:bg-red-800 transition font-semibold">Post Comment</button>
@@ -204,8 +197,7 @@
           <!-- Edit / Delete icons (own comment or mod/admin) -->
           {% if can_moderate or comment.author_id == current_user.id %}
           <div style="display:flex;gap:0.4rem;flex-shrink:0;">
-            <button onclick="openEditModal({{ comment.id }}, this)"
-                    data-content="{{ comment.content | e }}"
+            <button onclick="openEditModal({{ comment.id }})"
                     title="Edit comment"
                     style="background:none;border:none;cursor:pointer;padding:4px;color:#888;transition:color 0.15s;"
                     onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'">
@@ -227,7 +219,7 @@
           {% endif %}
         </div>
 
-        <p style="color:#111111;margin-bottom:0.6rem;">{{ comment.content }}</p>
+        <div class="comment-body" style="color:#111111;margin-bottom:0.6rem;">{{ comment.content | safe }}</div>
 
         {% if comment.edited_at %}
         <p style="font-size:0.65rem;color:#444;margin-bottom:0.4rem;font-style:italic;">
@@ -278,8 +270,8 @@
   <div style="background:#0d0d0d;border:1px solid rgba(139,0,0,0.5);padding:1.5rem;width:100%;max-width:520px;margin:1rem;">
     <p style="font-size:0.75rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#e5e5e5;margin-bottom:0.75rem;">Edit Comment</p>
     <form id="edit-form" method="POST">
-      <textarea id="edit-content" name="content" rows="4"
-                style="width:100%;background:#111;color:#f0f0f0;border:1px solid rgba(139,0,0,0.4);padding:0.6rem;font-size:0.9rem;resize:vertical;"></textarea>
+      <div id="edit-comment-quill" style="background:#1a1a1a;min-height:100px;border:1px solid rgba(139,0,0,0.4);border-radius:4px;padding:0.5rem;color:#f0f0f0;"></div>
+      <input type="hidden" name="content" id="edit-content">
       <div style="display:flex;gap:0.5rem;margin-top:0.75rem;justify-content:flex-end;">
         <button type="button" onclick="closeEditModal()"
                 style="padding:0.4rem 1rem;background:transparent;color:#888;border:1px solid #444;cursor:pointer;font-size:0.8rem;font-weight:700;text-transform:uppercase;">Cancel</button>
@@ -292,19 +284,18 @@
 
 <!-- Edit Post Modal -->
 <div id="post-edit-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;">
-  <div style="background:#fff;border:1px solid rgba(139,0,0,0.5);padding:1.5rem;width:100%;max-width:680px;margin:1rem;border-radius:6px;">
-    <p style="font-size:0.75rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#111;margin-bottom:0.75rem;">Edit Post</p>
+  <div style="background:#0d0d0d;border:1px solid rgba(139,0,0,0.5);padding:1.5rem;width:100%;max-width:680px;margin:1rem;">
+    <p style="font-size:0.75rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#e5e5e5;margin-bottom:0.75rem;">Edit Post</p>
     <form id="post-edit-form" method="POST" action="{{ url_for('community.edit_post', post_id=post.id) }}">
       <input type="text" name="title" id="post-edit-title" required
-             style="width:100%;background:#f9f9f9;color:#111;border:1px solid #d1d5db;padding:0.6rem;font-size:0.95rem;margin-bottom:0.75rem;border-radius:4px;">
-      <!-- Quill editor for post edit -->
-      <div id="post-edit-quill" style="background:#fff;min-height:200px;border:1px solid #d1d5db;border-radius:0 0 4px 4px;"></div>
+             style="width:100%;background:#1a1a1a;color:#f0f0f0;border:1px solid rgba(139,0,0,0.4);padding:0.6rem;font-size:0.95rem;margin-bottom:0.75rem;">
+      <div id="post-edit-quill" style="background:#1a1a1a;min-height:200px;border:1px solid rgba(139,0,0,0.4);border-radius:4px;padding:0.5rem;color:#f0f0f0;"></div>
       <input type="hidden" name="content" id="post-edit-content-hidden">
       <div style="display:flex;gap:0.5rem;margin-top:0.75rem;justify-content:flex-end;">
         <button type="button" onclick="closePostEditModal()"
-                style="padding:0.4rem 1rem;background:transparent;color:#888;border:1px solid #ccc;cursor:pointer;font-size:0.8rem;font-weight:700;text-transform:uppercase;border-radius:4px;">Cancel</button>
+                style="padding:0.4rem 1rem;background:transparent;color:#888;border:1px solid #444;cursor:pointer;font-size:0.8rem;font-weight:700;text-transform:uppercase;">Cancel</button>
         <button type="submit" id="post-edit-save"
-                style="padding:0.4rem 1rem;background:#8b0000;color:#fff;border:none;cursor:pointer;font-size:0.8rem;font-weight:700;text-transform:uppercase;border-radius:4px;">Save</button>
+                style="padding:0.4rem 1rem;background:#8b0000;color:#fff;border:none;cursor:pointer;font-size:0.8rem;font-weight:700;text-transform:uppercase;">Save</button>
       </div>
     </form>
   </div>
@@ -313,27 +304,32 @@
 <script src="{{ url_for('static', filename='js/page-tour.js') }}"></script>
 <script src="{{ url_for('static', filename='js/tour-community-post.js') }}"></script>
 <script>
-// Quill for comment reply
+// Quill for comment reply (bubble)
 var commentQuill = new Quill('#comment-quill', {
-  theme: 'snow',
-  placeholder: 'Share your thoughts...',
-  modules: { toolbar: [['bold','italic','underline','strike'],['blockquote','code-block'],[{'list':'ordered'},{'list':'bullet'}],['link'],'clean'] }
+  theme: 'bubble',
+  placeholder: 'Share your thoughts... (select text to format)'
 });
-document.getElementById('comment-form').addEventListener('submit', function() {
+document.getElementById('comment-form') && document.getElementById('comment-form').addEventListener('submit', function() {
   document.getElementById('comment-content-hidden').value = commentQuill.root.innerHTML;
 });
 
-// Quill for post edit modal
+// Quill for edit comment modal (bubble)
+var editCommentQuill = new Quill('#edit-comment-quill', {
+  theme: 'bubble',
+  placeholder: 'Edit your comment...'
+});
+document.getElementById('edit-form').addEventListener('submit', function() {
+  document.getElementById('edit-content').value = editCommentQuill.root.innerHTML;
+});
+
+// Quill for post edit modal (bubble)
 var postEditQuill = null;
 function openPostEditModal() {
   var modal = document.getElementById('post-edit-modal');
   document.getElementById('post-edit-title').value = {{ post.title | tojson }};
   modal.style.display = 'flex';
   if (!postEditQuill) {
-    postEditQuill = new Quill('#post-edit-quill', {
-      theme: 'snow',
-      modules: { toolbar: [['bold','italic','underline','strike'],['blockquote','code-block'],[{'list':'ordered'},{'list':'bullet'}],['link','image'],'clean'] }
-    });
+    postEditQuill = new Quill('#post-edit-quill', { theme: 'bubble', placeholder: 'Edit post content...' });
   }
   postEditQuill.root.innerHTML = document.getElementById('post-body').innerHTML;
   document.getElementById('post-edit-form').addEventListener('submit', function() {
@@ -402,10 +398,10 @@ document.addEventListener('click', () => {
   });
 });
 
-function openEditModal(commentId, btn) {
-  var content = btn.getAttribute('data-content');
-  document.getElementById('edit-content').value = content;
+function openEditModal(commentId) {
+  var bodyEl = document.querySelector('#comment-' + commentId + ' .comment-body');
   document.getElementById('edit-form').action = '/community/comment/' + commentId + '/edit';
+  editCommentQuill.root.innerHTML = bodyEl ? bodyEl.innerHTML : '';
   var modal = document.getElementById('edit-modal');
   modal.style.display = 'flex';
 }
