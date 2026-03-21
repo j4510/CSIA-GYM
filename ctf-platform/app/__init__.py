@@ -319,9 +319,33 @@ def create_app(config_class=Config):
                 'border_style':   "ALTER TABLE badges ADD COLUMN border_style VARCHAR(30) DEFAULT 'tier1'",
                 'from_event':     'ALTER TABLE badges ADD COLUMN from_event BOOLEAN DEFAULT 0',
                 'is_unattainable':'ALTER TABLE badges ADD COLUMN is_unattainable BOOLEAN DEFAULT 0',
+                'display_border': 'ALTER TABLE badges ADD COLUMN display_border BOOLEAN DEFAULT 1',
+                'display_shape':  "ALTER TABLE badges ADD COLUMN display_shape VARCHAR(20) DEFAULT 'square'",
             }.items():
                 if col not in badge_cols:
                     conn.execute(text(stmt))
+            conn.commit()
+
+            # milestones
+            conn.execute(text(
+                "CREATE TABLE IF NOT EXISTS milestones "
+                "(id INTEGER PRIMARY KEY, title VARCHAR(100) NOT NULL, "
+                "description VARCHAR(300) NOT NULL, image_filename VARCHAR(200) NOT NULL, "
+                "rule_type VARCHAR(50) NOT NULL DEFAULT 'manual', "
+                "threshold INTEGER, is_active BOOLEAN DEFAULT 1, created_at DATETIME, "
+                "FOREIGN KEY(id) REFERENCES milestones(id))"
+            ))
+            conn.commit()
+
+            # user_milestones
+            conn.execute(text(
+                "CREATE TABLE IF NOT EXISTS user_milestones "
+                "(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, "
+                "milestone_id INTEGER NOT NULL, awarded_at DATETIME, "
+                "UNIQUE(user_id, milestone_id), "
+                "FOREIGN KEY(user_id) REFERENCES users(id), "
+                "FOREIGN KEY(milestone_id) REFERENCES milestones(id))"
+            ))
             conn.commit()
 
             # notifications

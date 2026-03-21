@@ -80,19 +80,27 @@
 /* Comment reply box — white bg, text must be black */
 #comment-quill .ql-editor { color:#111111 !important; }
 #comment-quill .ql-editor.ql-blank::before { color:#888 !important; }
+#comment-quill .ql-editor p,
+#comment-quill .ql-editor span,
+#comment-quill .ql-editor li { color:#111111 !important; }
 
 /* Dark modal editors (edit comment, edit post) */
 #edit-comment-quill .ql-editor,
 #post-edit-quill .ql-editor { color:#f0f0f0 !important; }
+#edit-comment-quill .ql-editor p,
+#edit-comment-quill .ql-editor span,
+#edit-comment-quill .ql-editor li,
+#post-edit-quill .ql-editor p,
+#post-edit-quill .ql-editor span,
+#post-edit-quill .ql-editor li { color:#f0f0f0 !important; }
 #edit-comment-quill .ql-editor blockquote,
 #post-edit-quill .ql-editor blockquote { color:#e0e0e0 !important; border-left-color:#8b0000; }
 
-/* Quill bubble toolbar (dark bg for dark editors) */
-#edit-comment-quill .ql-bubble .ql-toolbar,
-#post-edit-quill .ql-bubble .ql-toolbar,
+/* Quill bubble tooltip — dark for all instances */
 .ql-bubble .ql-tooltip { background:#1a1a1a !important; border:1px solid rgba(139,0,0,0.5) !important; color:#f0f0f0 !important; }
 .ql-bubble .ql-tooltip input[type=text] { background:#111 !important; color:#f0f0f0 !important; border:1px solid rgba(139,0,0,0.4) !important; }
-.ql-bubble .ql-tooltip a { color:#f87171 !important; }
+.ql-bubble .ql-tooltip a.ql-action,
+.ql-bubble .ql-tooltip a.ql-remove { color:#f87171 !important; }
 .ql-bubble .ql-stroke { stroke:#e0e0e0 !important; }
 .ql-bubble .ql-fill { fill:#e0e0e0 !important; }
 .ql-bubble .ql-picker-label { color:#e0e0e0 !important; }
@@ -100,7 +108,6 @@
 /* Spoiler format */
 .ql-spoiler { background:#333; color:#333; border-radius:3px; padding:0 4px; cursor:pointer; transition:color 0.2s; }
 .ql-spoiler:hover { color:#f0f0f0; }
-/* On white bg (comment reply) */
 #comment-quill .ql-spoiler { background:#ccc; color:#ccc; }
 #comment-quill .ql-spoiler:hover { color:#111; }
 </style>
@@ -332,7 +339,7 @@
 <script src="{{ url_for('static', filename='js/page-tour.js') }}"></script>
 <script src="{{ url_for('static', filename='js/tour-community-post.js') }}"></script>
 <script>
-// Spoiler custom blot
+// ── Spoiler blot ──────────────────────────────────────────────────────────────
 var Inline = Quill.import('blots/inline');
 class SpoilerBlot extends Inline {
   static create() { var node = super.create(); node.setAttribute('class','ql-spoiler'); return node; }
@@ -358,17 +365,20 @@ var BUBBLE_MODULES = {
   }
 };
 
-// Quill for comment reply (bubble)
+// ── Comment reply ─────────────────────────────────────────────────────────────
 var commentQuill = new Quill('#comment-quill', {
   theme: 'bubble',
   placeholder: 'Share your thoughts... (select text to format)',
   modules: BUBBLE_MODULES
 });
-document.getElementById('comment-form') && document.getElementById('comment-form').addEventListener('submit', function() {
-  document.getElementById('comment-content-hidden').value = commentQuill.root.innerHTML;
-});
+var commentForm = document.getElementById('comment-form');
+if (commentForm) {
+  commentForm.addEventListener('submit', function() {
+    document.getElementById('comment-content-hidden').value = commentQuill.root.innerHTML;
+  });
+}
 
-// Quill for edit comment modal (bubble)
+// ── Edit comment modal ────────────────────────────────────────────────────────
 var editCommentQuill = new Quill('#edit-comment-quill', {
   theme: 'bubble',
   placeholder: 'Edit your comment...',
@@ -378,14 +388,18 @@ document.getElementById('edit-form').addEventListener('submit', function() {
   document.getElementById('edit-content').value = editCommentQuill.root.innerHTML;
 });
 
-// Quill for post edit modal (bubble)
+// ── Edit post modal ───────────────────────────────────────────────────────────
 var postEditQuill = null;
 function openPostEditModal() {
   var modal = document.getElementById('post-edit-modal');
   document.getElementById('post-edit-title').value = {{ post.title | tojson }};
   modal.style.display = 'flex';
   if (!postEditQuill) {
-    postEditQuill = new Quill('#post-edit-quill', { theme: 'bubble', placeholder: 'Edit post content...', modules: BUBBLE_MODULES });
+    postEditQuill = new Quill('#post-edit-quill', {
+      theme: 'bubble',
+      placeholder: 'Edit post content...',
+      modules: BUBBLE_MODULES
+    });
   }
   postEditQuill.root.innerHTML = document.getElementById('post-body').innerHTML;
   document.getElementById('post-edit-form').addEventListener('submit', function() {
@@ -398,8 +412,8 @@ function closePostEditModal() {
 document.getElementById('post-edit-modal').addEventListener('click', function(e) {
   if (e.target === this) closePostEditModal();
 });
-</script>
-<script>
+
+// ── Reactions ─────────────────────────────────────────────────────────────────
 const EMOJI_MAP = { heart:'❤️', haha:'😂', wow:'😮', sad:'😢', like:'👍', dislike:'👎' };
 
 var _postSubscribed = {{ 'true' if is_subscribed else 'false' }};
@@ -421,7 +435,6 @@ document.querySelectorAll('.rxn-wrap').forEach(wrap => {
   const popover = wrap.querySelector('.rxn-popover');
   let hideTimer = null;
   let locked = false;
-
   function showPopover() {
     clearTimeout(hideTimer);
     popover.classList.remove('fading');
@@ -454,12 +467,12 @@ document.addEventListener('click', () => {
   });
 });
 
+// ── Edit comment modal open/close ─────────────────────────────────────────────
 function openEditModal(commentId) {
   var bodyEl = document.querySelector('#comment-' + commentId + ' .comment-body');
   document.getElementById('edit-form').action = '/community/comment/' + commentId + '/edit';
   editCommentQuill.root.innerHTML = bodyEl ? bodyEl.innerHTML : '';
-  var modal = document.getElementById('edit-modal');
-  modal.style.display = 'flex';
+  document.getElementById('edit-modal').style.display = 'flex';
 }
 function closeEditModal() {
   document.getElementById('edit-modal').style.display = 'none';

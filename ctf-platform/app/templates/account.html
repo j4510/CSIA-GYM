@@ -154,6 +154,10 @@
     <div class="grid md:grid-cols-3 gap-6 mb-6">
       <div class="text-center p-6 bg-black border-3 border-red-600 hover-brutal">
         <div class="text-5xl font-black text-red-600 mb-2">{{ current_user.get_score() }}</div>
+        <div class="text-sm opacity-80 uppercase font-bold">TOTAL POINTS</div>
+      </div>
+      <div class="text-center p-6 bg-black border-3 border-yellow-500 hover-brutal">
+        <div class="text-5xl font-black mb-2" style="color:#facc15;">{{ rank_percentile }}</div>
         <div class="text-sm opacity-80 uppercase font-bold">XP</div>
       </div>
       <div class="text-center p-6 bg-black border-3 border-green-500 hover-brutal">
@@ -195,34 +199,103 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     {{ radar_chart(radar_categories, radar_datasets, all_users, current_user.id) }}
 
-    <!-- Badges -->
+    <!-- Badges & Milestones -->
     <div class="mt-8">
-      <h3 class="text-xl font-black uppercase mb-4 flex items-center">
-        <span class="text-red-600 mr-2">►</span> BADGES EARNED
-      </h3>
-      {% if current_user.badges %}
-      <div class="flex flex-wrap gap-4 mb-8">
-        {% for ub in current_user.badges %}
-        <a href="{{ url_for('settings.badges') }}#badge-{{ ub.badge.id }}" style="text-decoration:none;" class="text-center">
-          <div style="width:80px;position:relative;">
-            <img src="{{ url_for('settings.serve_badge', filename=ub.badge.image_filename) }}"
-                 alt="{{ ub.badge.title }}" title="{{ ub.badge.description }}"
-                 class="badge-img border-{{ ub.badge.border_style or 'tier1' }}">
-            <p class="text-xs font-black uppercase mt-1" style="word-break:break-word;color:#e5e5e5;">{{ ub.badge.title }}</p>
-            {% if ub.badge.is_limited %}
-            {% set badge_pos = namespace(n=0) %}
-            {% for other in ub.badge.recipients | sort(attribute='awarded_at') %}
-              {% if other.user_id == current_user.id %}{% set badge_pos.n = loop.index %}{% endif %}
+      <div class="grid md:grid-cols-2 gap-8">
+
+        <!-- BADGES column -->
+        <div>
+          <h3 class="text-xl font-black uppercase mb-4 flex items-center">
+            <span class="text-red-600 mr-2">►</span> BADGES EARNED
+          </h3>
+          {% if current_user.badges %}
+          <div class="flex flex-wrap gap-4 mb-4">
+            {% for ub in current_user.badges %}
+            {% set b = ub.badge %}
+            {% set shape = b.display_shape or 'square' %}
+            <a href="{{ url_for('settings.badges') }}#badge-{{ b.id }}" style="text-decoration:none;" class="text-center">
+              <div style="width:80px;position:relative;">
+                {% if shape == 'circle' %}
+                <img src="{{ url_for('settings.serve_badge', filename=b.image_filename) }}"
+                     alt="{{ b.title }}" title="{{ b.description }}"
+                     style="display:block;width:80px;height:80px;object-fit:cover;border-radius:50%;{% if b.display_border %}border:3px solid currentColor;{% endif %}"
+                     class="{% if b.display_border %}border-{{ b.border_style or 'tier1' }}{% endif %}">
+                {% elif shape == 'triangle' %}
+                <div style="width:80px;height:80px;position:relative;overflow:hidden;clip-path:polygon(50% 0%,100% 100%,0% 100%);">
+                  <img src="{{ url_for('settings.serve_badge', filename=b.image_filename) }}"
+                       alt="{{ b.title }}" title="{{ b.description }}"
+                       style="width:80px;height:80px;object-fit:cover;">
+                </div>
+                {% elif shape == 'pentagon' %}
+                <div style="width:80px;height:80px;position:relative;overflow:hidden;clip-path:polygon(50% 0%,100% 38%,82% 100%,18% 100%,0% 38%);">
+                  <img src="{{ url_for('settings.serve_badge', filename=b.image_filename) }}"
+                       alt="{{ b.title }}" title="{{ b.description }}"
+                       style="width:80px;height:80px;object-fit:cover;">
+                </div>
+                {% elif shape == 'seal-spike' %}
+                <div style="width:80px;height:80px;position:relative;overflow:hidden;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);">
+                  <img src="{{ url_for('settings.serve_badge', filename=b.image_filename) }}"
+                       alt="{{ b.title }}" title="{{ b.description }}"
+                       style="width:80px;height:80px;object-fit:cover;">
+                </div>
+                {% elif shape == 'seal-hanko' %}
+                <div style="width:80px;height:80px;position:relative;">
+                  <img src="{{ url_for('settings.serve_badge', filename=b.image_filename) }}"
+                       alt="{{ b.title }}" title="{{ b.description }}"
+                       style="width:80px;height:80px;object-fit:cover;border-radius:50%;border:4px solid #cc0000;box-shadow:0 0 0 2px #111,0 0 0 5px #cc0000;">
+                </div>
+                {% else %}
+                <img src="{{ url_for('settings.serve_badge', filename=b.image_filename) }}"
+                     alt="{{ b.title }}" title="{{ b.description }}"
+                     style="display:block;width:80px;height:80px;object-fit:cover;border-radius:4px;"
+                     class="{% if b.display_border %}border-{{ b.border_style or 'tier1' }}{% endif %}">
+                {% endif %}
+                <p class="text-xs font-black uppercase mt-1" style="word-break:break-word;color:#e5e5e5;">{{ b.title }}</p>
+                {% if b.is_limited %}
+                {% set badge_pos = namespace(n=0) %}
+                {% for other in b.recipients | sort(attribute='awarded_at') %}
+                  {% if other.user_id == current_user.id %}{% set badge_pos.n = loop.index %}{% endif %}
+                {% endfor %}
+                <p class="text-xs" style="color:#facc15;">#{{ badge_pos.n }} / {{ b.recipients | length }}</p>
+                {% endif %}
+              </div>
+            </a>
             {% endfor %}
-            <p class="text-xs" style="color:#facc15;">#{{ badge_pos.n }} / {{ ub.badge.recipients | length }}</p>
-            {% endif %}
           </div>
-        </a>
-        {% endfor %}
+          {% else %}
+          <p class="opacity-40 uppercase text-sm">NO BADGES EARNED YET</p>
+          {% endif %}
+        </div>
+
+        <!-- MILESTONES column -->
+        <div>
+          <h3 class="text-xl font-black uppercase mb-4 flex items-center">
+            <span class="text-red-600 mr-2">►</span> MILESTONES
+          </h3>
+          {% if user_milestones %}
+          <div style="display:flex;flex-wrap:wrap;gap:0;">
+            {% for um in user_milestones %}
+            {% set odd_row = (loop.index0 // 3) % 2 %}
+            {% set col = loop.index0 % 3 %}
+            <div title="{{ um.milestone.title }}: {{ um.milestone.description }}"
+                 style="width:72px;height:83px;position:relative;margin-right:2px;margin-bottom:{% if odd_row %}2px{% else %}-10px{% endif %};
+                        {% if odd_row and col == 0 %}margin-left:37px;{% endif %}">
+              <img src="{{ url_for('settings.serve_milestone', filename=um.milestone.image_filename) }}"
+                   alt="{{ um.milestone.title }}"
+                   style="width:72px;height:83px;object-fit:cover;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);">
+              <div style="position:absolute;bottom:14px;left:0;right:0;text-align:center;">
+                <span style="font-size:0.45rem;font-weight:900;text-transform:uppercase;color:#fff;text-shadow:0 1px 3px #000;line-height:1.1;display:block;padding:0 4px;">{{ um.milestone.title[:12] }}</span>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="opacity-40 uppercase text-sm">NO MILESTONES YET</p>
+          {% endif %}
+        </div>
+
       </div>
-      {% else %}
-      <p class="opacity-40 uppercase text-sm mb-8">NO BADGES EARNED YET</p>
-      {% endif %}
+    </div>
 
       <h3 class="text-xl font-black uppercase mb-4 flex items-center">
         <span class="text-red-600 mr-2">►</span> RECENT SOLVES

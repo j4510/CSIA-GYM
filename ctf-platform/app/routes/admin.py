@@ -10,12 +10,7 @@ import secrets
 from datetime import datetime, timedelta
 from sqlalchemy import func, case
 from app import db
-from app.models import (
-    User, Challenge, ChallengeSubmission, SubmissionFile, CommunityPost, Comment,
-    Badge, UserBadge, WebChallenge, NcChallenge, Notification, NotificationRead,
-    Announcement, BadgeRule, BadgeClaim, BugReport, FlagAttempt, UserChallengeSolve,
-    ChallengeOpen
-)
+from app.models import (\n    User, Challenge, ChallengeSubmission, SubmissionFile, CommunityPost, Comment,\n    Badge, UserBadge, WebChallenge, NcChallenge, Notification, NotificationRead,\n    Announcement, BadgeRule, BadgeClaim, BugReport, FlagAttempt, UserChallengeSolve,\n    ChallengeOpen, Milestone, UserMilestone\n)
 
 SUBMISSION_FILES_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'instance', 'submission_files')
 
@@ -266,10 +261,7 @@ def create_badge():
     img = img.resize((500, 500))
     img.save(os.path.join(BADGE_DIR, filename), 'WEBP', quality=85)
 
-    badge = Badge(title=title, description=description, image_filename=filename,
-                  is_limited=is_limited, limited_count=limited_count,
-                  border_style=border_style, from_event=from_event,
-                  is_unattainable=is_unattainable)
+    badge = Badge(title=title, description=description, image_filename=filename, is_limited=is_limited, limited_count=limited_count, border_style=border_style, from_event=from_event, is_unattainable=is_unattainable, display_border=('display_border' in request.form), display_shape=request.form.get('display_shape', 'square'))
     db.session.add(badge)
     db.session.commit()
     log_action('create_badge', title)
@@ -1103,4 +1095,146 @@ def admin_toggle_reactions(post_id):
     db.session.commit()
     log_action('toggle_reactions', f'post:{post_id}')
     return redirect(url_for('admin.posts'))
+
+
+# ========================================
+# MILESTONE MANAGEMENT
+# ========================================
+
+MILESTONE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'instance', 'milestones')
+
+
+def _award_milestone_to_user(milestone, user):
+    from app.models import UserNotification
+    if UserMilestone.query.filter_by(user_id=user.id, milestone_id=milestone.id).first():
+        return False
+    db.session.add(UserMilestone(user_id=user.id, milestone_id=milestone.id))
+    db.session.add(UserNotification(
+        user_id=user.id,
+        title='Milestone Unlocked!',
+        body=f'You earned the milestone: {milestone.title}',
+        category='system',
+    ))
+    return True
+
+
+def _check_milestone_for_user(milestone, user):
+    if not milestone.is_active:
+        return False
+    rt = milestone.rule_type
+    th = milestone.threshold or 0
+    if rt == 'manual':
+        return False
+    elif rt == 'solved_n_challenges':
+        eligible = len(user.solves) >= th
+    elif rt == 'reached_score':
+        eligible = user.get_score() >= th
+    elif rt == 'community_posts':
+        eligible = len(user.posts) >= th
+    elif rt == 'approved_submissions':
+        from app.models import ChallengeSubmission
+        eligible = ChallengeSubmission.query.filter_by(author_id=user.id, status='approved').count() >= th
+    else:
+        eligible = False
+    if eligible:
+        return _award_milestone_to_user(milestone, user)
+    return False
+
+
+def check_milestones_for_user(user_id: int):
+    user = User.query.get(user_id)
+    if not user:
+        return
+    for m in Milestone.query.filter_by(is_active=True).all():
+        _check_milestone_for_user(m, user)
+    db.session.commit()
+
+
+@admin_bp.route('/milestones')
+def milestones():
+    all_milestones = Milestone.query.order_by(Milestone.created_at.desc()).all()
+    return render_template('admin/milestones.html', milestones=all_milestones)
+
+
+@admin_bp.route('/milestones/create', methods=['POST'])
+def create_milestone():
+    title = request.form.get('title', '').strip()
+    description = request.form.get('description', '').strip()
+    rule_type = request.form.get('rule_type', 'manual').strip()
+    threshold_raw = request.form.get('threshold', '').strip()
+    threshold = int(threshold_raw) if threshold_raw.isdigit() else None
+
+    if not title or not description:
+        flash('Title and description are required', 'danger')
+        return redirect(url_for('admin.milestones'))
+
+    cropped_data = request.form.get('cropped_image', '')
+    if cropped_data and cropped_data.startswith('data:image'):
+        header, b64 = cropped_data.split(',', 1)
+        img_bytes = base64.b64decode(b64)
+        img = Image.open(io.BytesIO(img_bytes)).convert('RGBA')
+    elif 'image' in request.files and request.files['image'].filename:
+        img = Image.open(request.files['image']).convert('RGBA')
+    else:
+        flash('Milestone image is required', 'danger')
+        return redirect(url_for('admin.milestones'))
+
+    os.makedirs(MILESTONE_DIR, exist_ok=True)
+    filename = secure_filename(f'milestone_{title.lower().replace(" ", "_")}.webp')
+    img = img.resize((500, 500))
+    img.save(os.path.join(MILESTONE_DIR, filename), 'WEBP', quality=85)
+
+    milestone = Milestone(title=title, description=description,
+                          image_filename=filename, rule_type=rule_type,
+                          threshold=threshold)
+    db.session.add(milestone)
+    db.session.commit()
+
+    awarded = 0
+    if rule_type != 'manual':
+        for user in User.query.all():
+            if _check_milestone_for_user(milestone, user):
+                awarded += 1
+        db.session.commit()
+
+    log_action('create_milestone', title)
+    flash(f'Milestone "{title}" created and auto-awarded to {awarded} user(s).', 'success')
+    return redirect(url_for('admin.milestones'))
+
+
+@admin_bp.route('/milestones/<int:milestone_id>/award', methods=['POST'])
+def award_milestone(milestone_id):
+    milestone = Milestone.query.get_or_404(milestone_id)
+    username = request.form.get('username', '').strip()
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        flash(f'User "{username}" not found.', 'danger')
+        return redirect(url_for('admin.milestones'))
+    if _award_milestone_to_user(milestone, user):
+        db.session.commit()
+        log_action('award_milestone', f'{milestone.title} -> {user.username}')
+        flash(f'Milestone awarded to {user.username}.', 'success')
+    else:
+        flash(f'{user.username} already has this milestone.', 'info')
+    return redirect(url_for('admin.milestones'))
+
+
+@admin_bp.route('/milestones/<int:milestone_id>/toggle', methods=['POST'])
+def toggle_milestone(milestone_id):
+    milestone = Milestone.query.get_or_404(milestone_id)
+    milestone.is_active = not milestone.is_active
+    db.session.commit()
+    log_action('toggle_milestone', f'{milestone.title} -> {"active" if milestone.is_active else "inactive"}')
+    return redirect(url_for('admin.milestones'))
+
+
+@admin_bp.route('/milestones/<int:milestone_id>/delete', methods=['POST'])
+def delete_milestone(milestone_id):
+    milestone = Milestone.query.get_or_404(milestone_id)
+    title = milestone.title
+    db.session.delete(milestone)
+    db.session.commit()
+    log_action('delete_milestone', title)
+    flash(f'Milestone "{title}" deleted.', 'info')
+    return redirect(url_for('admin.milestones'))
 

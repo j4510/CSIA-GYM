@@ -163,6 +163,33 @@
           <input type="checkbox" name="is_unattainable" style="accent-color:#ef4444;width:16px;height:16px;">
           <span class="text-sm font-bold uppercase opacity-80">Unattainable</span>
         </label>
+        <label style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;">
+          <input type="checkbox" name="display_border" checked style="accent-color:#facc15;width:16px;height:16px;">
+          <span class="text-sm font-bold uppercase opacity-80">Show Border</span>
+        </label>
+      </div>
+
+      <!-- Shape -->
+      <div class="mb-6">
+        <label class="block text-sm opacity-60 uppercase font-bold mb-2">Display Shape</label>
+        <div style="display:flex;flex-wrap:wrap;gap:0.75rem;">
+          {% set shapes = [
+            ('square',     '⬛', 'Square'),
+            ('circle',     '⬤',  'Circle'),
+            ('triangle',   '▲',  'Triangle'),
+            ('pentagon',   '⬠',  'Pentagon'),
+            ('seal-spike', '✦',  'Seal (Spikey)'),
+            ('seal-hanko', '㊙', 'Seal (Hanko)'),
+          ] %}
+          {% for val, icon, label in shapes %}
+          <label style="cursor:pointer;text-align:center;">
+            <input type="radio" name="display_shape" value="{{ val }}" {% if loop.first %}checked{% endif %} style="display:none;" class="shape-radio">
+            <div class="shape-swatch" data-val="{{ val }}"
+                 style="width:52px;height:52px;background:#1a1a1a;border:2px solid #444;display:flex;align-items:center;justify-content:center;font-size:1.4rem;transition:transform 0.1s;">{{ icon }}</div>
+            <p style="font-size:0.55rem;font-weight:900;text-transform:uppercase;color:#888;margin-top:3px;">{{ label }}</p>
+          </label>
+          {% endfor %}
+        </div>
       </div>
 
       <button type="submit"
@@ -244,6 +271,21 @@ document.querySelectorAll('.tier-radio').forEach(function(r) {
 (function(){
   var def = document.querySelector('.tier-swatch[data-val="tier1"]');
   if (def) { def.style.transform = 'scale(1.15)'; def.style.outline = '2px solid #fff'; }
+})();
+
+// ── Shape swatch selection ────────────────────────────────────────────────────
+document.querySelectorAll('.shape-radio').forEach(function(r) {
+  r.addEventListener('change', function() {
+    document.querySelectorAll('.shape-swatch').forEach(function(s) {
+      s.style.transform = ''; s.style.borderColor = '#444';
+    });
+    var sw = document.querySelector('.shape-swatch[data-val="' + r.value + '"]');
+    if (sw) { sw.style.transform = 'scale(1.15)'; sw.style.borderColor = '#fff'; }
+  });
+});
+(function(){
+  var def = document.querySelector('.shape-swatch[data-val="square"]');
+  if (def) { def.style.transform = 'scale(1.15)'; def.style.borderColor = '#fff'; }
 })();
 
 // ── Limited count toggle ──────────────────────────────────────────────────────

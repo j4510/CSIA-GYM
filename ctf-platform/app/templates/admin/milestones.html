@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Manage Milestones - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+.hex-wrap { display:inline-block; width:90px; height:104px; position:relative; }
+.hex-wrap img {
+  width:90px; height:104px; object-fit:cover;
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+  <div class="mb-6 flex justify-between items-center">
+    <div>
+      <p style="font-size:0.65rem;font-weight:900;text-transform:uppercase;letter-spacing:0.2em;color:#cc0000;margin-bottom:0.4rem;">Admin</p>
+      <h1 class="text-3xl font-black uppercase" style="color:#fff;">■ MANAGE MILESTONES</h1>
+      <p style="font-size:0.82rem;font-weight:700;text-transform:uppercase;color:#555;margin-top:0.25rem;">{{ milestones|length }} milestones</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" style="padding:8px 18px;background:transparent;color:#555;font-weight:700;font-size:0.8rem;text-transform:uppercase;border:2px solid #333;text-decoration:none;">← BACK</a>
+  </div>
+
+  <!-- Create Milestone -->
+  <div class="bg-black border-4 border-red-600 p-8 mb-8 shadow-lg">
+    <h2 class="text-xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">CREATE NEW MILESTONE</h2>
+    <form method="POST" action="{{ url_for('admin.create_milestone') }}" enctype="multipart/form-data" id="milestone-form">
+      <input type="hidden" name="cropped_image" id="ms-cropped-data">
+
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm opacity-60 uppercase font-bold mb-1">Title</label>
+          <input type="text" name="title" required placeholder="Milestone title"
+                 style="width:100%;background:#1a1a1a;color:#fff;border:1px solid #444;padding:0.5rem;">
+        </div>
+        <div>
+          <label class="block text-sm opacity-60 uppercase font-bold mb-1">Image (hexagonal, 500×500)</label>
+          <label id="ms-file-btn" style="display:inline-flex;align-items:center;gap:0.5rem;padding:9px 20px;background:#1a1a1a;color:#e5e5e5;border:2px solid #8b0000;cursor:pointer;font-weight:700;font-size:0.82rem;text-transform:uppercase;">
+            Choose Image
+          </label>
+          <input type="file" id="ms-file-input" accept="image/*" style="display:none;">
+          <span id="ms-file-name" style="font-size:0.75rem;color:#888;margin-left:0.5rem;"></span>
+          <div id="ms-crop-preview" style="display:none;margin-top:8px;align-items:center;gap:8px;">
+            <div class="hex-wrap" style="width:50px;height:58px;">
+              <img id="ms-preview-img" style="width:50px;height:58px;">
+            </div>
+            <span style="font-size:0.7rem;color:#4ade80;">✓ Cropped</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm opacity-60 uppercase font-bold mb-1">Description</label>
+        <input type="text" name="description" required placeholder="Short description"
+               style="width:100%;background:#1a1a1a;color:#fff;border:1px solid #444;padding:0.5rem;">
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <div>
+          <label class="block text-sm opacity-60 uppercase font-bold mb-1">Auto-Award Rule</label>
+          <select name="rule_type" id="ms-rule-type"
+                  style="width:100%;background:#1a1a1a;color:#fff;border:1px solid #444;padding:0.5rem;">
+            <option value="manual">Manual only</option>
+            <option value="solved_n_challenges">Solved N challenges</option>
+            <option value="reached_score">Reached score (points)</option>
+            <option value="community_posts">Made N community posts</option>
+            <option value="approved_submissions">N approved submissions</option>
+          </select>
+        </div>
+        <div id="ms-threshold-wrap">
+          <label class="block text-sm opacity-60 uppercase font-bold mb-1">Threshold (N)</label>
+          <input type="number" name="threshold" min="1" placeholder="e.g. 10"
+                 style="width:100%;background:#1a1a1a;color:#fff;border:1px solid #444;padding:0.5rem;">
+        </div>
+      </div>
+
+      <button type="submit" style="padding:10px 28px;background:#8b0000;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;">
+        CREATE MILESTONE
+      </button>
+    </form>
+  </div>
+
+  <!-- Milestone List -->
+  {% if milestones %}
+  <div class="grid md:grid-cols-4 gap-6">
+    {% for ms in milestones %}
+    <div class="bg-black border-2 border-red-600 p-4 shadow-lg text-center">
+      <div class="hex-wrap" style="margin:0 auto 10px;">
+        <img src="{{ url_for('settings.serve_milestone', filename=ms.image_filename) }}" alt="{{ ms.title }}">
+      </div>
+      <p class="font-black uppercase text-sm mb-1">{{ ms.title }}</p>
+      <p class="text-xs opacity-40 mb-1">{{ ms.description }}</p>
+      <p class="text-xs mb-1" style="color:{% if ms.rule_type == 'manual' %}#888{% else %}#4ade80{% endif %};">
+        {{ ms.rule_type.replace('_',' ').upper() }}{% if ms.threshold %} · {{ ms.threshold }}{% endif %}
+      </p>
+      <p class="text-xs mb-1" style="color:{% if ms.is_active %}#4ade80{% else %}#f87171{% endif %};">
+        {{ 'ACTIVE' if ms.is_active else 'INACTIVE' }}
+      </p>
+      <p class="text-xs opacity-30 mb-3">{{ ms.recipients|length }} holder(s)</p>
+
+      <!-- Manual award -->
+      <form method="POST" action="{{ url_for('admin.award_milestone', milestone_id=ms.id) }}" class="mb-2 flex gap-1">
+        <input type="text" name="username" placeholder="username"
+               style="flex:1;background:#111;color:#fff;border:1px solid #444;padding:4px 6px;font-size:0.7rem;">
+        <button type="submit" style="padding:4px 8px;background:#1a3a1a;color:#4ade80;font-size:0.7rem;font-weight:700;border:1px solid #4ade80;cursor:pointer;">GIVE</button>
+      </form>
+
+      <div class="flex gap-2 justify-center">
+        <form method="POST" action="{{ url_for('admin.toggle_milestone', milestone_id=ms.id) }}">
+          <button type="submit" style="padding:5px 10px;background:#1a1a1a;color:{% if ms.is_active %}#fb923c{% else %}#4ade80{% endif %};font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid {% if ms.is_active %}#fb923c{% else %}#4ade80{% endif %};cursor:pointer;">
+            {{ 'DISABLE' if ms.is_active else 'ENABLE' }}
+          </button>
+        </form>
+        <form method="POST" action="{{ url_for('admin.delete_milestone', milestone_id=ms.id) }}" onsubmit="return confirm('Delete this milestone?');">
+          <button type="submit" style="padding:5px 10px;background:#7f1d1d;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;border:none;cursor:pointer;">DELETE</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-16 border-4 border-red-600">
+    <p class="text-2xl font-black uppercase opacity-60">NO MILESTONES YET</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Cropper modal -->
+<div id="ms-cropper-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#111;border:3px solid #8b0000;padding:24px;max-width:520px;width:95%;">
+    <p class="text-sm font-black uppercase mb-3" style="color:#fff;">CROP MILESTONE IMAGE</p>
+    <div style="max-height:380px;overflow:hidden;">
+      <img id="ms-cropper-img" style="max-width:100%;display:block;">
+    </div>
+    <div class="flex gap-3 mt-4">
+      <button id="ms-crop-confirm" style="flex:1;padding:10px;background:#8b0000;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;">CROP & USE</button>
+      <button id="ms-crop-cancel" style="flex:1;padding:10px;background:#333;color:#fff;font-weight:900;text-transform:uppercase;border:none;cursor:pointer;">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+<script>
+var msCropper = null;
+var msFileInput = document.getElementById('ms-file-input');
+var msModal = document.getElementById('ms-cropper-modal');
+
+document.getElementById('ms-file-btn').addEventListener('click', function() { msFileInput.click(); });
+
+msFileInput.addEventListener('change', function() {
+  var file = this.files[0]; if (!file) return;
+  document.getElementById('ms-file-name').textContent = file.name;
+  var url = URL.createObjectURL(file);
+  document.getElementById('ms-cropper-img').src = url;
+  msModal.style.display = 'flex';
+  if (msCropper) { msCropper.destroy(); msCropper = null; }
+  msCropper = new Cropper(document.getElementById('ms-cropper-img'), { aspectRatio: 1, viewMode: 1, autoCropArea: 0.9 });
+});
+
+document.getElementById('ms-crop-cancel').addEventListener('click', function() {
+  msModal.style.display = 'none';
+  if (msCropper) { msCropper.destroy(); msCropper = null; }
+  msFileInput.value = '';
+});
+
+document.getElementById('ms-crop-confirm').addEventListener('click', function() {
+  if (!msCropper) return;
+  msCropper.getCroppedCanvas({ width:500, height:500 }).toBlob(function(blob) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('ms-cropped-data').value = e.target.result;
+      var p = document.getElementById('ms-crop-preview');
+      document.getElementById('ms-preview-img').src = e.target.result;
+      p.style.display = 'flex';
+    };
+    reader.readAsDataURL(blob);
+    msModal.style.display = 'none';
+    if (msCropper) { msCropper.destroy(); msCropper = null; }
+  }, 'image/webp', 0.85);
+});
+
+// Hide threshold when manual
+document.getElementById('ms-rule-type').addEventListener('change', function() {
+  document.getElementById('ms-threshold-wrap').style.display = this.value === 'manual' ? 'none' : 'block';
+});
+document.getElementById('ms-threshold-wrap').style.display = 'none';
+</script>
+{% endblock %}

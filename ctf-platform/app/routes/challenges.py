@@ -229,6 +229,8 @@ def submit_flag(challenge_id):
         DynamicFlag.query.filter_by(challenge_id=challenge_id, user_id=current_user.id).delete()
         db.session.commit()
         check_auto_badges(current_user.id)
+        from app.routes.admin import check_milestones_for_user
+        check_milestones_for_user(current_user.id)
         log_event(actor=current_user.username, action='flag_correct', target=challenge.title, category='challenge')
         notify_challenge_solve(current_user.id, challenge)
         notify_challenge_subscribers(current_user.id, challenge)

@@ -95,6 +95,7 @@ class User(UserMixin, db.Model):
     posts = db.relationship('CommunityPost', backref='author', lazy=True)
     comments = db.relationship('Comment', foreign_keys='Comment.author_id', backref='author', lazy=True)
     badges = db.relationship('UserBadge', backref='user', lazy=True)
+    milestones = db.relationship('UserMilestone', backref='user', lazy=True)
     
     def set_password(self, password):
         """Hash and store password securely."""
@@ -477,6 +478,8 @@ class Badge(db.Model):
     is_limited = db.Column(db.Boolean, default=False)
     limited_count = db.Column(db.Integer, nullable=True)
     border_style = db.Column(db.String(30), default='tier1')
+    display_border = db.Column(db.Boolean, default=True)   # show/hide border
+    display_shape = db.Column(db.String(20), default='square')  # square|circle|triangle|pentagon|seal-spike|seal-hanko
     from_event = db.Column(db.Boolean, default=False)
     is_unattainable = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -591,6 +594,44 @@ class BugReport(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     reporter = db.relationship('User', backref=db.backref('bug_reports', lazy=True))
+
+
+# ========================================
+# MILESTONE MODELS
+# ========================================
+
+class Milestone(db.Model):
+    """Admin-created milestone with auto-award rules."""
+    __tablename__ = 'milestones'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(300), nullable=False)
+    image_filename = db.Column(db.String(200), nullable=False)
+    # rule_type: solved_n_challenges | reached_score | community_posts | approved_submissions | manual
+    rule_type = db.Column(db.String(50), nullable=False, default='manual')
+    threshold = db.Column(db.Integer, nullable=True)   # numeric threshold
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    recipients = db.relationship('UserMilestone', backref='milestone', lazy=True, cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<Milestone {self.title}>'
+
+
+class UserMilestone(db.Model):
+    __tablename__ = 'user_milestones'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    milestone_id = db.Column(db.Integer, db.ForeignKey('milestones.id'), nullable=False)
+    awarded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'milestone_id', name='uq_user_milestone'),)
+
+    def __repr__(self):
+        return f'<UserMilestone user={self.user_id} milestone={self.milestone_id}>'
 
 
 class Announcement(db.Model):

@@ -8,6 +8,7 @@ from app.identicon import generate_identicon
 
 AVATAR_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'instance', 'avatars')
 BADGE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'instance', 'badges')
+MILESTONE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'instance', 'milestones')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 settings_bp = Blueprint('settings', __name__, template_folder='../templates')
@@ -28,12 +29,19 @@ def serve_avatar(username):
 def serve_badge(filename):
     full_path = os.path.join(BADGE_DIR, filename)
     if not os.path.exists(full_path):
-        # fallback to static/badges for old installs
         static_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'badges', filename)
         if os.path.exists(static_path):
             return send_from_directory(os.path.abspath(os.path.dirname(static_path)), filename)
         abort(404)
     return send_from_directory(os.path.abspath(BADGE_DIR), filename)
+
+
+@settings_bp.route('/milestone-img/<filename>')
+def serve_milestone(filename):
+    full_path = os.path.join(MILESTONE_DIR, filename)
+    if not os.path.exists(full_path):
+        abort(404)
+    return send_from_directory(os.path.abspath(MILESTONE_DIR), filename)
 
 
 @settings_bp.route('/robots.txt')
@@ -139,12 +147,13 @@ def _rank_context(user):
     percentile, rank_title = get_user_rank(user)
     rank_style = ALL_RANK_CSS.get(rank_title, '')
     all_cats, radar_datasets = get_category_radar_data([user])
-    # Only load id + username — the radar search widget doesn't need full objects
     all_users = db.session.query(User.id, User.username).filter_by(
         is_hidden_from_scoreboard=False).order_by(User.username).all()
     accepted = ChallengeSubmission.query.filter_by(author_id=user.id, status='approved').count()
     rejected = ChallengeSubmission.query.filter_by(author_id=user.id, status='rejected').count()
     wrong_attempts = FlagAttempt.query.filter_by(user_id=user.id, correct=False).count()
+    from app.models import UserMilestone
+    user_milestones = UserMilestone.query.filter_by(user_id=user.id).order_by(UserMilestone.awarded_at).all()
     return dict(
         rank_title=rank_title, rank_style=rank_style,
         rank_percentile=percentile, rank_keyframes=RANK_KEYFRAMES,
@@ -152,6 +161,7 @@ def _rank_context(user):
         all_users=all_users,
         accepted=accepted, rejected=rejected, wrong_attempts=wrong_attempts,
         top_border=user.get_top_border(),
+        user_milestones=user_milestones,
     )
 
 
