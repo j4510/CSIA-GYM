@@ -1057,8 +1057,17 @@ label[style*="cursor:pointer"] span {
   .nav-hamburger { display: flex; }
 }
 
+
 /* ===== BUTTON SPAN LABEL INHERITANCE ===== */
-/* Spans inside buttons should inherit the button's color, not the global span color */
-button span, a span {
+/* Direct child spans inside buttons/anchors inherit the parent's color */
+button > span, a > span {
     color: inherit !important;
 }
+
+/* ===== FLAIR PILL COLORS (community new post) ===== */
+.flair-pill[data-flair=""]                     { background:#f3f4f6 !important; color:#555 !important;    border-color:#d1d5db !important; }
+.flair-pill[data-flair="Challenge Discussion"]  { background:#1e3a5f !important; color:#93c5fd !important; border-color:#1e40af !important; }
+.flair-pill[data-flair="Writeups"]              { background:#1a3a1a !important; color:#86efac !important; border-color:#166534 !important; }
+.flair-pill[data-flair="For Beginners"]         { background:#3b1f00 !important; color:#fcd34d !important; border-color:#92400e !important; }
+.flair-pill[data-flair="Need Help"]             { background:#3b0a0a !important; color:#fca5a5 !important; border-color:#991b1b !important; }
+.flair-pill[data-flair="Tutorial"]              { background:#0d2137 !important; color:#67e8f9 !important; border-color:#0e7490 !important; }

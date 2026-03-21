@@ -829,6 +829,7 @@ def accept_flag_submission(attempt_id):
 @admin_bp.route('/flag-submissions/<int:attempt_id>/delete', methods=['POST'])
 def delete_flag_submission(attempt_id):
     """Delete a correct flag submission: remove solve record, revert points, remove first blood."""
+    from sqlalchemy import text
     attempt = FlagAttempt.query.get_or_404(attempt_id)
     if not attempt.correct:
         flash('Only correct submissions can be deleted.', 'danger')
@@ -837,23 +838,16 @@ def delete_flag_submission(attempt_id):
     user_id = attempt.user_id
     challenge_id = attempt.challenge_id
 
-    # Remove the UserChallengeSolve record (reverts scoreboard/points)
-    solve = UserChallengeSolve.query.filter_by(
-        user_id=user_id, challenge_id=challenge_id).first()
-    if solve:
-        db.session.delete(solve)
-
-    # Remove first-blood notification for this user+challenge if any
-    from app.models import UserNotification
-    UserNotification.query.filter(
-        UserNotification.user_id == user_id,
-        UserNotification.category == 'challenge',
-        UserNotification.title.like('%First Blood%'),
-        UserNotification.link.like(f'%/challenges/{challenge_id}%')
-    ).delete(synchronize_session=False)
-
-    db.session.delete(attempt)
-    db.session.commit()
+    # Use raw SQL to avoid ORM flush issues with NOT NULL constraints
+    with db.engine.connect() as conn:
+        conn.execute(text(
+            'DELETE FROM user_challenge_solves WHERE user_id=:u AND challenge_id=:c'
+        ), {'u': user_id, 'c': challenge_id})
+        conn.execute(text(
+            'DELETE FROM user_notifications WHERE user_id=:u AND category=:cat AND title LIKE :t AND link LIKE :l'
+        ), {'u': user_id, 'cat': 'challenge', 't': '%First Blood%', 'l': f'%/challenges/{challenge_id}%'})
+        conn.execute(text('DELETE FROM flag_attempts WHERE id=:id'), {'id': attempt_id})
+        conn.commit()
 
     log_action('delete_flag_submission', f'attempt:{attempt_id} user:{user_id} challenge:{challenge_id}')
     flash('Submission deleted, solve reverted, and first blood removed (if applicable).', 'success')
