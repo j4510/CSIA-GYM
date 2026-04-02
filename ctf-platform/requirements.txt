@@ -31,3 +31,6 @@ bleach==6.2.0
 # amazonq-ignore-next-line
 cbor2==5.6.5
 cryptography==44.0.2
+
+# Runner sidecar HTTP client
+requests==2.32.3

@@ -1,9 +1,10 @@
 ## Here's what's new with our current version: v2.1
 
-* v2.1 (March 22, 2026)
+* v2.1 (April 4, 2026)
     - Users now have inboxes to message other users.
     - Milestones are now available.
-    - NC Challenges are disabled temporarily for security reasons.
+    - Dockerized container per PWN/WEB challenge.
+    - Passkeys are now available.
     - Better admin buttons.
     - “Keep me logged in” label: Improved readability with dark text on the login page.
     - Flag submission deletion: Admins can now delete correct flag submissions, which reverts scoreboard points and first-blood notifications. The template now shows a red ✕ Delete button.

@@ -1,0 +1,27 @@
+timestamp,user,action,target,category,ip
+2026-04-02 20:28:47 UTC,admin,challenge_submit,lfi [Web],submission,172.18.0.1
+2026-04-02 20:28:52 UTC,admin,approve_challenge,lfi,admin,172.18.0.1
+2026-04-02 20:28:57 UTC,admin,instance_launch_web,lfi,challenge,172.18.0.1
+2026-04-02 20:29:17 UTC,admin,flag_wrong,lfi,challenge,172.18.0.1
+2026-04-02 20:29:25 UTC,admin,flag_wrong,lfi,challenge,172.18.0.1
+2026-04-02 20:29:37 UTC,admin,instance_launch_web,lfi,challenge,172.18.0.1
+2026-04-02 20:29:45 UTC,admin,flag_wrong,lfi,challenge,172.18.0.1
+2026-04-02 20:29:58 UTC,admin,flag_correct,lfi,challenge,172.18.0.1
+2026-04-02 20:30:38 UTC,admin,challenge_submit,rev [Binary Exploitation],submission,172.18.0.1
+2026-04-02 20:30:44 UTC,admin,approve_challenge,rev,admin,172.18.0.1
+2026-04-02 20:30:50 UTC,admin,instance_launch_nc,rev,challenge,172.18.0.1
+2026-04-02 20:31:36 UTC,admin,flag_correct,rev,challenge,172.18.0.1
+2026-04-02 20:32:43 UTC,admin,instance_launch_nc,rev,challenge,172.18.0.1
+2026-04-02 20:34:14 UTC,admin,instance_launch_web,lfi,challenge,172.18.0.1
+2026-04-02 20:34:33 UTC,admin,delete_flag_submission,attempt:4 user:1 challenge:1,admin,172.18.0.1
+2026-04-02 20:34:37 UTC,admin,flag_wrong,lfi,challenge,172.18.0.1
+2026-04-02 20:37:25 UTC,admin,instance_launch_web,lfi,challenge,172.18.0.1
+2026-04-02 20:37:39 UTC,admin,flag_wrong,lfi,challenge,172.18.0.1
+2026-04-02 20:37:53 UTC,admin,instance_launch_nc,rev,challenge,172.18.0.1
+2026-04-02 20:38:10 UTC,admin,delete_flag_submission,attempt:5 user:1 challenge:2,admin,172.18.0.1
+2026-04-02 20:38:16 UTC,admin,flag_correct,rev,challenge,172.18.0.1
+2026-04-02 20:40:48 UTC,admin,flag_wrong,lfi,challenge,172.18.0.1
+2026-04-02 20:48:45 UTC,admin,flag_wrong,lfi,challenge,172.18.0.1
+2026-04-02 20:48:50 UTC,admin,instance_launch_web,lfi,challenge,172.18.0.1
+2026-04-02 20:48:58 UTC,admin,flag_correct,lfi,challenge,172.18.0.1
+2026-04-02 20:49:08 UTC,admin,post_create,test,community,172.18.0.1

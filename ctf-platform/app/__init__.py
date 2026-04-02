@@ -521,10 +521,15 @@ def create_app(config_class=Config):
                     conn.execute(text(stmt))
             conn.commit()
 
-            # flag_attempts extra column (submitted_flag)
+            # flag_attempts extra columns
             fa_cols = {row[1] for row in conn.execute(text("PRAGMA table_info(flag_attempts)"))}
-            if 'submitted_flag' not in fa_cols:
-                conn.execute(text('ALTER TABLE flag_attempts ADD COLUMN submitted_flag VARCHAR(500)'))
+            for col, stmt in {
+                'submitted_flag':     'ALTER TABLE flag_attempts ADD COLUMN submitted_flag VARCHAR(500)',
+                'solution_file_path': 'ALTER TABLE flag_attempts ADD COLUMN solution_file_path VARCHAR(500)',
+                'solution_file_name': 'ALTER TABLE flag_attempts ADD COLUMN solution_file_name VARCHAR(300)',
+            }.items():
+                if col not in fa_cols:
+                    conn.execute(text(stmt))
             conn.commit()
 
             # challenge_opens

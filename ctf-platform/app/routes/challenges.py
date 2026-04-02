@@ -262,6 +262,16 @@ def _record_correct_solve(challenge, user_id):
     db.session.commit()
     DynamicFlag.query.filter_by(challenge_id=challenge.id, user_id=user_id).delete()
     db.session.commit()
+    # Immediately kill the player's running instance on solve
+    if challenge.category in ('Web', 'Binary Exploitation'):
+        try:
+            from app.challenge_runner import stop_server, stop_nc_server
+            if challenge.category == 'Web':
+                stop_server(challenge.id, user_id)
+            else:
+                stop_nc_server(challenge.id, user_id)
+        except Exception:
+            pass
     check_auto_badges(user_id)
     from app.routes.admin import check_milestones_for_user
     check_milestones_for_user(user_id)
@@ -454,15 +464,14 @@ def launch_nc(challenge_id):
     nc = NcChallenge.query.filter_by(challenge_id=challenge_id).first()
     if not nc:
         return jsonify(ok=False, error='No binary attached to this challenge.'), 404
-    from app.nc_runner import start_nc_server
+    from app.challenge_runner import start_nc_server
     try:
-        port, expires_at, dynamic_flag = start_nc_server(challenge_id, current_user.id, nc.binary_path)
+        port, subdomain, expires_at, dynamic_flag = start_nc_server(challenge_id, current_user.id, nc.binary_path)
         if dynamic_flag:
             _upsert_dynamic_flag(challenge_id, current_user.id, dynamic_flag)
-        host = _nc_host()
         log_event(actor=current_user.username, action='instance_launch_nc', target=challenge.title, category='challenge')
-        return jsonify(ok=True, port=port, host=host, expires_at=expires_at, has_dynamic_flag=bool(dynamic_flag))
-    except RuntimeError as e:
+        return jsonify(ok=True, port=port, host=subdomain, expires_at=expires_at, has_dynamic_flag=bool(dynamic_flag))
+    except Exception as e:
         return jsonify(ok=False, error=str(e)), 500
 
 
@@ -470,7 +479,7 @@ def launch_nc(challenge_id):
 @login_required
 @csrf.exempt
 def stop_nc(challenge_id):
-    from app.nc_runner import stop_nc_server
+    from app.challenge_runner import stop_nc_server
     stop_nc_server(challenge_id, current_user.id)
     return jsonify(ok=True)
 
@@ -479,7 +488,7 @@ def stop_nc(challenge_id):
 @login_required
 @csrf.exempt
 def extend_nc(challenge_id):
-    from app.nc_runner import extend_nc_server
+    from app.challenge_runner import extend_nc_server
     ok, err, new_expires = extend_nc_server(challenge_id, current_user.id)
     if ok:
         return jsonify(ok=True, expires_at=new_expires)
@@ -490,14 +499,13 @@ def extend_nc(challenge_id):
 @login_required
 def nc_status(challenge_id):
     Challenge.query.get_or_404(challenge_id)
-    from app.nc_runner import nc_server_status
-    status = nc_server_status(challenge_id, current_user.id)
-    if status['running']:
-        status['host'] = _nc_host()
+    from app.challenge_runner import nc_server_status
+    st = nc_server_status(challenge_id, current_user.id)
+    if st['running']:
         dyn = DynamicFlag.query.filter_by(challenge_id=challenge_id, user_id=current_user.id).first()
-        status['has_dynamic_flag'] = bool(dyn)
-        status.pop('dynamic_flag', None)
-    return jsonify(status)
+        st['has_dynamic_flag'] = bool(dyn)
+        st.pop('dynamic_flag', None)
+    return jsonify(st)
 
 
 @challenges_bp.route('/challenges/<int:challenge_id>/launch', methods=['POST'])
@@ -510,14 +518,15 @@ def launch_web(challenge_id):
     wc = WebChallenge.query.filter_by(challenge_id=challenge_id).first()
     if not wc:
         return jsonify(ok=False, error='No web archive attached to this challenge.'), 404
-    from app.web_runner import start_server
+    from app.challenge_runner import start_server
     try:
-        port, expires_at, dynamic_flag = start_server(challenge_id, current_user.id, wc.archive_path)
-        host = _web_host()
+        port, subdomain, expires_at, dynamic_flag = start_server(challenge_id, current_user.id, wc.archive_path)
+        if dynamic_flag:
+            _upsert_dynamic_flag(challenge_id, current_user.id, dynamic_flag)
         log_event(actor=current_user.username, action='instance_launch_web', target=challenge.title, category='challenge')
-        return jsonify(ok=True, port=port, url=f'http://{host}:{port}/', expires_at=expires_at,
-                       dynamic_flag=dynamic_flag, has_dynamic_flag=bool(dynamic_flag))
-    except RuntimeError as e:
+        return jsonify(ok=True, port=port, url=f'http://{subdomain}:{port}/', expires_at=expires_at,
+                       has_dynamic_flag=bool(dynamic_flag))
+    except Exception as e:
         return jsonify(ok=False, error=str(e)), 500
 
 
@@ -525,7 +534,7 @@ def launch_web(challenge_id):
 @login_required
 @csrf.exempt
 def stop_web(challenge_id):
-    from app.web_runner import stop_server
+    from app.challenge_runner import stop_server
     stop_server(challenge_id, current_user.id)
     return jsonify(ok=True)
 
@@ -534,7 +543,7 @@ def stop_web(challenge_id):
 @login_required
 @csrf.exempt
 def extend_web(challenge_id):
-    from app.web_runner import extend_server
+    from app.challenge_runner import extend_server
     ok, err, new_expires = extend_server(challenge_id, current_user.id)
     if ok:
         return jsonify(ok=True, expires_at=new_expires)
@@ -545,15 +554,14 @@ def extend_web(challenge_id):
 @login_required
 def web_status(challenge_id):
     Challenge.query.get_or_404(challenge_id)
-    from app.web_runner import server_status
-    status = server_status(challenge_id, current_user.id)
-    if status['running']:
-        host = _web_host()
-        status['url'] = f"http://{host}:{status['port']}/"
+    from app.challenge_runner import server_status
+    st = server_status(challenge_id, current_user.id)
+    if st['running']:
+        st['url'] = f"http://{st['subdomain']}:{st['port']}/"
         dyn = DynamicFlag.query.filter_by(challenge_id=challenge_id, user_id=current_user.id).first()
-        status['has_dynamic_flag'] = bool(dyn)
-        status.pop('dynamic_flag', None)
-    return jsonify(status)
+        st['has_dynamic_flag'] = bool(dyn)
+        st.pop('dynamic_flag', None)
+    return jsonify(st)
 
 
 @challenges_bp.route('/challenges/<int:challenge_id>/bookmark', methods=['POST'])

@@ -1,33 +1,58 @@
-version: '3.x'
-
 services:
   web:
     build: .
     container_name: ctf-platform
     ports:
       - "5050:5050"
-      - "10000-10099:10000-10099"
-      - "11000-11099:11000-11099"
-    privileged: true
-    security_opt:
-      - seccomp:unconfined
     env_file:
       - .env
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - DATABASE_URL=${DATABASE_URL}
       - FLASK_ENV=production
+      - RUNNER_URL=http://runner:32526
+      - RUNNER_SECRET=${RUNNER_SECRET}
+      - HOST_INSTANCE_DIR=${HOST_INSTANCE_DIR:-/opt/ctf/instance}
     volumes:
-      - instance_data:/app/instance
+      - ${HOST_INSTANCE_DIR:-/opt/ctf/instance}:/app/instance
       - avatar_data:/app/app/static/avatars
       - post_images_data:/app/app/static/post_images
-      - web_challenges_data:/app/instance/web_challenges
-      - nc_challenges_data:/app/instance/nc_challenges
+    depends_on:
+      - runner
+    restart: unless-stopped
+
+  runner:
+    build: ./runner
+    container_name: ctf-runner
+    ports:
+      - "127.0.0.1:32526:32526"
+    environment:
+      - RUNNER_SECRET=${RUNNER_SECRET}
+      - CHALLENGES_DIR=/app/instance
+      - HOST_INSTANCE_DIR=${HOST_INSTANCE_DIR:-/opt/ctf/instance}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOST_INSTANCE_DIR:-/opt/ctf/instance}:/app/instance
+      - pip_cache:/cache/pip
+      - npm_cache:/cache/npm
+    stop_grace_period: 30s
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: ctf-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - web
     restart: unless-stopped
 
 volumes:
-  instance_data:
   avatar_data:
   post_images_data:
-  web_challenges_data:
-  nc_challenges_data:
+  pip_cache:
+  npm_cache:

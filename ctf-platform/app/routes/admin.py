@@ -631,15 +631,15 @@ def delete_challenge(challenge_id):
     title = challenge.title
     if challenge.category == 'Web' and challenge.web_challenge:
         try:
-            from app.web_runner import cleanup_serve_dir
-            cleanup_serve_dir(challenge_id)
-        except (ImportError, RuntimeError):
+            from app.challenge_runner import cleanup_challenge
+            cleanup_challenge(challenge_id)
+        except Exception:
             pass
     if challenge.category == 'Binary Exploitation' and challenge.nc_challenge:
         try:
-            from app.nc_runner import cleanup_nc_dir
-            cleanup_nc_dir(challenge_id)
-        except (ImportError, RuntimeError):
+            from app.challenge_runner import cleanup_challenge
+            cleanup_challenge(challenge_id)
+        except Exception:
             pass
     from sqlalchemy import text
     # Expunge challenge and its relationships from the ORM identity map

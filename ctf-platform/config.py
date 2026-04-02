@@ -33,3 +33,6 @@ class Config:
     CHALLENGE_HOST = os.environ.get('CHALLENGE_HOST') or None
     NC_CHALLENGE_HOST = os.environ.get('NC_CHALLENGE_HOST') or None
     WEB_CHALLENGE_HOST = os.environ.get('WEB_CHALLENGE_HOST') or None
+
+    RUNNER_URL    = os.environ.get('RUNNER_URL', 'http://runner:32526')
+    RUNNER_SECRET = os.environ.get('RUNNER_SECRET', '')
