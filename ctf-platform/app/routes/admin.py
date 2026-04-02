@@ -247,8 +247,23 @@ def _update_user_badges(user, form, user_badge_ids):
             db.session.add(UserBadge(user_id=user.id, badge_id=bid))
 
 
-# amazonq-ignore-next-line
-@admin_bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@admin_bp.route('/users/<int:user_id>/regenerate-avatar', methods=['POST'])
+def regenerate_avatar(user_id):
+    """Regenerate the identicon avatar for a user."""
+    user = User.query.get_or_404(user_id)
+    try:
+        from app.identicon import generate_identicon
+        filename = generate_identicon(user.username)
+        user.profile_picture = filename
+        db.session.commit()
+        log_action('regenerate_avatar', user.username)
+        flash(f'Avatar regenerated for {user.username}.', 'success')
+    except Exception as e:
+        flash(f'Failed to regenerate avatar: {e}', 'danger')
+    return redirect(url_for('admin.edit_user', user_id=user_id))
+
+
+
 def edit_user(user_id):
     """Edit any user's profile including password."""
     user = User.query.get_or_404(user_id)
