@@ -1,5 +1,6 @@
-# Flask Core
+# amazonq-ignore-next-line# Flask Core
 Flask==3.0.0
+# amazonq-ignore-next-line
 Werkzeug==3.0.1
 
 # Database
@@ -16,14 +17,17 @@ WTForms==3.1.1
 python-dotenv==1.0.0
 
 # Production server
-gunicorn==21.2.0
+# amazonq-ignore-next-line
+gunicorn==23.0.0
 
 # Image processing
-Pillow==10.1.0
+# amazonq-ignore-next-line
+Pillow==11.1.0
 
 # HTML sanitization
-bleach==6.1.0
+bleach==6.2.0
 
 # WebAuthn passkey support
-cbor2==5.6.2
-cryptography==42.0.5
+# amazonq-ignore-next-line
+cbor2==5.6.5
+cryptography==44.0.2

@@ -5,6 +5,7 @@ All DB queries are batched once in compute_all_scores() and cached on
 Flask's g object so multiple callers in the same request pay zero extra cost.
 """
 
+from app import db
 from app.models import (
     User, Challenge, UserChallengeSolve, ChallengeSubmission,
     FlagAttempt, CommunityPost, PostUpvote
@@ -339,7 +340,7 @@ def check_auto_badges(user_id: int):
                 try:
                     from app.notifs import notify_badge_earned
                     notify_badge_earned(user_id, badge.title)
-                except Exception:
+                except ImportError:
                     pass
     db.session.commit()
 
@@ -440,6 +441,21 @@ def compute_all_scores() -> dict:
     )
     wrong_attempts: dict[int, int] = {uid: cnt for uid, cnt in wrong_rows}
 
+    # Batch: comment counts per user
+    from app.models import Comment
+    comment_rows = (
+        db.session.query(Comment.author_id, func.count(Comment.id))
+        .group_by(Comment.author_id).all()
+    )
+    comment_counts: dict[int, int] = {uid: cnt for uid, cnt in comment_rows}
+
+    # Batch: post counts per user
+    post_rows = (
+        db.session.query(CommunityPost.author_id, func.count(CommunityPost.id))
+        .group_by(CommunityPost.author_id).all()
+    )
+    post_counts: dict[int, int] = {uid: cnt for uid, cnt in post_rows}
+
     BLOOD_BONUS = {1: 15.0, 2: 8.0, 3: 4.0}  # low consideration
 
     scores: dict[int, float] = {}
@@ -465,14 +481,14 @@ def compute_all_scores() -> dict:
             (cnt / cat_totals.get(cat, 1)) * 12
             for cat, cnt in solved_cats.items()
         )
-        post_score       = len(user.posts) * 2.5
+        post_score       = post_counts.get(user.id, 0) * 2.5
         submission_score = (accepted_counts.get(user.id, 0) * 8.0
                             - rejected_counts.get(user.id, 0) * 1.5)
         # Challenge vote score: medium weight (+3 per upvote, -2 per downvote)
         net_votes = vote_net.get(user.id, 0)
         vote_score = (max(net_votes, 0) * 3.0) + (min(net_votes, 0) * 2.0)
         reaction_score   = upvotes_received.get(user.id, 0) * 1.2
-        comment_score    = len(user.comments) * 1.0
+        comment_score    = comment_counts.get(user.id, 0) * 1.0
         attempt_penalty  = wrong_attempts.get(user.id, 0) * 0.05
 
         scores[user.id] = (solve_score + blood_score + cat_score + post_score
@@ -510,19 +526,39 @@ def get_user_rank(user) -> tuple[float, str]:
 def get_category_radar_data(users) -> tuple[list, list]:
     """
     Return (categories, datasets).
-    Reuses the already-loaded challenge data where possible.
+    Uses batched queries to avoid N+1 lazy loads.
     """
+    from sqlalchemy import func
     all_cats = sorted({c.category for c in Challenge.query.all()})
-    datasets = []
-    for user in users:
-        cat_points: dict[str, int] = {cat: 0 for cat in all_cats}
-        for solve in user.solves:
-            cat = solve.challenge.category
-            if cat in cat_points:
-                cat_points[cat] += solve.challenge.points
-        datasets.append({
-            'user_id': user.id,
-            'username': user.username,
-            'data': [cat_points[cat] for cat in all_cats],
-        })
+    if not users or not all_cats:
+        return all_cats, []
+
+    user_ids = [u.id for u in users]
+    challenges_map: dict[int, Challenge] = {c.id: c for c in Challenge.query.all()}
+
+    # Batch all solves for the requested users in one query
+    solves = (
+        UserChallengeSolve.query
+        .filter(UserChallengeSolve.user_id.in_(user_ids))
+        .with_entities(UserChallengeSolve.user_id, UserChallengeSolve.challenge_id)
+        .all()
+    )
+
+    # Build per-user category points map
+    user_cat_points: dict[int, dict[str, int]] = {
+        u.id: {cat: 0 for cat in all_cats} for u in users
+    }
+    for uid, cid in solves:
+        ch = challenges_map.get(cid)
+        if ch and ch.category in user_cat_points.get(uid, {}):
+            user_cat_points[uid][ch.category] += ch.points
+
+    datasets = [
+        {
+            'user_id': u.id,
+            'username': u.username,
+            'data': [user_cat_points[u.id][cat] for cat in all_cats],
+        }
+        for u in users
+    ]
     return all_cats, datasets

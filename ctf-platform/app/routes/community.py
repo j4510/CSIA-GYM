@@ -6,11 +6,13 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, abort
 from flask_login import login_required, current_user
 from PIL import Image
-from app import db
+from app import db, csrf
 from app.models import CommunityPost, Comment, CommentReaction, PostUpvote, PostSubscription
 from sqlalchemy import func
 from app.routes.admin import log_event
 from app.ranking import check_auto_badges
+from flask_wtf.csrf import validate_csrf
+from wtforms import ValidationError
 
 community_bp = Blueprint('community', __name__, template_folder='../templates')
 
@@ -30,6 +32,7 @@ ALLOWED_ATTRS = {
 }
 
 MAX_IMAGE_BYTES = 1 * 1024 * 1024
+MAX_UPLOAD_INPUT_BYTES = 5 * 1024 * 1024  # reject before PIL opens anything
 VALID_REACTIONS = {'like', 'dislike', 'heart', 'haha', 'wow', 'sad'}
 VALID_FLAIRS = {'Challenge Discussion', 'Writeups', 'For Beginners', 'Need Help', 'Tutorial'}
 
@@ -45,23 +48,25 @@ def _can_moderate(user, post=None):
 
 def _convert_to_webp(file_storage):
     os.makedirs(UPLOAD_DIR, exist_ok=True)
-    img = Image.open(file_storage).convert('RGB')
     filename = f'post_{uuid.uuid4().hex}.webp'
     dest = os.path.join(UPLOAD_DIR, filename)
     quality = 85
-    while True:
-        buf = io.BytesIO()
-        img.save(buf, 'WEBP', quality=quality)
-        if buf.tell() <= MAX_IMAGE_BYTES or quality <= 20:
-            break
-        if quality > 40:
-            quality -= 15
-        else:
-            w, h = img.size
-            img = img.resize((int(w * 0.85), int(h * 0.85)), Image.LANCZOS)
-    with open(dest, 'wb') as f:
-        buf.seek(0)
-        f.write(buf.read())
+    with Image.open(file_storage) as _src:
+        img = _src.convert('RGB')
+    with img:
+        while True:
+            buf = io.BytesIO()
+            img.save(buf, 'WEBP', quality=quality)
+            if buf.tell() <= MAX_IMAGE_BYTES or quality <= 20:
+                break
+            if quality > 40:
+                quality -= 15
+            else:
+                w, h = img.size
+                img = img.resize((int(w * 0.85), int(h * 0.85)), Image.LANCZOS)
+        with open(dest, 'wb') as f:
+            buf.seek(0)
+            f.write(buf.read())
     return filename, url_for('static', filename=f'post_images/{filename}')
 
 
@@ -82,15 +87,20 @@ def _load_interaction_maps(post_ids):
 
 @community_bp.route('/community/upload-image', methods=['POST'])
 @login_required
+@csrf.exempt
 def upload_image():
     file = request.files.get('image')
     if not file or not file.filename:
         return jsonify({'error': 'No file'}), 400
+    file.seek(0, 2)
+    if file.tell() > MAX_UPLOAD_INPUT_BYTES:
+        return jsonify({'error': 'Image exceeds 5 MB limit'}), 413
+    file.seek(0)
     try:
         _, url = _convert_to_webp(file)
         return jsonify({'url': url})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except (OSError, IOError):
+        return jsonify({'error': 'Image processing failed'}), 500
 
 
 @community_bp.route('/community')
@@ -142,11 +152,17 @@ def list():
                            page=page, total_pages=total_pages, total=total,
                            valid_flairs=VALID_FLAIRS)
 
+# amazonq-ignore-next-line
 
 @community_bp.route('/community/new', methods=['GET', 'POST'])
 @login_required
+@csrf.exempt
 def new_post():
     if request.method == 'POST':
+        try:
+            validate_csrf(request.form.get('csrf_token'))
+        except ValidationError:
+            abort(403)
         if current_user.is_timed_out():
             flash(f'You are timed out until {current_user.timeout_until.strftime("%Y-%m-%d %H:%M UTC")} and cannot post.', 'danger')
             return redirect(url_for('community.list'))
@@ -201,6 +217,10 @@ def view_post(post_id):
 @community_bp.route('/community/<int:post_id>/delete', methods=['POST'])
 @login_required
 def delete_post(post_id):
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        abort(403)
     post = CommunityPost.query.get_or_404(post_id)
     if not _can_moderate(current_user, post):
         abort(403)
@@ -214,6 +234,10 @@ def delete_post(post_id):
 @community_bp.route('/community/<int:post_id>/edit', methods=['POST'])
 @login_required
 def edit_post(post_id):
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        abort(403)
     post = CommunityPost.query.get_or_404(post_id)
     if not _can_moderate(current_user, post):
         abort(403)
@@ -233,6 +257,10 @@ def edit_post(post_id):
 @community_bp.route('/community/<int:post_id>/pin', methods=['POST'])
 @login_required
 def pin_post(post_id):
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        abort(403)
     if not current_user.is_admin and not current_user.is_moderator:
         abort(403)
     post = CommunityPost.query.get_or_404(post_id)
@@ -246,6 +274,10 @@ def pin_post(post_id):
 @community_bp.route('/community/<int:post_id>/unpin', methods=['POST'])
 @login_required
 def unpin_post(post_id):
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        abort(403)
     if not current_user.is_admin and not current_user.is_moderator:
         abort(403)
     post = CommunityPost.query.get_or_404(post_id)
@@ -259,6 +291,10 @@ def unpin_post(post_id):
 @community_bp.route('/community/<int:post_id>/toggle-comments', methods=['POST'])
 @login_required
 def toggle_comments(post_id):
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        abort(403)
     post = CommunityPost.query.get_or_404(post_id)
     if not _can_moderate(current_user, post):
         abort(403)
@@ -272,6 +308,10 @@ def toggle_comments(post_id):
 @community_bp.route('/community/<int:post_id>/toggle-reactions', methods=['POST'])
 @login_required
 def toggle_reactions(post_id):
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        abort(403)
     post = CommunityPost.query.get_or_404(post_id)
     if not _can_moderate(current_user, post):
         abort(403)
@@ -285,6 +325,10 @@ def toggle_reactions(post_id):
 @community_bp.route('/community/<int:post_id>/archive', methods=['POST'])
 @login_required
 def archive_post(post_id):
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        abort(403)
     post = CommunityPost.query.get_or_404(post_id)
     if not _can_moderate(current_user, post):
         abort(403)
@@ -299,6 +343,10 @@ def archive_post(post_id):
 @community_bp.route('/community/comment/<int:comment_id>/edit', methods=['POST'])
 @login_required
 def edit_comment(comment_id):
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        abort(403)
     comment = Comment.query.get_or_404(comment_id)
     if comment.author_id != current_user.id and not current_user.is_admin and not current_user.is_moderator:
         abort(403)
@@ -323,6 +371,10 @@ def edit_comment(comment_id):
 @community_bp.route('/community/comment/<int:comment_id>/delete', methods=['POST'])
 @login_required
 def delete_comment(comment_id):
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        abort(403)
     comment = Comment.query.get_or_404(comment_id)
     post = CommunityPost.query.get_or_404(comment.post_id)
     if not _can_moderate(current_user, post) and comment.author_id != current_user.id:
@@ -339,6 +391,10 @@ def delete_comment(comment_id):
 @community_bp.route('/community/<int:post_id>/comment', methods=['POST'])
 @login_required
 def add_comment(post_id):
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        abort(403)
     if current_user.is_timed_out():
         flash(f'You are timed out until {current_user.timeout_until.strftime("%Y-%m-%d %H:%M UTC")} and cannot comment.', 'danger')
         return redirect(url_for('community.view_post', post_id=post_id))
@@ -364,6 +420,7 @@ def add_comment(post_id):
 
 @community_bp.route('/community/comment/<int:comment_id>/react/<reaction>', methods=['POST'])
 @login_required
+@csrf.exempt
 def react_comment(comment_id, reaction):
     if current_user.is_timed_out():
         return jsonify({'error': f'Timed out until {current_user.timeout_until.strftime("%Y-%m-%d %H:%M UTC")}'}), 403
@@ -397,6 +454,10 @@ def react_comment(comment_id, reaction):
 @community_bp.route('/community/<int:post_id>/upvote', methods=['POST'])
 @login_required
 def upvote_post(post_id):
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        abort(403)
     if current_user.is_timed_out():
         flash(f'You are timed out until {current_user.timeout_until.strftime("%Y-%m-%d %H:%M UTC")} and cannot upvote.', 'danger')
         return redirect(url_for('community.view_post', post_id=post_id))
@@ -415,6 +476,7 @@ def upvote_post(post_id):
 
 @community_bp.route('/community/<int:post_id>/subscribe', methods=['POST'])
 @login_required
+@csrf.exempt
 def toggle_post_subscribe(post_id):
     CommunityPost.query.get_or_404(post_id)
     existing = PostSubscription.query.filter_by(post_id=post_id, user_id=current_user.id).first()

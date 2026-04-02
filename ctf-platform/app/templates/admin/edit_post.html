@@ -27,6 +27,7 @@
 
     <div style="background:#0d0d0d;border:1px solid rgba(139,0,0,0.5);padding:2rem;">
         <form method="POST" id="edit-post-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-6">
                 <label style="display:block;color:#e5e5e5;font-weight:700;text-transform:uppercase;font-size:0.8rem;margin-bottom:0.5rem;">Title</label>
                 <input type="text" name="title" value="{{ post.title }}" required

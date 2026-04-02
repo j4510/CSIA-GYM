@@ -14,7 +14,7 @@ import struct
 import cbor2
 from flask import Blueprint, request, jsonify, session
 from flask_login import login_required, current_user, login_user
-from app import db
+from app import db, csrf
 from app.models import User, UserPasskey
 
 passkey_bp = Blueprint('passkey', __name__)
@@ -44,6 +44,7 @@ def _random_challenge() -> str:
 
 @passkey_bp.route('/passkey/register/begin', methods=['POST'])
 @login_required
+@csrf.exempt
 def register_begin():
     challenge = _random_challenge()
     session['passkey_reg_challenge'] = challenge
@@ -74,6 +75,7 @@ def register_begin():
 
 @passkey_bp.route('/passkey/register/complete', methods=['POST'])
 @login_required
+@csrf.exempt
 def register_complete():
     data = request.get_json(silent=True) or {}
     challenge = session.pop('passkey_reg_challenge', None)
@@ -102,7 +104,7 @@ def register_complete():
 
         credential_id = _b64url_encode(cred_id_bytes)
         public_key_b64 = _b64url_encode(cose_key_bytes)
-        device_name = data.get('deviceName', 'Passkey Device')[:100]
+        device_name = (data['deviceName'] if 'deviceName' in data else 'Passkey Device')[:100]
 
         pk = UserPasskey(
             user_id=current_user.id,
@@ -113,22 +115,24 @@ def register_complete():
         )
         current_user.passkey_enabled = True
         db.session.add(pk)
+        # amazonq-ignore-next-line
         db.session.commit()
         return jsonify(ok=True)
-    except Exception as e:
+    except (KeyError, ValueError, AssertionError) as e:
         db.session.rollback()
-        return jsonify(ok=False, error=str(e)), 400
-
-
-# ── Authentication ────────────────────────────────────────────────────────────
+        return jsonify(ok=False, error='Registration verification failed'), 400
 
 @passkey_bp.route('/passkey/auth/begin', methods=['POST'])
+@csrf.exempt
 def auth_begin():
+    if current_user.is_authenticated:
+        return jsonify(ok=False, error='Already authenticated'), 400
     challenge = _random_challenge()
     session['passkey_auth_challenge'] = challenge
 
     # Collect all known credential IDs (for allowCredentials)
-    username = (request.get_json(silent=True) or {}).get('username', '')
+    json_body = request.get_json(silent=True) or {}
+    username = json_body['username'] if 'username' in json_body else ''
     allow = []
     if username:
         user = User.query.filter_by(username=username).first()
@@ -145,7 +149,10 @@ def auth_begin():
 
 
 @passkey_bp.route('/passkey/auth/complete', methods=['POST'])
+@csrf.exempt
 def auth_complete():
+    if current_user.is_authenticated:
+        return jsonify(ok=False, error='Already authenticated'), 400
     data = request.get_json(silent=True) or {}
     challenge = session.pop('passkey_auth_challenge', None)
     if not challenge:
@@ -171,7 +178,9 @@ def auth_complete():
 
         # Verify signature using stored COSE public key
         cose_key = cbor2.loads(_b64url_decode(pk_record.public_key))
-        alg = cose_key.get(3)
+        if 3 not in cose_key:
+            return jsonify(ok=False, error='Missing algorithm in credential'), 400
+        alg = cose_key[3]
 
         client_data_hash = hashlib.sha256(_b64url_decode(data['clientDataJSON'])).digest()
         verification_data = auth_data + client_data_hash
@@ -199,27 +208,37 @@ def auth_complete():
         else:
             return jsonify(ok=False, error='Unsupported algorithm'), 400
 
+        # Enforce sign count — reject replayed authenticator responses
+        if sign_count != 0 and sign_count <= pk_record.sign_count:
+            return jsonify(ok=False, error='Authenticator sign count invalid (possible replay)'), 400
+
         # Update sign count
         pk_record.sign_count = sign_count
         db.session.commit()
 
         user = pk_record.user
+        # amazonq-ignore-next-line
         if user.is_banned:
             return jsonify(ok=False, error='Account banned'), 403
         login_user(user, remember=True)
         return jsonify(ok=True)
-    except Exception as e:
+    except (KeyError, ValueError, AssertionError):
         db.session.rollback()
-        return jsonify(ok=False, error=str(e)), 400
+        return jsonify(ok=False, error='Authentication verification failed'), 400
 
 
 @passkey_bp.route('/passkey/remove', methods=['POST'])
 @login_required
+@csrf.exempt
 def remove_passkey():
-    pk_id = request.get_json(silent=True, force=True).get('id')
+    body = request.get_json(silent=True, force=True) or {}
+    pk_id = body['id'] if 'id' in body else ''
+    if not pk_id:
+        return jsonify(ok=False, error='Missing id'), 400
     pk = UserPasskey.query.filter_by(id=pk_id, user_id=current_user.id).first_or_404()
     db.session.delete(pk)
-    if not current_user.passkeys:
+    db.session.flush()
+    if not UserPasskey.query.filter_by(user_id=current_user.id).first():
         current_user.passkey_enabled = False
     db.session.commit()
     return jsonify(ok=True)

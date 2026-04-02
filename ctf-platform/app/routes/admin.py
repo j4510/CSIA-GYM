@@ -2,12 +2,13 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from PIL import Image
+import re
 import base64
 import io
 import os
 import csv
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, case
 from app import db
 from app.models import (
@@ -22,6 +23,16 @@ SUBMISSION_FILES_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'inst
 BADGE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'instance', 'badges')
 AVATAR_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'instance', 'avatars')
 AUDIT_LOG = os.path.join(os.path.dirname(__file__), '..', '..', 'instance', 'admin_audit.csv')
+
+
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB for badge/milestone/avatar images
+
+VALID_BORDER_STYLES = {'tier1','tier2','tier3','tier4','tier5','tier6','tier7','tier8','tier9','tier10'}
+VALID_RULE_TYPES = {
+    'solved_challenge','community_posts','approved_submissions','post_upvotes',
+    'comment_reactions','scoreboard_top_week','top_month_post','claimable_link',
+}
+VALID_BUG_STATUSES = {'open', 'in_progress', 'resolved', 'wontfix'}
 
 
 def _get_ip():
@@ -43,7 +54,7 @@ def log_event(actor: str, action: str, target: str = '', category: str = 'admin'
         if write_header:
             writer.writerow(['timestamp', 'user', 'action', 'target', 'category', 'ip'])
         writer.writerow([
-            datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),
+            datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC'),
             actor,
             action,
             target,
@@ -151,6 +162,20 @@ def delete_user(user_id):
         conn.execute(text('DELETE FROM user_notifications WHERE user_id=:u'), {'u': user.id})
         conn.execute(text('DELETE FROM flag_attempts WHERE user_id=:u'), {'u': user.id})
         conn.execute(text('DELETE FROM user_challenge_solves WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM mail_messages WHERE sender_id=:u OR recipient_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM user_passkeys WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM challenge_bookmarks WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM challenge_subscriptions WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM post_subscriptions WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM post_upvotes WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM comment_reactions WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM challenge_votes WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM challenge_opens WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM user_milestones WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM badge_claims WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM user_badges WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM notification_reads WHERE user_id=:u'), {'u': user.id})
+        conn.execute(text('DELETE FROM bug_reports WHERE reporter_id=:u'), {'u': user.id})
         conn.commit()
 
     log_action('delete_user', user.username)
@@ -161,6 +186,68 @@ def delete_user(user_id):
     return redirect(url_for('admin.users'))
 
 
+def _update_user_profile(user, form):
+    """Update basic profile fields from form data. Returns error message or None."""
+    new_username = form.get('username', '').strip()
+    new_email = form.get('email', '').strip()
+    if new_username and new_username != user.username:
+        if User.query.filter_by(username=new_username).first():
+            return 'Username already taken'
+        user.username = new_username
+    if new_email and new_email != user.email:
+        if User.query.filter_by(email=new_email).first():
+            return 'Email already registered'
+        user.email = new_email
+    age_val = form.get('age', '').strip()
+    user.full_name = form.get('full_name', '').strip() or None
+    user.affiliation = form.get('affiliation', '').strip() or None
+    user.age = int(age_val) if age_val.isdigit() else None
+    user.gender = form.get('gender', '').strip() or None
+    new_password = form.get('new_password', '').strip()
+    if new_password:
+        user.set_password(new_password)
+    return None
+
+
+def _update_user_avatar(user, files, user_id):
+    """Save uploaded avatar for user. Returns redirect response or None."""
+    if 'avatar' not in files or not files['avatar'].filename:
+        return None
+    file = files['avatar']
+    file.seek(0, 2)
+    if file.tell() > MAX_UPLOAD_BYTES:
+        flash('Avatar must be 5 MB or smaller.', 'danger')
+        return redirect(url_for('admin.edit_user', user_id=user_id))
+    file.seek(0)
+    os.makedirs(AVATAR_DIR, exist_ok=True)
+    safe_username = re.sub(r'[^A-Za-z0-9_-]', '_', user.username)[:64]
+    filename = f'avatar_{safe_username}.webp'
+    real_avatar_dir = os.path.realpath(AVATAR_DIR)
+    save_path = os.path.realpath(os.path.join(real_avatar_dir, filename))
+    if not save_path.startswith(real_avatar_dir + os.sep):
+        flash('Invalid username for avatar save.', 'danger')
+        return redirect(url_for('admin.edit_user', user_id=user_id))
+    with Image.open(file) as raw:
+        with raw.convert('RGB') as img:
+            img_resized = img.resize((500, 500))
+        with img_resized:
+            img_resized.save(save_path, 'WEBP', quality=85)
+    user.profile_picture = filename
+    return None
+
+
+def _update_user_badges(user, form, user_badge_ids):
+    """Sync badge assignments from form data."""
+    selected_badge_ids = {int(x) for x in form.getlist('badges')}
+    for ub in list(user.badges):
+        if ub.badge_id not in selected_badge_ids:
+            db.session.delete(ub)
+    for bid in selected_badge_ids:
+        if bid not in user_badge_ids:
+            db.session.add(UserBadge(user_id=user.id, badge_id=bid))
+
+
+# amazonq-ignore-next-line
 @admin_bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
 def edit_user(user_id):
     """Edit any user's profile including password."""
@@ -169,51 +256,16 @@ def edit_user(user_id):
     user_badge_ids = {ub.badge_id for ub in user.badges}
 
     if request.method == 'POST':
-        new_username = request.form.get('username', '').strip()
-        new_email = request.form.get('email', '').strip()
-        new_full_name = request.form.get('full_name', '').strip() or None
-        new_affiliation = request.form.get('affiliation', '').strip() or None
-        age_val = request.form.get('age', '').strip()
-        new_age = int(age_val) if age_val.isdigit() else None
-        new_gender = request.form.get('gender', '').strip() or None
-        new_password = request.form.get('new_password', '').strip()
+        error = _update_user_profile(user, request.form)
+        if error:
+            flash(error, 'danger')
+            return redirect(url_for('admin.edit_user', user_id=user_id))
 
-        if new_username and new_username != user.username:
-            if User.query.filter_by(username=new_username).first():
-                flash('Username already taken', 'danger')
-                return redirect(url_for('admin.edit_user', user_id=user_id))
-            user.username = new_username
+        avatar_redirect = _update_user_avatar(user, request.files, user_id)
+        if avatar_redirect:
+            return avatar_redirect
 
-        if new_email and new_email != user.email:
-            if User.query.filter_by(email=new_email).first():
-                flash('Email already registered', 'danger')
-                return redirect(url_for('admin.edit_user', user_id=user_id))
-            user.email = new_email
-
-        user.full_name = new_full_name
-        user.affiliation = new_affiliation
-        user.age = new_age
-        user.gender = new_gender
-
-        if new_password:
-            user.set_password(new_password)
-
-        if 'avatar' in request.files and request.files['avatar'].filename:
-            file = request.files['avatar']
-            os.makedirs(AVATAR_DIR, exist_ok=True)
-            filename = f'avatar_{user.username}.webp'
-            img = Image.open(file).convert('RGB')
-            img = img.resize((500, 500))
-            img.save(os.path.join(AVATAR_DIR, filename), 'WEBP', quality=85)
-            user.profile_picture = filename
-
-        selected_badge_ids = set(int(x) for x in request.form.getlist('badges'))
-        for ub in list(user.badges):
-            if ub.badge_id not in selected_badge_ids:
-                db.session.delete(ub)
-        for bid in selected_badge_ids:
-            if bid not in user_badge_ids:
-                db.session.add(UserBadge(user_id=user.id, badge_id=bid))
+        _update_user_badges(user, request.form, user_badge_ids)
 
         db.session.commit()
         log_action('edit_user', user.username)
@@ -243,6 +295,8 @@ def create_badge():
         lc = request.form.get('limited_count', '').strip()
         limited_count = int(lc) if lc.isdigit() and int(lc) > 0 else None
     border_style = request.form.get('border_style', 'tier1')
+    if border_style not in VALID_BORDER_STYLES:
+        border_style = 'tier1'
     from_event = 'from_event' in request.form
     is_unattainable = 'is_unattainable' in request.form
 
@@ -254,17 +308,29 @@ def create_badge():
     if cropped_data and cropped_data.startswith('data:image'):
         header, b64 = cropped_data.split(',', 1)
         img_bytes = base64.b64decode(b64)
-        img = Image.open(io.BytesIO(img_bytes)).convert('RGBA')
+        if len(img_bytes) > MAX_UPLOAD_BYTES:
+            flash('Badge image exceeds the 5 MB limit.', 'danger')
+            return redirect(url_for('admin.badges'))
+        with Image.open(io.BytesIO(img_bytes)) as _src:
+            raw_img = _src.convert('RGBA')
     elif 'image' in request.files and request.files['image'].filename:
-        img = Image.open(request.files['image']).convert('RGBA')
+        f = request.files['image']
+        f.seek(0, 2)
+        if f.tell() > MAX_UPLOAD_BYTES:
+            flash('Badge image exceeds the 5 MB limit.', 'danger')
+            return redirect(url_for('admin.badges'))
+        f.seek(0)
+        with Image.open(f) as _src:
+            raw_img = _src.convert('RGBA')
     else:
         flash('Badge image is required', 'danger')
         return redirect(url_for('admin.badges'))
 
     os.makedirs(BADGE_DIR, exist_ok=True)
     filename = secure_filename(f'badge_{title.lower().replace(" ", "_")}.webp')
-    img = img.resize((500, 500))
-    img.save(os.path.join(BADGE_DIR, filename), 'WEBP', quality=85)
+    with raw_img:
+        with raw_img.resize((500, 500)) as img_resized:
+            img_resized.save(os.path.join(BADGE_DIR, filename), 'WEBP', quality=85)
 
     badge = Badge(title=title, description=description, image_filename=filename, is_limited=is_limited, limited_count=limited_count, border_style=border_style, from_event=from_event, is_unattainable=is_unattainable, display_border=('display_border' in request.form), display_shape=request.form.get('display_shape', 'square'))
     db.session.add(badge)
@@ -278,6 +344,9 @@ def create_badge():
 def create_badge_rule(badge_id):
     Badge.query.get_or_404(badge_id)
     rule_type = request.form.get('rule_type', '').strip()
+    if rule_type not in VALID_RULE_TYPES:
+        flash('Invalid rule type.', 'danger')
+        return redirect(url_for('admin.badge_rules', badge_id=badge_id))
     threshold = request.form.get('threshold', '').strip()
     challenge_id = request.form.get('challenge_id', '').strip()
     threshold_val = int(threshold) if threshold.isdigit() else None
@@ -398,7 +467,7 @@ def ban_user(user_id):
     reason = request.form.get('ban_reason', '').strip() or 'Violation of platform rules.'
     user.is_banned = True
     user.ban_reason = reason
-    user.banned_at = datetime.utcnow()
+    user.banned_at = datetime.now(timezone.utc)
     db.session.commit()
     log_action('ban_user', f'{user.username} — {reason}')
     flash(f'{user.username} has been banned.', 'success')
@@ -427,10 +496,10 @@ def timeout_user(user_id):
         return redirect(url_for('admin.users'))
     hours = request.form.get('timeout_hours', '').strip()
     try:
-        hours = max(1, int(hours))
+        hours = max(1, min(int(hours), 720))  # cap at 30 days
     except (ValueError, TypeError):
         hours = 24
-    user.timeout_until = datetime.utcnow() + timedelta(hours=hours)
+    user.timeout_until = datetime.now(timezone.utc) + timedelta(hours=hours)
     db.session.commit()
     log_action('timeout_user', f'{user.username} for {hours}h')
     flash(f'{user.username} timed out for {hours} hour(s).', 'success')
@@ -474,7 +543,7 @@ def audit_log():
 def audit_log_download():
     if os.path.exists(AUDIT_LOG):
         return send_file(AUDIT_LOG, mimetype='text/csv', as_attachment=True,
-                         download_name=f'admin_audit_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.csv')
+                         download_name=f'admin_audit_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.csv')
     return Response('timestamp,admin,action,target\n', mimetype='text/csv',
                     headers={'Content-Disposition': 'attachment; filename=admin_audit.csv'})
 
@@ -537,10 +606,13 @@ def reject_challenge(submission_id):
     """Reject a user-submitted challenge and permanently delete its attached files."""
     submission = ChallengeSubmission.query.get_or_404(submission_id)
 
+    real_base = os.path.realpath(SUBMISSION_FILES_DIR)
     for sf in list(submission.files):
-        disk_path = os.path.join(SUBMISSION_FILES_DIR, sf.stored_name)
-        if os.path.exists(disk_path):
-            os.remove(disk_path)
+        safe_name = os.path.basename(sf.stored_name)
+        if safe_name:
+            real_path = os.path.realpath(os.path.join(real_base, safe_name))
+            if real_path.startswith(real_base + os.sep) and os.path.exists(real_path):
+                os.remove(real_path)
         db.session.delete(sf)
 
     submission.status = 'rejected'
@@ -561,15 +633,18 @@ def delete_challenge(challenge_id):
         try:
             from app.web_runner import cleanup_serve_dir
             cleanup_serve_dir(challenge_id)
-        except Exception:
+        except (ImportError, RuntimeError):
             pass
     if challenge.category == 'Binary Exploitation' and challenge.nc_challenge:
         try:
             from app.nc_runner import cleanup_nc_dir
             cleanup_nc_dir(challenge_id)
-        except Exception:
+        except (ImportError, RuntimeError):
             pass
     from sqlalchemy import text
+    # Expunge challenge and its relationships from the ORM identity map
+    # before raw SQL deletes, to prevent StaleDataError on flush
+    db.session.expunge(challenge)
     with db.engine.connect() as conn:
         conn.execute(text('DELETE FROM flag_attempts WHERE challenge_id=:c'), {'c': challenge_id})
         conn.execute(text('DELETE FROM user_challenge_solves WHERE challenge_id=:c'), {'c': challenge_id})
@@ -577,9 +652,11 @@ def delete_challenge(challenge_id):
         conn.execute(text('DELETE FROM challenge_bookmarks WHERE challenge_id=:c'), {'c': challenge_id})
         conn.execute(text('DELETE FROM challenge_subscriptions WHERE challenge_id=:c'), {'c': challenge_id})
         conn.execute(text('DELETE FROM challenge_votes WHERE challenge_id=:c'), {'c': challenge_id})
+        conn.execute(text('DELETE FROM dynamic_flags WHERE challenge_id=:c'), {'c': challenge_id})
+        conn.execute(text('DELETE FROM web_challenges WHERE challenge_id=:c'), {'c': challenge_id})
+        conn.execute(text('DELETE FROM nc_challenges WHERE challenge_id=:c'), {'c': challenge_id})
+        conn.execute(text('DELETE FROM challenges WHERE id=:c'), {'c': challenge_id})
         conn.commit()
-    db.session.delete(challenge)
-    db.session.commit()
     log_action('delete_challenge', title)
     flash(f'Challenge "{title}" deleted', 'info')
     return redirect(url_for('admin.challenges'))
@@ -754,8 +831,8 @@ def edit_post(post_id):
     post = CommunityPost.query.get_or_404(post_id)
     
     if request.method == 'POST':
-        post.title = request.form.get('title')
-        post.content = request.form.get('content')
+        post.title = request.form.get('title') or post.title
+        post.content = request.form.get('content') or post.content
         db.session.commit()
         
         log_action('edit_post', str(post.id))
@@ -779,6 +856,8 @@ def bug_reports():
 def update_bug_status(report_id):
     report = BugReport.query.get_or_404(report_id)
     new_status = request.form.get('status', 'open')
+    if new_status not in VALID_BUG_STATUSES:
+        new_status = 'open'
     report.status = new_status
     db.session.commit()
     log_action('update_bug_status', f'#{report_id} -> {new_status}')
@@ -987,12 +1066,18 @@ def bulk_users():
         if action == 'ban':
             u.is_banned = True
             u.ban_reason = request.form.get('ban_reason', 'Bulk ban.')
-            u.banned_at = datetime.utcnow()
+            u.banned_at = datetime.now(timezone.utc)
         elif action == 'unban':
             u.is_banned = False
             u.ban_reason = None
             u.banned_at = None
         elif action == 'delete':
+            from sqlalchemy import text
+            with db.engine.connect() as conn:
+                conn.execute(text('DELETE FROM user_notifications WHERE user_id=:u'), {'u': u.id})
+                conn.execute(text('DELETE FROM flag_attempts WHERE user_id=:u'), {'u': u.id})
+                conn.execute(text('DELETE FROM user_challenge_solves WHERE user_id=:u'), {'u': u.id})
+                conn.commit()
             db.session.delete(u)
             continue
         elif action == 'reset_password':
@@ -1006,8 +1091,11 @@ def bulk_users():
             if bid and not UserBadge.query.filter_by(user_id=u.id, badge_id=bid).first():
                 db.session.add(UserBadge(user_id=u.id, badge_id=bid))
         elif action == 'timeout':
-            hours = int(request.form.get('timeout_hours', 24))
-            u.timeout_until = datetime.utcnow() + timedelta(hours=hours)
+            try:
+                hours = max(1, min(int(request.form.get('timeout_hours', 24)), 720))
+            except (ValueError, TypeError):
+                hours = 24
+            u.timeout_until = datetime.now(timezone.utc) + timedelta(hours=hours)
         elif action == 'make_moderator':
             u.is_moderator = True
         elif action == 'remove_moderator':
@@ -1186,17 +1274,29 @@ def create_milestone():
     if cropped_data and cropped_data.startswith('data:image'):
         header, b64 = cropped_data.split(',', 1)
         img_bytes = base64.b64decode(b64)
-        img = Image.open(io.BytesIO(img_bytes)).convert('RGBA')
+        if len(img_bytes) > MAX_UPLOAD_BYTES:
+            flash('Milestone image exceeds the 5 MB limit.', 'danger')
+            return redirect(url_for('admin.milestones'))
+        with Image.open(io.BytesIO(img_bytes)) as _src:
+            raw_img = _src.convert('RGBA')
     elif 'image' in request.files and request.files['image'].filename:
-        img = Image.open(request.files['image']).convert('RGBA')
+        f = request.files['image']
+        f.seek(0, 2)
+        if f.tell() > MAX_UPLOAD_BYTES:
+            flash('Milestone image exceeds the 5 MB limit.', 'danger')
+            return redirect(url_for('admin.milestones'))
+        f.seek(0)
+        with Image.open(f) as _src:
+            raw_img = _src.convert('RGBA')
     else:
         flash('Milestone image is required', 'danger')
         return redirect(url_for('admin.milestones'))
 
     os.makedirs(MILESTONE_DIR, exist_ok=True)
     filename = secure_filename(f'milestone_{title.lower().replace(" ", "_")}.webp')
-    img = img.resize((500, 500))
-    img.save(os.path.join(MILESTONE_DIR, filename), 'WEBP', quality=85)
+    with raw_img:
+        with raw_img.resize((500, 500)) as img_resized:
+            img_resized.save(os.path.join(MILESTONE_DIR, filename), 'WEBP', quality=85)
 
     milestone = Milestone(title=title, description=description,
                           image_filename=filename, rule_type=rule_type,

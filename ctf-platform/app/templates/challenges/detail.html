@@ -91,7 +91,8 @@
       <p class="font-semibold" style="color:#000000;">✅ You have already solved this challenge!</p>
     </div>
     {% else %}
-    <form method="POST" action="{{ url_for('challenges.submit_flag', challenge_id=challenge.id) }}">
+    <form method="POST" action="{{ url_for('challenges.submit_flag', challenge_id=challenge.id) }}" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="mb-4">
         <label for="flag" class="block text-gray-700 font-semibold mb-2">Submit Flag</label>
         {% if challenge.is_regex %}
@@ -105,6 +106,57 @@
           <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">Submit</button>
         </div>
       </div>
+      
+      {% if challenge.category == 'Web Exploitation' %}
+      <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <label for="solution_file" class="block text-gray-700 font-semibold mb-2">🔧 Solution File (Required)</label>
+        <p class="text-xs text-gray-600 mb-3">Upload your exploit/solution as a .tar.gz archive (max 100 MB)</p>
+        <input type="file" id="solution_file" name="solution_file" required
+               accept=".tar.gz"
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+               onchange="validateSolutionFile(this)">
+        <p id="file-validation-msg" class="text-xs mt-2"></p>
+        
+        <!-- Archive Requirements -->
+        <div class="mt-4 p-3 rounded-lg text-xs" style="background:rgba(139,0,0,0.06);border:1px solid rgba(139,0,0,0.2);color:#555;line-height:1.7;">
+          <strong style="color:#8b0000;">Archive requirements:</strong><br>
+          • Must be a <code>.tar.gz</code> file containing your web server files (max 100 MB)<br>
+          • <strong>PHP</strong> — any <code>.php</code> file detected → served with <code>php -S</code><br>
+          • <strong>Node.js / JavaScript</strong> — include <code>package.json</code> with a <code>start</code> script, or name your entry point <code>index.js</code>, <code>server.js</code>, or <code>app.js</code><br>
+          • <strong>TypeScript</strong> — name your entry point <code>index.ts</code>, <code>server.ts</code>, or <code>app.ts</code> (runs via <code>ts-node</code>)<br>
+          • <strong>Java</strong> — include a runnable <code>.jar</code> file<br>
+          • <strong>Python</strong> — name your entry point <code>app.py</code>, <code>main.py</code>, or <code>server.py</code>; static HTML falls back to <code>python3 -m http.server</code><br>
+          • Your server must listen on the port provided via the <code>PORT</code> environment variable or hard-code any port — the platform will detect it automatically
+        </div>
+        
+        <!-- Dynamic Flag Warning -->
+        <div class="mt-2 p-3 rounded-lg text-xs" style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.35);color:#555;line-height:1.7;">
+          ⚠️ <strong style="color:#92400e;">Dynamic flag notice:</strong> If your archive contains a <code>flag.txt</code>, its contents will be <strong>automatically overwritten</strong> with a randomly generated <code>CSIA{...}</code> flag each time a player launches their instance. Do <em>not</em> rely on the flag value you put in <code>flag.txt</code> — set the <strong>Flag</strong> field above to a placeholder; the real flag is generated at runtime and shown to the player in their instance panel.
+        </div>
+      </div>
+      <script>
+        function validateSolutionFile(input) {
+          const fileMsg = document.getElementById('file-validation-msg');
+          const file = input.files[0];
+          if (!file) {
+            fileMsg.textContent = '';
+            return;
+          }
+          if (!file.name.endsWith('.tar.gz')) {
+            fileMsg.textContent = '❌ File must be a .tar.gz archive';
+            fileMsg.style.color = '#dc2626';
+            input.value = '';
+          } else if (file.size > 100 * 1024 * 1024) {
+            fileMsg.textContent = '❌ File exceeds 100 MB limit';
+            fileMsg.style.color = '#dc2626';
+            input.value = '';
+          } else {
+            fileMsg.textContent = `✅ ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            fileMsg.style.color = '#16a34a';
+          }
+        }
+      </script>
+      {% endif %}
     </form>
     {% endif %}
 
@@ -151,18 +203,13 @@
         <p class="text-xs mb-1" style="color:#888;">Connect using:</p>
         <code id="nc-connect-cmd" style="color:#4caf50;font-size:0.9rem;font-weight:700;"></code>
       </div>
-      <!-- Dynamic flag banner -->
-      <div id="nc-flag-banner" style="display:none;margin-top:1rem;padding:0.85rem 1rem;background:#0d1f0d;border:1px solid #2e6b2e;border-radius:4px;">
-        <p style="font-size:0.72rem;color:#aaa;margin-bottom:0.35rem;">⚠️ <strong style="color:#ffcc00;">This challenge has a dynamically generated flag</strong> — it is unique to your instance and will be lost if you stop or let it expire. Extend your session to keep it.</p>
-        <p style="font-size:0.72rem;color:#888;margin-bottom:0.5rem;">Your flag for this instance (pre-filled in the submit box below):</p>
-        <code id="nc-flag-value" style="color:#4caf50;font-size:0.95rem;font-weight:900;word-break:break-all;"></code>
-      </div>
+
     </div>
     <script>
     (function(){
       const CID = {{ challenge.id }};
-      const LS_KEY = `dyn_flag_nc_${CID}_{{ current_user.id }}`;
       const INITIAL_TTL = 15 * 60;
+      const CSRF = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
       let _expiresAt = null, _ticker = null;
 
       function setStatus(msg, color) {
@@ -181,31 +228,6 @@
         document.getElementById('nc-timer-bar').style.width = pct + '%';
         document.getElementById('nc-timer-bar').style.background = color;
       }
-      function showFlag(flag) {
-        if (!flag) return;
-        // Store HMAC-SHA256 digest in localStorage for reference
-        crypto.subtle.importKey('raw', new TextEncoder().encode(flag), {name:'HMAC',hash:'SHA-256'}, false, ['sign'])
-          .then(k => crypto.subtle.sign('HMAC', k, new TextEncoder().encode(`csia-ctf-${CID}`)))
-          .then(sig => {
-            const hex = Array.from(new Uint8Array(sig)).map(b=>b.toString(16).padStart(2,'0')).join('');
-            localStorage.setItem(LS_KEY, JSON.stringify({flag, hmac: hex}));
-          });
-        document.getElementById('nc-flag-value').textContent = flag;
-        document.getElementById('nc-flag-banner').style.display = 'block';
-        const flagInput = document.getElementById('flag');
-        if (flagInput) flagInput.value = flag;
-      }
-      function clearFlag() {
-        localStorage.removeItem(LS_KEY);
-        document.getElementById('nc-flag-banner').style.display = 'none';
-        document.getElementById('nc-flag-value').textContent = '';
-      }
-      function restoreFlag() {
-        try {
-          const stored = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
-          if (stored && stored.flag) showFlag(stored.flag);
-        } catch(e) {}
-      }
       function startTicker() {
         if (_ticker) clearInterval(_ticker);
         _ticker = setInterval(() => {
@@ -213,9 +235,7 @@
           updateTimer(rem);
           const canExtend = rem <= 30 * 60;
           document.getElementById('nc-extend-btn').style.display = canExtend ? '' : 'none';
-          document.getElementById('nc-extend-msg').textContent = canExtend
-            ? '⚠️ Extend now to keep your flag — stopping or expiring will lose it!'
-            : '';
+          document.getElementById('nc-extend-msg').textContent = canExtend ? '⚠️ Extend now to keep your session active.' : '';
           document.getElementById('nc-extend-msg').style.color = canExtend ? '#ffcc00' : '#666';
           if (rem <= 0) { clearInterval(_ticker); onExpired(); }
         }, 1000);
@@ -226,11 +246,10 @@
         document.getElementById('nc-connect-info').style.display = 'none';
         document.getElementById('nc-stop-btn').style.display = 'none';
         document.getElementById('nc-extend-btn').style.display = 'none';
-        clearFlag();
         const btn = document.getElementById('nc-launch-btn');
         btn.disabled = false; btn.textContent = '▶ LAUNCH';
       }
-      function showRunning(port, host, expiresAt, dynamicFlag) {
+      function showRunning(port, host, expiresAt) {
         _expiresAt = expiresAt;
         document.getElementById('nc-launch-btn').style.display = 'none';
         document.getElementById('nc-stop-btn').style.display = '';
@@ -238,22 +257,21 @@
         document.getElementById('nc-connect-cmd').textContent = `nc ${host} ${port}`;
         document.getElementById('nc-connect-info').style.display = 'block';
         setStatus(`Listening on port ${port}`, '#4caf50');
-        if (dynamicFlag) showFlag(dynamicFlag); else restoreFlag();
         startTicker();
       }
       window.ncLaunch = function() {
         const btn = document.getElementById('nc-launch-btn');
         btn.disabled = true; btn.textContent = '⏳ STARTING...';
         setStatus('Starting listener...', '#ffaa00');
-        fetch(`/challenges/${CID}/launch-nc`, {method:'POST'})
+        fetch(`/challenges/${CID}/launch-nc`, {method:'POST', headers:{'X-CSRFToken': CSRF}})
           .then(r => r.json()).then(d => {
-            if (d.ok) { showRunning(d.port, d.host, d.expires_at, d.dynamic_flag); }
+            if (d.ok) { showRunning(d.port, d.host, d.expires_at); }
             else { setStatus('Error: ' + d.error, '#f44336'); btn.disabled = false; btn.textContent = '▶ LAUNCH'; }
           }).catch(() => { setStatus('Network error', '#f44336'); btn.disabled = false; btn.textContent = '▶ LAUNCH'; });
       };
       window.ncStop = function() {
-        if (!confirm('Stopping will permanently lose your dynamically generated flag. Are you sure?')) return;
-        fetch(`/challenges/${CID}/stop-nc`, {method:'POST'}).then(r => r.json()).then(d => {
+        if (!confirm('Stop this instance? You will need to relaunch to get a new session.')) return;
+        fetch(`/challenges/${CID}/stop-nc`, {method:'POST', headers:{'X-CSRFToken': CSRF}}).then(r => r.json()).then(d => {
           if (d.ok) {
             if (_ticker) clearInterval(_ticker);
             document.getElementById('nc-launch-btn').style.display = ''; document.getElementById('nc-launch-btn').disabled = false; document.getElementById('nc-launch-btn').textContent = '▶ LAUNCH';
@@ -261,19 +279,18 @@
             document.getElementById('nc-extend-btn').style.display = 'none';
             document.getElementById('nc-timer-row').style.display = 'none';
             document.getElementById('nc-connect-info').style.display = 'none';
-            clearFlag();
             setStatus('Instance stopped.', '#888');
           }
         });
       };
       window.ncExtend = function() {
-        fetch(`/challenges/${CID}/extend-nc`, {method:'POST'}).then(r => r.json()).then(d => {
+        fetch(`/challenges/${CID}/extend-nc`, {method:'POST', headers:{'X-CSRFToken': CSRF}}).then(r => r.json()).then(d => {
           if (d.ok) { _expiresAt = d.expires_at; setStatus('Extended!', '#4caf50'); setTimeout(() => setStatus(`Listening on port`, '#4caf50'), 2000); }
           else { document.getElementById('nc-extend-msg').textContent = d.error; document.getElementById('nc-extend-msg').style.color = '#f44336'; }
         });
       };
       fetch(`/challenges/${CID}/nc-status`).then(r => r.json()).then(d => {
-        if (d.running) showRunning(d.port, d.host, d.expires_at, d.dynamic_flag);
+        if (d.running) showRunning(d.port, d.host, d.expires_at);
       });
     })();
     </script>
@@ -304,18 +321,13 @@
         <a id="web-challenge-url" href="#" target="_blank" rel="noopener"
            style="font-weight:900;font-size:0.9rem;color:#4caf50;text-decoration:underline;">→ Open Challenge in New Tab</a>
       </div>
-      <!-- Dynamic flag banner -->
-      <div id="web-flag-banner" style="display:none;margin-top:1rem;padding:0.85rem 1rem;background:#0d1f0d;border:1px solid #2e6b2e;border-radius:4px;">
-        <p style="font-size:0.72rem;color:#aaa;margin-bottom:0.35rem;">⚠️ <strong style="color:#ffcc00;">This challenge has a dynamically generated flag</strong> — it is unique to your instance and will be lost if you stop or let it expire. Extend your session to keep it.</p>
-        <p style="font-size:0.72rem;color:#888;margin-bottom:0.5rem;">Your flag for this instance (pre-filled in the submit box below):</p>
-        <code id="web-flag-value" style="color:#4caf50;font-size:0.95rem;font-weight:900;word-break:break-all;"></code>
-      </div>
+
     </div>
     <script>
     (function(){
       const CID = {{ challenge.id }};
-      const LS_KEY = `dyn_flag_web_${CID}_{{ current_user.id }}`;
       const INITIAL_TTL = 15 * 60;
+      const CSRF = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
       let _expiresAt = null, _ticker = null;
 
       function setStatus(msg, color) {
@@ -334,30 +346,6 @@
         document.getElementById('web-timer-bar').style.width = pct + '%';
         document.getElementById('web-timer-bar').style.background = color;
       }
-      function showFlag(flag) {
-        if (!flag) return;
-        crypto.subtle.importKey('raw', new TextEncoder().encode(flag), {name:'HMAC',hash:'SHA-256'}, false, ['sign'])
-          .then(k => crypto.subtle.sign('HMAC', k, new TextEncoder().encode(`csia-ctf-${CID}`)))
-          .then(sig => {
-            const hex = Array.from(new Uint8Array(sig)).map(b=>b.toString(16).padStart(2,'0')).join('');
-            localStorage.setItem(LS_KEY, JSON.stringify({flag, hmac: hex}));
-          });
-        document.getElementById('web-flag-value').textContent = flag;
-        document.getElementById('web-flag-banner').style.display = 'block';
-        const flagInput = document.getElementById('flag');
-        if (flagInput) flagInput.value = flag;
-      }
-      function clearFlag() {
-        localStorage.removeItem(LS_KEY);
-        document.getElementById('web-flag-banner').style.display = 'none';
-        document.getElementById('web-flag-value').textContent = '';
-      }
-      function restoreFlag() {
-        try {
-          const stored = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
-          if (stored && stored.flag) showFlag(stored.flag);
-        } catch(e) {}
-      }
       function startTicker() {
         if (_ticker) clearInterval(_ticker);
         _ticker = setInterval(() => {
@@ -365,9 +353,7 @@
           updateTimer(rem);
           const canExtend = rem <= 30 * 60;
           document.getElementById('web-extend-btn').style.display = canExtend ? '' : 'none';
-          document.getElementById('web-extend-msg').textContent = canExtend
-            ? '⚠️ Extend now to keep your flag — stopping or expiring will lose it!'
-            : '';
+          document.getElementById('web-extend-msg').textContent = canExtend ? '⚠️ Extend now to keep your session active.' : '';
           document.getElementById('web-extend-msg').style.color = canExtend ? '#ffcc00' : '#666';
           if (rem <= 0) { clearInterval(_ticker); onExpired(); }
         }, 1000);
@@ -378,11 +364,10 @@
         document.getElementById('web-launch-link').style.display = 'none';
         document.getElementById('web-stop-btn').style.display = 'none';
         document.getElementById('web-extend-btn').style.display = 'none';
-        clearFlag();
         const btn = document.getElementById('web-launch-btn');
         btn.style.display = ''; btn.disabled = false; btn.textContent = '▶ LAUNCH';
       }
-      function showRunning(port, url, expiresAt, dynamicFlag) {
+      function showRunning(port, url, expiresAt) {
         _expiresAt = expiresAt;
         document.getElementById('web-launch-btn').style.display = 'none';
         document.getElementById('web-stop-btn').style.display = '';
@@ -391,22 +376,21 @@
         anchor.href = url; anchor.textContent = `→ Open Challenge (${url})`;
         document.getElementById('web-launch-link').style.display = 'block';
         setStatus(`Running on port ${port}`, '#4caf50');
-        if (dynamicFlag) showFlag(dynamicFlag); else restoreFlag();
         startTicker();
       }
       window.webLaunch = function() {
         const btn = document.getElementById('web-launch-btn');
         btn.disabled = true; btn.textContent = '⏳ STARTING...';
         setStatus('Starting instance...', '#ffaa00');
-        fetch(`/challenges/${CID}/launch`, {method:'POST'})
+        fetch(`/challenges/${CID}/launch`, {method:'POST', headers:{'X-CSRFToken': CSRF}})
           .then(r => r.json()).then(d => {
-            if (d.ok) { showRunning(d.port, d.url, d.expires_at, d.dynamic_flag); }
+            if (d.ok) { showRunning(d.port, d.url, d.expires_at); }
             else { setStatus('Error: ' + d.error, '#f44336'); btn.disabled = false; btn.textContent = '▶ LAUNCH'; }
           }).catch(() => { setStatus('Network error', '#f44336'); btn.disabled = false; btn.textContent = '▶ LAUNCH'; });
       };
       window.webStop = function() {
-        if (!confirm('Stopping will permanently lose your dynamically generated flag. Are you sure?')) return;
-        fetch(`/challenges/${CID}/stop-web`, {method:'POST'}).then(r => r.json()).then(d => {
+        if (!confirm('Stop this instance? You will need to relaunch to get a new session.')) return;
+        fetch(`/challenges/${CID}/stop-web`, {method:'POST', headers:{'X-CSRFToken': CSRF}}).then(r => r.json()).then(d => {
           if (d.ok) {
             if (_ticker) clearInterval(_ticker);
             document.getElementById('web-launch-btn').style.display = ''; document.getElementById('web-launch-btn').disabled = false; document.getElementById('web-launch-btn').textContent = '▶ LAUNCH';
@@ -414,19 +398,18 @@
             document.getElementById('web-extend-btn').style.display = 'none';
             document.getElementById('web-timer-row').style.display = 'none';
             document.getElementById('web-launch-link').style.display = 'none';
-            clearFlag();
             setStatus('Instance stopped.', '#888');
           }
         });
       };
       window.webExtend = function() {
-        fetch(`/challenges/${CID}/extend-web`, {method:'POST'}).then(r => r.json()).then(d => {
+        fetch(`/challenges/${CID}/extend-web`, {method:'POST', headers:{'X-CSRFToken': CSRF}}).then(r => r.json()).then(d => {
           if (d.ok) { _expiresAt = d.expires_at; setStatus('Extended!', '#4caf50'); }
           else { document.getElementById('web-extend-msg').textContent = d.error; document.getElementById('web-extend-msg').style.color = '#f44336'; }
         });
       };
       fetch(`/challenges/${CID}/web-status`).then(r => r.json()).then(d => {
-        if (d.running) showRunning(d.port, d.url, d.expires_at, d.dynamic_flag);
+        if (d.running) showRunning(d.port, d.url, d.expires_at);
       });
     })();
     </script>
@@ -539,7 +522,7 @@ var _bookmarked = {{ 'true' if is_bookmarked else 'false' }};
 var _subscribed = {{ 'true' if is_subscribed else 'false' }};
 
 function toggleBookmark() {
-  fetch('/challenges/{{ challenge.id }}/bookmark', {method:'POST'})
+  fetch('/challenges/{{ challenge.id }}/bookmark', {method:'POST', headers:{'X-CSRFToken': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : ''}})
     .then(r => r.json()).then(d => {
       _bookmarked = d.bookmarked;
       var btn = document.getElementById('bm-btn');
@@ -552,7 +535,7 @@ function toggleBookmark() {
 }
 
 function toggleSubscribe() {
-  fetch('/challenges/{{ challenge.id }}/subscribe', {method:'POST'})
+  fetch('/challenges/{{ challenge.id }}/subscribe', {method:'POST', headers:{'X-CSRFToken': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : ''}})
     .then(r => r.json()).then(d => {
       _subscribed = d.subscribed;
       var btn = document.getElementById('sub-btn');
@@ -567,7 +550,7 @@ function toggleSubscribe() {
 function castVote(value) {
   fetch('/challenges/{{ challenge.id }}/vote', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : ''},
     body: JSON.stringify({value: value})
   }).then(function(r){ return r.json(); }).then(function(d) {
     if (!d.ok) return;

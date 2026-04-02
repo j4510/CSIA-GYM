@@ -14,6 +14,7 @@
     </div>
 
     <form method="POST" action="{{ url_for('admin.edit_user', user_id=user.id) }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <!-- Profile Picture -->
         <div class="bg-black border-4 border-red-600 p-8 mb-6 shadow-lg">
             <h2 class="text-xl font-black uppercase mb-4 border-b-2 border-red-600 pb-2">PROFILE PICTURE</h2>
@@ -123,6 +124,7 @@
         <p class="text-sm font-bold" style="color:#e040fb;">This user holds a protected legendary rank: <strong>{{ user.legendary_rank }}</strong>. It cannot be modified here.</p>
         {% else %}
         <form method="POST" action="{{ url_for('admin.assign_legendary', user_id=user.id) }}" class="flex items-center gap-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <select name="legendary_rank" style="background:#1a1a1a;color:#e0e0e0;border:1px solid #7b2ff7;padding:8px 14px;font-weight:700;">
                 <option value="">— None (remove legendary rank) —</option>
                 <option value="Omninet Ambassador" {% if user.legendary_rank == 'Omninet Ambassador' %}selected{% endif %}>Omninet Ambassador</option>

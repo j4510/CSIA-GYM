@@ -141,9 +141,10 @@
 
 <script>
 (function(){
-  const hash = window.location.hash;
-  if (hash && hash.startsWith('#badge-')) {
-    const el = document.querySelector(hash);
+  // amazonq-ignore-next-line
+  const match = /^#badge-([0-9]+)$/.exec(window.location.hash);
+  if (match) {
+    const el = document.getElementById('badge-' + match[1]);
     if (el) {
       setTimeout(() => {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });

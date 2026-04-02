@@ -15,6 +15,7 @@
   <div class="bg-black border-4 border-red-600 p-6 mb-8 shadow-lg">
     <h2 class="text-lg font-black uppercase mb-4 border-b-2 border-red-600 pb-2">ADD RULE</h2>
     <form method="POST" action="{{ url_for('admin.create_badge_rule', badge_id=badge.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="grid md:grid-cols-2 gap-4 mb-4">
         <div>
           <label class="block text-xs font-black uppercase opacity-60 mb-1">Rule Type</label>
@@ -86,11 +87,13 @@
       </div>
       <div style="display:flex;gap:6px;">
         <form method="POST" action="{{ url_for('admin.toggle_badge_rule', rule_id=rule.id) }}" style="margin:0;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" style="padding:4px 10px;background:transparent;color:{% if rule.is_active %}#fb923c{% else %}#4ade80{% endif %};font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid {% if rule.is_active %}#fb923c{% else %}#4ade80{% endif %};cursor:pointer;">
             {% if rule.is_active %}PAUSE{% else %}RESUME{% endif %}
           </button>
         </form>
         <form method="POST" action="{{ url_for('admin.delete_badge_rule', rule_id=rule.id) }}" onsubmit="return confirm('Delete this rule?');" style="margin:0;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" style="padding:4px 10px;background:transparent;color:#f87171;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #f87171;cursor:pointer;">DEL</button>
         </form>
       </div>

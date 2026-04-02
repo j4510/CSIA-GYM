@@ -1,47 +1,70 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, send_from_directory, jsonify, Response
 from flask_login import login_required, current_user
-from PIL import Image
+from flask_wtf.csrf import validate_csrf
+from wtforms import ValidationError
 import os
-from app import db
+from app import db, csrf
 from app.models import User
 from app.identicon import generate_identicon
+from app.image_utils import encode_avatar
 
 AVATAR_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'instance', 'avatars')
 BADGE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'instance', 'badges')
 MILESTONE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'instance', 'milestones')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
+MAX_AVATAR_BYTES = 5 * 1024 * 1024  # 5 MB
+
 settings_bp = Blueprint('settings', __name__, template_folder='../templates')
 
 
+def _safe_filename(filename: str) -> str:
+    """Strip all path components, allow only safe characters."""
+    from werkzeug.utils import secure_filename as _sf
+    return _sf(os.path.basename(filename))
+
+
 @settings_bp.route('/avatar/<username>')
+@login_required
 def serve_avatar(username):
-    filename = f'avatar_{username}.webp'
-    full_path = os.path.join(AVATAR_DIR, filename)
-    if not os.path.exists(full_path):
+    if not current_user.is_authenticated:
+        abort(401)
+    filename = _safe_filename(f'avatar_{username}.webp')
+    real_avatar_dir = os.path.realpath(AVATAR_DIR)
+    if not os.path.exists(os.path.join(real_avatar_dir, filename)):
         user = User.query.filter_by(username=username).first()
         if not user or not user.profile_picture:
             generate_identicon(username)
-    return send_from_directory(os.path.abspath(AVATAR_DIR), filename)
+    return send_from_directory(real_avatar_dir, filename)
 
 
 @settings_bp.route('/badge-img/<filename>')
+@login_required
 def serve_badge(filename):
-    full_path = os.path.join(BADGE_DIR, filename)
-    if not os.path.exists(full_path):
-        static_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'badges', filename)
-        if os.path.exists(static_path):
-            return send_from_directory(os.path.abspath(os.path.dirname(static_path)), filename)
-        abort(404)
-    return send_from_directory(os.path.abspath(BADGE_DIR), filename)
+    if not current_user.is_authenticated:
+        abort(401)
+    filename = _safe_filename(filename)
+    real_badge_dir = os.path.realpath(BADGE_DIR)
+    if os.path.exists(os.path.join(real_badge_dir, filename)):
+        return send_from_directory(real_badge_dir, filename)
+    static_dir = os.path.realpath(
+        os.path.join(os.path.dirname(__file__), '..', 'static', 'badges')
+    )
+    if os.path.exists(os.path.join(static_dir, filename)):
+        return send_from_directory(static_dir, filename)
+    abort(404)
 
 
 @settings_bp.route('/milestone-img/<filename>')
+@login_required
 def serve_milestone(filename):
-    full_path = os.path.join(MILESTONE_DIR, filename)
-    if not os.path.exists(full_path):
+    if not current_user.is_authenticated:
+        abort(401)
+    filename = _safe_filename(filename)
+    real_milestone_dir = os.path.realpath(MILESTONE_DIR)
+    if not os.path.exists(os.path.join(real_milestone_dir, filename)):
         abort(404)
-    return send_from_directory(os.path.abspath(MILESTONE_DIR), filename)
+    return send_from_directory(real_milestone_dir, filename)
 
 
 @settings_bp.route('/robots.txt')
@@ -70,6 +93,7 @@ def badges():
 
 @settings_bp.route('/api/notifications/<int:notif_id>/read', methods=['POST'])
 @login_required
+@csrf.exempt
 def mark_notification_read(notif_id):
     from app.models import Notification, NotificationRead
     Notification.query.get_or_404(notif_id)
@@ -81,6 +105,7 @@ def mark_notification_read(notif_id):
 
 @settings_bp.route('/api/notifications/read-all', methods=['POST'])
 @login_required
+@csrf.exempt
 def mark_all_notifications_read():
     from app.models import Notification, NotificationRead
     read_ids = {r.notification_id for r in
@@ -116,6 +141,7 @@ def ranks():
 
 @settings_bp.route('/api/ghost-unlock', methods=['POST'])
 @login_required
+@csrf.exempt
 def ghost_unlock():
     from app.ranking import GHOST_COMMAND, LEGENDARY_TIERS
     data = request.get_json(silent=True) or {}
@@ -182,10 +208,25 @@ def public_profile(user_id):
     return render_template('public_profile.html', user=user, **_rank_context(user))
 
 
+def _save_avatar(file_storage, dest_path: str) -> None:
+    """Read uploaded file, encode as 500x500 WebP, write to dest_path."""
+    try:
+        data = file_storage.read()
+    finally:
+        file_storage.close()
+    with open(dest_path, 'wb') as f:
+        f.write(encode_avatar(data))
+
+
 @settings_bp.route('/settings/upload-avatar', methods=['POST'])
 @login_required
 def upload_avatar():
-    if 'avatar' not in request.files:
+    if not current_user.is_authenticated:
+        abort(401)
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        abort(403)
         flash('No file selected', 'danger')
         return redirect(url_for('settings.index'))
     file = request.files['avatar']
@@ -197,10 +238,17 @@ def upload_avatar():
         flash('Invalid file type', 'danger')
         return redirect(url_for('settings.index'))
     os.makedirs(AVATAR_DIR, exist_ok=True)
-    filename = f'avatar_{current_user.username}.webp'
-    img = Image.open(file).convert('RGB')
-    img = img.resize((500, 500))
-    img.save(os.path.join(AVATAR_DIR, filename), 'WEBP', quality=85)
+    file.seek(0, 2)
+    size = file.tell()
+    file.seek(0)
+    if size > MAX_AVATAR_BYTES:
+        flash('Avatar must be 5 MB or smaller.', 'danger')
+        return redirect(url_for('settings.index'))
+    import re as _re
+    safe_username = _re.sub(r'[^A-Za-z0-9_-]', '_', current_user.username)[:64]
+    filename = f'avatar_{safe_username}.webp'
+    real_avatar_dir = os.path.realpath(AVATAR_DIR)
+    _save_avatar(file, os.path.join(real_avatar_dir, filename))
     current_user.profile_picture = filename
     db.session.commit()
     flash('Profile picture updated!', 'success')
@@ -262,6 +310,8 @@ def bug_report():
         description = request.form.get('description', '').strip()
         page_url = request.form.get('page_url', '').strip() or None
         severity = request.form.get('severity', 'medium')
+        if severity not in ('low', 'medium', 'high', 'critical'):
+            severity = 'medium'
         if not title or not description:
             flash('Title and description are required.', 'danger')
             return redirect(url_for('settings.bug_report'))
@@ -280,6 +330,7 @@ def bug_report():
 
 @settings_bp.route('/api/user-notifications/<int:notif_id>/read', methods=['POST'])
 @login_required
+@csrf.exempt
 def mark_user_notification_read(notif_id):
     from app.models import UserNotification
     n = UserNotification.query.filter_by(id=notif_id, user_id=current_user.id).first_or_404()
@@ -290,6 +341,7 @@ def mark_user_notification_read(notif_id):
 
 @settings_bp.route('/api/user-notifications/read-all', methods=['POST'])
 @login_required
+@csrf.exempt
 def mark_all_user_notifications_read():
     from app.models import UserNotification
     UserNotification.query.filter_by(user_id=current_user.id, is_read=False).update({'is_read': True})
@@ -300,6 +352,12 @@ def mark_all_user_notifications_read():
 @settings_bp.route('/settings/notifications', methods=['POST'])
 @login_required
 def save_notification_prefs():
+    if not current_user.is_authenticated:
+        abort(401)
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except ValidationError:
+        abort(403)
     current_user.notif_challenge_solve   = 'notif_challenge_solve' in request.form
     current_user.notif_challenge_sub     = 'notif_challenge_sub' in request.form
     current_user.notif_post_reply        = 'notif_post_reply' in request.form

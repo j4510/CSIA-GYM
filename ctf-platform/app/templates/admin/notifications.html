@@ -18,6 +18,7 @@
       <h2 class="text-lg font-black uppercase mb-4 border-b-2 border-red-600 pb-2">📣 NEW NOTIFICATION</h2>
       <p class="text-xs opacity-50 uppercase mb-4">Appears in the navbar bell dropdown for all users.</p>
       <form method="POST" action="{{ url_for('admin.create_notification') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-3">
           <label class="block text-xs font-bold uppercase opacity-60 mb-1">Title</label>
           <input type="text" name="title" required placeholder="Short title"
@@ -41,6 +42,7 @@
       <h2 class="text-lg font-black uppercase mb-4 border-b-2 border-yellow-500 pb-2">📢 NEW ANNOUNCEMENT</h2>
       <p class="text-xs opacity-50 uppercase mb-4">Timed banner shown on all pages. Times are in your local timezone — converted to UTC automatically.</p>
       <form method="POST" action="{{ url_for('admin.create_announcement') }}" id="ann-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-3">
           <label class="block text-xs font-bold uppercase opacity-60 mb-1">Message</label>
           <input type="text" name="message" required placeholder="Announcement text"
@@ -90,6 +92,7 @@
           <p class="text-xs opacity-40 mt-1">{{ n.created_at.strftime('%b %d, %Y %H:%M UTC') }}</p>
         </div>
         <form method="POST" action="{{ url_for('admin.delete_notification', notif_id=n.id) }}" onsubmit="return confirm('Delete this notification?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" style="padding:4px 12px;background:#7f1d1d;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;border:none;cursor:pointer;white-space:nowrap;">
             DELETE
           </button>
@@ -120,6 +123,7 @@
           </p>
         </div>
         <form method="POST" action="{{ url_for('admin.delete_announcement', ann_id=a.id) }}" onsubmit="return confirm('Delete this announcement?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" style="padding:4px 12px;background:#7f1d1d;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;border:none;cursor:pointer;white-space:nowrap;">
             DELETE
           </button>

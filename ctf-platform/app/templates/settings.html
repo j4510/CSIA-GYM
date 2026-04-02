@@ -47,6 +47,7 @@
 
         <!-- Hidden form that submits the cropped blob -->
         <form id="avatar-upload-form" method="POST" action="{{ url_for('settings.upload_avatar') }}" enctype="multipart/form-data" style="display:none;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="file" name="avatar" id="avatar-cropped-input">
         </form>
     </div>
@@ -54,6 +55,7 @@
     <!-- Profile & Password -->
     <div class="bg-black border-4 border-red-600 p-8 shadow-lg hover-brutal">
         <form method="POST" action="{{ url_for('settings.index') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <!-- Profile Information -->
             <h2 class="text-2xl font-black uppercase mb-6 border-b-2 border-red-600 pb-2">PROFILE INFORMATION</h2>
@@ -239,6 +241,7 @@
         <h2 class="text-2xl font-black uppercase mb-2 border-b-2 border-red-600 pb-2">NOTIFICATION PREFERENCES</h2>
         <p class="text-xs opacity-40 uppercase mb-6">Control which notifications you receive</p>
         <form method="POST" action="{{ url_for('settings.save_notification_prefs') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             {% set prefs = [
                 ('notif_global',            'Admin Announcements',          'Global notifications sent by administrators'),
                 ('notif_changelog',         'Version Changelogs',           'Notified when the platform is updated'),

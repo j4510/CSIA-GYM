@@ -3,20 +3,23 @@ import re
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, logout_user
+from flask_wtf.csrf import CSRFProtect
 from config import Config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
+csrf = CSRFProtect()
 
 # Read version once at import time — not on every request
 _VERSION = 'v?'
 try:
     _md = os.path.join(os.path.dirname(__file__), '..', 'WHATS-NEW.md')
     with open(_md, encoding='utf-8') as _f:
-        _m = re.search(r'v[\d.]+', _f.readline())
+        _line = re.sub(r'[^\x20-\x7E]', '', _f.readline())[:200]
+        _m = re.search(r'v[\d.]+', _line)
         if _m:
             _VERSION = _m.group(0)
-except Exception:
+except (OSError, AttributeError):
     pass
 
 
@@ -25,6 +28,7 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
 
     db.init_app(app)
+    csrf.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please log in to access this page.'
@@ -90,7 +94,7 @@ def create_app(config_class=Config):
                 ctx['active_announcements'] = []
                 ctx['user_top_border'] = None
                 ctx['mail_unread_count'] = 0
-        except Exception:
+        except (AttributeError, RuntimeError):
             ctx['notifications'] = []
             ctx['global_notifications'] = []
             ctx['unread_count'] = 0
@@ -125,12 +129,12 @@ def create_app(config_class=Config):
             try:
                 is_banned = current_user.is_banned
                 reason = current_user.ban_reason or 'No reason provided.'
-            except Exception:
+            except (AttributeError, RuntimeError):
                 db.session.rollback()
                 try:
                     is_banned = current_user.is_banned
                     reason = current_user.ban_reason or 'No reason provided.'
-                except Exception:
+                except (AttributeError, RuntimeError):
                     return
             if is_banned and request.endpoint not in ('auth.logout', 'static'):
                 logout_user()
@@ -566,14 +570,18 @@ def create_app(config_class=Config):
 
         from app.models import User
         if not User.query.filter_by(username='admin').first():
+            import secrets as _s
+            _pw = _s.token_urlsafe(16)
             admin = User(username='admin', email='admin@ctf.local', is_admin=True)
-            admin.set_password('admin123')
+            admin.set_password(_pw)
             db.session.add(admin)
             db.session.commit()
-            print("=" * 60)
-            print("✅ Admin account created!")
-            print("   Username: admin  |  Password: admin123")
-            print("   ⚠️  Change this password after first login!")
-            print("=" * 60)
+            import sys
+            print("=" * 60, file=sys.stderr)
+            print("\u2705 Admin account created!", file=sys.stderr)
+            print("   Username: admin  |  Password: [see application startup log]", file=sys.stderr)
+            print(f"   Password hint: {_pw[:4]}{'*' * (len(_pw) - 4)}", file=sys.stderr)
+            print("   \u26a0\ufe0f  Change this password after first login!", file=sys.stderr)
+            print("=" * 60, file=sys.stderr)
 
     return app

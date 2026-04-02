@@ -12,6 +12,7 @@
 
     <div class="bg-white rounded-lg shadow-md p-8">
         <form method="POST" action="{{ url_for('submissions.new') }}" enctype="multipart/form-data" id="sub-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <!-- Title -->
             <div class="mb-4">
@@ -75,29 +76,11 @@
                 </div>
             </div>
 
-            <!-- RE Binary (shown only for Reverse Engineering category) -->
+            <!-- RE Binary (shown only for Binary Exploitation category) -->
             <div id="nc-binary-section" class="mb-4" style="display:none;">
-                <label class="block text-gray-700 font-semibold mb-2">
-                    Challenge Executable *
-                    <span class="text-xs font-normal text-gray-500">(executable or .tar.gz archive, max 100 MB)</span>
-                </label>
-                <label id="nc-binary-btn" for="nc_binary" style="display:inline-flex;align-items:center;gap:0.5rem;padding:9px 20px;background:#1a1a1a;color:#e5e5e5 !important;border:2px solid #8b0000;cursor:pointer;font-weight:700;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.05em;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg>
-                    Choose Executable
-                </label>
-                <input type="file" name="nc_binary" id="nc_binary"
-                       style="display:none;"
-                       onchange="document.getElementById('nc-binary-name').textContent = this.files[0] ? this.files[0].name : ''">
-                <span id="nc-binary-name" style="font-size:0.75rem;color:#888;margin-left:0.5rem;"></span>
-                <div class="mt-2 p-3 rounded-lg text-xs" style="background:rgba(139,0,0,0.06);border:1px solid rgba(139,0,0,0.2);color:#555;line-height:1.7;">
-                    <strong style="color:#8b0000;">Accepted formats:</strong><br>
-                    • <strong>Single executable</strong> — ELF binary, <code>.sh</code>, Python script, etc. Scripts need a shebang (e.g. <code>#!/bin/bash</code>)<br>
-                    • <strong><code>.tar.gz</code> archive</strong> — include your executable alongside any supporting files (e.g. <code>flag.txt</code>, data files). Name your main executable <code>run</code>, <code>main</code>, or <code>challenge</code> so it is detected automatically<br>
-                    • Players connect via <code>nc &lt;host&gt; &lt;port&gt;</code> — each connection spawns a fresh isolated process<br>
-                    • Max size: 100 MB
-                </div>
-                <div class="mt-2 p-3 rounded-lg text-xs" style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.35);color:#555;line-height:1.7;">
-                    ⚠️ <strong style="color:#92400e;">Dynamic flag notice:</strong> If your archive contains a <code>flag.txt</code>, its contents will be <strong>automatically overwritten</strong> with a randomly generated <code>CSIA{...}</code> flag each time a player launches their instance. Do <em>not</em> rely on the flag value you put in <code>flag.txt</code> — set the <strong>Flag</strong> field above to a placeholder; the real flag is generated at runtime and shown to the player in their instance panel.
+                <div class="p-4 rounded-lg" style="background:rgba(139,0,0,0.08);border:1.5px solid rgba(139,0,0,0.4);">
+                    <p style="font-size:0.85rem;font-weight:700;color:#f87171;margin:0;">⚠️ Binary Exploitation (NC) challenges are currently disabled for security reasons.</p>
+                    <p style="font-size:0.78rem;color:#888;margin-top:6px;">This category will be re-enabled in a future update. Please choose a different category.</p>
                 </div>
             </div>
 
@@ -145,9 +128,9 @@
                     Submit Files for Review
                     <span class="text-xs font-normal text-gray-500">(optional, max 250 MB total per upload)</span>
                 </label>
-                <div class="mb-2 p-3 rounded-lg text-xs" style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.35);color:#555;line-height:1.7;">
-                    ⚠️ <strong style="color:#92400e;">These files are for review purposes only</strong> — they are <em>not</em> served as part of your challenge and will not be accessible to players during the CTF.
-                    Use them to provide writeups, source code, or supplementary materials for admin review.
+                <div class="mb-2 p-3 rounded-lg text-xs" style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.3);color:#555;line-height:1.7;">
+                    📂 <strong style="color:#1d4ed8;">These files will be shown on the challenge page</strong> once your submission is approved by an administrator.
+                    Upload writeups, source code, binaries, or any supplementary materials you want players to access.
                     For Web challenges, upload your server files as a <code>.tar.gz</code> in the field above instead.
                     Max 250 MB per upload.
                 </div>
@@ -317,7 +300,7 @@
             webInput.required = true;
         } else if (cat === 'Binary Exploitation') {
             ncSec.style.display = 'block';
-            ncInput.required = true;
+            // NC challenges disabled — do not set required
         }
     };
 })();

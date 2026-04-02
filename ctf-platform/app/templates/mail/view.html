@@ -46,6 +46,7 @@
       </a>
       {% endif %}
       <form method="POST" action="{{ url_for('mail.delete_message', msg_id=msg.id) }}" style="display:inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit"
                 style="padding:9px 20px;background:transparent;color:#666;font-weight:700;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.07em;border:2px solid #333;cursor:pointer;transition:color 0.15s,border-color 0.15s;"
                 onmouseover="this.style.color='#f87171';this.style.borderColor='#f87171'" onmouseout="this.style.color='#666';this.style.borderColor='#333'"

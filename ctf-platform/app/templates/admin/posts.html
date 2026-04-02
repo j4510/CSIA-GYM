@@ -27,6 +27,7 @@
     </div>
     <div id="post-bulk-bar" style="display:none;background:#1a0a00;border-bottom:1px solid #fb923c;padding:10px 16px;flex-wrap:wrap;gap:8px;align-items:center;">
       <form method="POST" action="{{ url_for('admin.bulk_posts') }}" id="post-bulk-form" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div id="post-bulk-ids"></div>
         <select name="bulk_action" style="padding:6px 10px;background:#111;color:#e5e5e5;border:1px solid #555;font-size:0.8rem;border-radius:3px;">
           <option value="">-- Action --</option>
@@ -88,12 +89,15 @@
                  style="padding:4px 12px;background:rgba(139,0,0,0.15);color:#e5e5e5;font-size:0.72rem;font-weight:700;text-transform:uppercase;text-decoration:none;border:1px solid rgba(139,0,0,0.3);border-radius:3px;"
                  onmouseover="this.style.background='rgba(139,0,0,0.3)'" onmouseout="this.style.background='rgba(139,0,0,0.15)'">Edit</a>
               <form method="POST" action="{{ url_for('admin.admin_toggle_comments', post_id=post.id) }}" style="margin:0;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" style="padding:4px 12px;background:transparent;color:{% if post.comments_disabled %}#fb923c{% else %}#4ade80{% endif %};font-size:0.72rem;font-weight:700;text-transform:uppercase;border:1px solid {% if post.comments_disabled %}rgba(251,146,60,0.4){% else %}rgba(74,222,128,0.4){% endif %};border-radius:3px;cursor:pointer;">{% if post.comments_disabled %}CMT OFF{% else %}CMT ON{% endif %}</button>
               </form>
               <form method="POST" action="{{ url_for('admin.admin_toggle_reactions', post_id=post.id) }}" style="margin:0;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" style="padding:4px 12px;background:transparent;color:{% if post.reactions_disabled %}#fb923c{% else %}#a78bfa{% endif %};font-size:0.72rem;font-weight:700;text-transform:uppercase;border:1px solid {% if post.reactions_disabled %}rgba(251,146,60,0.4){% else %}rgba(167,139,250,0.4){% endif %};border-radius:3px;cursor:pointer;">{% if post.reactions_disabled %}RXN OFF{% else %}RXN ON{% endif %}</button>
               </form>
               <form method="POST" action="{{ url_for('admin.delete_post', post_id=post.id) }}" onsubmit="return confirm('Delete this post and all comments?');" style="margin:0;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" style="padding:4px 12px;background:transparent;color:#f87171;font-size:0.72rem;font-weight:700;text-transform:uppercase;border:1px solid rgba(248,113,113,0.3);border-radius:3px;cursor:pointer;"
                         onmouseover="this.style.background='rgba(248,113,113,0.1)'" onmouseout="this.style.background='transparent'">Delete</button>
               </form>

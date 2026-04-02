@@ -54,6 +54,7 @@
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;min-width:160px;">
           <form method="POST" action="{{ url_for('admin.update_bug_status', report_id=r.id) }}" style="display:flex;gap:4px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <select name="status" style="flex:1;padding:5px 8px;background:#1a1a1a;color:#e5e5e5;border:1px solid #333;font-size:0.75rem;">
               <option value="open" {% if r.status=='open' %}selected{% endif %}>Open</option>
               <option value="in_progress" {% if r.status=='in_progress' %}selected{% endif %}>In Progress</option>
@@ -64,6 +65,7 @@
           </form>
           <form method="POST" action="{{ url_for('admin.delete_bug_report', report_id=r.id) }}"
                 onsubmit="return confirm('Delete this report?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" style="width:100%;padding:5px 10px;background:transparent;color:#f87171;font-weight:900;font-size:0.72rem;border:1px solid rgba(248,113,113,0.4);cursor:pointer;text-transform:uppercase;">Delete</button>
           </form>
         </div>

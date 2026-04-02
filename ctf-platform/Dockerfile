@@ -38,10 +38,13 @@ RUN useradd -u 1500 -M -s /usr/sbin/nologin ctf-sandbox
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY --chown=root:root . .
+# Remove secrets that must never be baked into the image
+RUN rm -f /app/.env /app/ssl/haucsia.com.key /app/ssl/haucsia.com.pem
 
 RUN mkdir -p /app/instance /app/instance/web_challenges /app/instance/nc_challenges /app/instance/badges /app/instance/avatars \
-    && chmod 777 /app/instance /app/instance/web_challenges /app/instance/nc_challenges /app/instance/badges /app/instance/avatars
+    && chown -R root:root /app/instance \
+    && chmod 755 /app/instance /app/instance/web_challenges /app/instance/nc_challenges /app/instance/badges /app/instance/avatars
 
 EXPOSE 5050
 

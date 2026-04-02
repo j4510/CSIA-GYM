@@ -4,6 +4,7 @@ All functions are fire-and-forget; they silently swallow errors.
 """
 from app import db
 from app.models import UserNotification, User, ChallengeSubscription, PostSubscription
+from sqlalchemy.exc import SQLAlchemyError
 
 
 def _pref(user, pref_col):
@@ -18,7 +19,7 @@ def push(user_id: int, title: str, body: str, category: str = 'system', link: st
             category=category, link=link,
         ))
         db.session.commit()
-    except Exception:
+    except SQLAlchemyError:
         db.session.rollback()
 
 
@@ -35,7 +36,7 @@ def push_global(title: str, body: str, category: str = 'system',
                 category=category, link=link,
             ))
         db.session.commit()
-    except Exception:
+    except SQLAlchemyError:
         db.session.rollback()
 
 
@@ -52,7 +53,7 @@ def notify_challenge_solve(solver_id: int, challenge):
                 category='challenge',
                 link=f'/challenges/{challenge.id}',
             )
-    except Exception:
+    except (AttributeError, RuntimeError):
         pass
 
 
@@ -74,7 +75,7 @@ def notify_challenge_subscribers(solver_id: int, challenge):
                     link=f'/challenges/{challenge.id}',
                 ))
         db.session.commit()
-    except Exception:
+    except (AttributeError, SQLAlchemyError):
         db.session.rollback()
 
 
@@ -111,7 +112,7 @@ def notify_post_subscribers(commenter_id: int, post, comment_preview: str):
                     link=f'/community/{post.id}',
                 ))
         db.session.commit()
-    except Exception:
+    except (AttributeError, SQLAlchemyError):
         db.session.rollback()
 
 
@@ -150,7 +151,7 @@ def notify_submission_result(user_id: int, title: str, approved: bool):
                 push(user_id, f'Submission rejected: {title}',
                      f'Your challenge "{title}" was not approved. Check the community for feedback.',
                      category='submission')
-    except Exception:
+    except (AttributeError, RuntimeError):
         pass
 
 
@@ -162,7 +163,7 @@ def notify_badge_earned(user_id: int, badge_title: str):
             push(user_id, f'Badge earned: {badge_title}',
                  f'You earned the "{badge_title}" badge!',
                  category='system', link='/badges')
-    except Exception:
+    except (AttributeError, RuntimeError):
         pass
 
 
@@ -174,7 +175,7 @@ def notify_first_blood(solver_id: int, challenge):
             push(solver_id, f'🩸 First Blood: {challenge.title}',
                  f'You are the first to solve "{challenge.title}"! Legendary.',
                  category='challenge', link=f'/challenges/{challenge.id}')
-    except Exception:
+    except (AttributeError, RuntimeError):
         pass
 
 
@@ -187,7 +188,7 @@ def notify_upvote_milestone(post_author_id: int, post, count: int):
                 push(post_author_id, f'Your post hit {count} upvotes!',
                      f'"{post.title}" just reached {count} upvotes. Keep it up!',
                      category='community', link=f'/community/{post.id}')
-    except Exception:
+    except (AttributeError, RuntimeError):
         pass
 
 
@@ -199,5 +200,5 @@ def notify_comment_reaction(comment_author_id: int, reactor_username: str, react
             push(comment_author_id, f'Someone reacted to your comment',
                  f'{reactor_username} reacted with {reaction} to your comment.',
                  category='community', link=f'/community/{post_id}')
-    except Exception:
+    except (AttributeError, RuntimeError):
         pass

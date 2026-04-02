@@ -10,6 +10,7 @@
 
   <div class="bg-black border-4 border-red-600 p-8 shadow-lg">
     <form method="POST" action="{{ url_for('admin.edit_challenge', challenge_id=challenge.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="mb-4">
         <label class="block text-sm opacity-60 uppercase font-bold mb-1">Title</label>
         <input type="text" name="title" value="{{ challenge.title }}" required

@@ -15,6 +15,7 @@
 
     <!-- Password form -->
     <form method="POST" action="{{ url_for('auth.login') }}" id="login-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div style="margin-bottom:18px;">
         <label style="display:block;font-size:0.68rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#666;margin-bottom:6px;">Username</label>
         <input type="text" id="username" name="username" required autofocus placeholder="Enter your username"
@@ -30,7 +31,7 @@
       <div style="margin-bottom:22px;">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
           <input type="checkbox" name="remember" style="width:15px;height:15px;accent-color:#8b0000;cursor:pointer;">
-          <span style="font-size:0.78rem;color:#666;">Keep me logged in for 30 days</span>
+          <span style="font-size:0.78rem;color:#fff!important;">Keep me logged in for 30 days</span>
         </label>
       </div>
       <button type="submit"

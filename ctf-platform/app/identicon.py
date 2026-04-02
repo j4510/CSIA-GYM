@@ -1,5 +1,6 @@
 import hashlib
 import os
+import re
 from PIL import Image, ImageDraw
 
 AVATAR_DIR = os.path.join(os.path.dirname(__file__), '..', 'instance', 'avatars')
@@ -25,30 +26,32 @@ def generate_identicon(username: str) -> str:
     Returns the filename (not full path)."""
     os.makedirs(AVATAR_DIR, exist_ok=True)
 
-    h = hashlib.md5(username.lower().encode()).hexdigest()
+    h = hashlib.sha256(username.lower().encode()).hexdigest()
     color = _color_from_hash(h)
     bg = (15, 15, 15)
 
-    img = Image.new('RGB', (SIZE, SIZE), bg)
-    draw = ImageDraw.Draw(img)
+    safe_username = re.sub(r'[^A-Za-z0-9_-]', '_', username)[:64]
+    filename = f'avatar_{safe_username}.webp'
+    save_path = os.path.realpath(os.path.join(AVATAR_DIR, filename))
+    real_avatar_dir = os.path.realpath(AVATAR_DIR)
+    if not save_path.startswith(real_avatar_dir + os.sep):
+        raise ValueError(f'Invalid username for avatar generation: {username!r}')
 
-    # 5x5 grid, mirrored horizontally — use first 15 bits of hash
-    for row in range(GRID):
-        for col in range(GRID // 2 + 1):
-            idx = row * 3 + col
-            bit = int(h[idx % len(h)], 16) % 2
-            if bit:
-                x0 = PADDING + col * CELL
-                y0 = PADDING + row * CELL
-                x1 = x0 + CELL - 2
-                y1 = y0 + CELL - 2
-                draw.rectangle([x0, y0, x1, y1], fill=color)
-                # Mirror
-                mirror_col = GRID - 1 - col
-                if mirror_col != col:
-                    mx0 = PADDING + mirror_col * CELL
-                    draw.rectangle([mx0, y0, mx0 + CELL - 2, y1], fill=color)
-
-    filename = f'avatar_{username}.webp'
-    img.save(os.path.join(AVATAR_DIR, filename), 'WEBP', quality=85)
+    with Image.new('RGB', (SIZE, SIZE), bg) as img:
+        draw = ImageDraw.Draw(img)
+        for row in range(GRID):
+            for col in range(GRID // 2 + 1):
+                idx = row * 3 + col
+                bit = int(h[idx % len(h)], 16) % 2
+                if bit:
+                    x0 = PADDING + col * CELL
+                    y0 = PADDING + row * CELL
+                    x1 = x0 + CELL - 2
+                    y1 = y0 + CELL - 2
+                    draw.rectangle([x0, y0, x1, y1], fill=color)
+                    mirror_col = GRID - 1 - col
+                    if mirror_col != col:
+                        mx0 = PADDING + mirror_col * CELL
+                        draw.rectangle([mx0, y0, mx0 + CELL - 2, y1], fill=color)
+        img.save(save_path, 'WEBP', quality=85)
     return filename

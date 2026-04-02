@@ -27,12 +27,50 @@
 .border-tier10::before { content:''; position:absolute; inset:-3px; border-radius:6px; background:linear-gradient(90deg,#ff0040,#e040fb,#00fff7,#facc15,#ff0040); background-size:300% 100%; animation:rainbowShift 2s linear infinite; z-index:-1; }
 @keyframes rainbowShift { 0%{background-position:0% 50%} 100%{background-position:300% 50%} }
 @keyframes godPulse { 0%,100%{box-shadow:0 0 20px rgba(224,64,251,0.6),0 0 40px rgba(0,255,247,0.4)} 50%{box-shadow:0 0 40px rgba(224,64,251,1),0 0 80px rgba(0,255,247,0.8)} }
-/* Honeycomb hive grid */
-.hive-grid { display:flex; flex-wrap:wrap; width:296px; line-height:0; }
-.hive-cell { position:relative; width:72px; height:62px; margin:0 2px; margin-bottom:-15px; flex-shrink:0; }
-.hive-cell.hive-odd { margin-top:31px; }
-.hive-cell img { width:72px; height:62px; object-fit:cover; clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%); display:block; }
-.hive-cell span { position:absolute; top:50%; left:0; right:0; transform:translateY(-50%); text-align:center; font-size:0.4rem; font-weight:900; text-transform:uppercase; color:#fff; text-shadow:0 1px 3px #000; line-height:1.1; padding:0 4px; pointer-events:none; }
+/* Honeycomb hive grid — pointy-top hexagons
+   size=36px → w=62px (√3×36), h=72px (2×36)
+   horiz step=62px, vert step=54px (1.5×36), odd-row offset=31px */
+.hive-grid {
+  position: relative;
+  line-height: 0;
+}
+.hive-row {
+  display: flex;
+  gap: 0;
+  margin-bottom: -18px;
+}
+.hive-row.hive-row-offset {
+  margin-left: 31px;
+}
+.hive-cell {
+  position: relative;
+  width: 62px;
+  height: 72px;
+  flex-shrink: 0;
+}
+.hive-cell img {
+  width: 62px;
+  height: 72px;
+  object-fit: cover;
+  clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  display: block;
+}
+.hive-cell span {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  text-align: center;
+  font-size: 0.38rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 1px 3px #000;
+  line-height: 1.1;
+  padding: 0 6px;
+  pointer-events: none;
+}
 </style>
 {% endblock %}
 
@@ -268,12 +306,18 @@
             <span class="text-red-600 mr-2">►</span> MILESTONES
           </h3>
           {% if user_milestones %}
-          <div class="hive-grid">
-            {% for um in user_milestones %}
-            <div class="hive-cell {% if (loop.index0 // 4) % 2 == 1 %}hive-odd{% endif %}" title="{{ um.milestone.title }}: {{ um.milestone.description }}">
-              <img src="{{ url_for('settings.serve_milestone', filename=um.milestone.image_filename) }}"
-                   alt="{{ um.milestone.title }}">
-              <span>{{ um.milestone.title[:12] }}</span>
+          {% set cells_per_row = 4 %}
+          <div class="hive-grid" style="padding-bottom:36px;">
+            {% for i in range(0, user_milestones|length, cells_per_row) %}
+            {% set row_num = loop.index0 %}
+            <div class="hive-row {% if row_num % 2 == 1 %}hive-row-offset{% endif %}">
+              {% for um in user_milestones[i:i+cells_per_row] %}
+              <div class="hive-cell" title="{{ um.milestone.title }}: {{ um.milestone.description }}">
+                <img src="{{ url_for('settings.serve_milestone', filename=um.milestone.image_filename) }}"
+                     alt="{{ um.milestone.title }}">
+                <span>{{ um.milestone.title[:10] }}</span>
+              </div>
+              {% endfor %}
             </div>
             {% endfor %}
           </div>

@@ -16,12 +16,12 @@ from app import create_app
 app = create_app()
 
 if __name__ == '__main__':
-    # Run the development server
-    # This is only for local development - use gunicorn in production
+    # Debug mode is explicitly disabled — never enable in production.
+    # The FLASK_DEBUG env var is intentionally ignored here to prevent
+    # accidental exposure of the debug interface (CWE-668).
+    # amazonq-ignore-next-line
     app.run(
-        host='0.0.0.0',  # Allow external connections
-        port=5000,        # Port number
-        debug=True        # Enable debug mode (auto-reload, detailed errors)
+        host='127.0.0.1',
+        port=5000,
+        debug=False,
     )
-    
-    # FOR PRODUCTION: Set debug=False

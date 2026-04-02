@@ -10,6 +10,7 @@
 
   <div class="bg-black border-4 border-red-600 p-8 shadow-lg">
     <form method="POST" action="{{ url_for('settings.bug_report') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <div class="mb-5">
         <label class="block text-sm opacity-60 uppercase font-bold mb-1">Title <span style="color:#f87171;">*</span></label>

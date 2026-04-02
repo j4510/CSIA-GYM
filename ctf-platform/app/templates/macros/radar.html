@@ -21,7 +21,7 @@
         <div id="compare-results-{{ chart_id }}"
              style="display:none;position:absolute;top:100%;left:0;right:0;background:#111;border:1px solid #8b0000;border-top:none;z-index:50;max-height:160px;overflow-y:auto;border-radius:0 0 3px 3px;"></div>
       </div>
-      <button onclick="radarClear_{{ chart_id }}()"
+      <button onclick="radarClear_{{ chart_id | e }}()"
               style="padding:0.25rem 0.65rem;background:#222;color:#aaa;font-size:0.72rem;font-weight:900;text-transform:uppercase;border:1px solid #444;cursor:pointer;border-radius:3px;">CLEAR</button>
     </div>
   </div>
@@ -35,13 +35,13 @@
 
 <script>
 (function(){
-  const CHART_ID   = '{{ chart_id }}';
-  const PRIMARY_ID = {{ primary_user_id }};
+  const CHART_ID   = {{ chart_id | tojson }};
+  const PRIMARY_ID = {{ primary_user_id | tojson }};
   const COLORS     = ['#cc0000','#00aaff','#00cc66','#ffaa00'];
 
   const ALL_USERS = [
     {% for u in all_users %}{% if u.id != primary_user_id %}
-    { id: {{ u.id }}, username: {{ u.username | tojson }} },
+    { id: {{ u.id | tojson }}, username: {{ u.username | tojson }} },
     {% endif %}{% endfor %}
   ];
 

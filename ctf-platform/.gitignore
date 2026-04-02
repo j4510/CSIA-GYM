@@ -1,4 +1,5 @@
 .env
 ssl/*
+!ssl/README.md
 nginx.conf
 .how2

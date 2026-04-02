@@ -14,10 +14,13 @@ TO ADD NEW AUTH FEATURES:
 - OAuth login: Add /login/google, /login/github routes
 """
 
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, abort
 from flask_login import login_user, logout_user, current_user, login_required
 import os, re
-from app import db
+from urllib.parse import urlparse
+from flask_wtf.csrf import validate_csrf
+from wtforms import ValidationError
+from app import db, csrf
 from app.models import User
 from app.identicon import generate_identicon
 from app.routes.admin import log_event
@@ -28,10 +31,10 @@ WHATS_NEW_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'WHATS-NEW.
 def get_version():
     try:
         with open(WHATS_NEW_PATH, encoding='utf-8') as f:
-            first_line = f.readline()
+            first_line = re.sub(r'[^\x20-\x7E]', '', f.readline())[:200]
         match = re.search(r'v[\d.]+', first_line)
         return match.group(0) if match else 'v?'
-    except Exception:
+    except (OSError, AttributeError):
         return 'v?'
 
 # Create blueprint
@@ -45,7 +48,7 @@ def whats_new():
     try:
         with open(WHATS_NEW_PATH, encoding='utf-8') as f:
             content = f.read()
-    except Exception:
+    except OSError:
         content = 'Could not load changelog.'
     version = get_version()
     return render_template('whats_new.html', content=content, version=version)
@@ -66,6 +69,7 @@ def index():
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
+@csrf.exempt
 def register():
     """
     User registration.
@@ -85,6 +89,10 @@ def register():
         return redirect(url_for('challenges.list'))
     
     if request.method == 'POST':
+        try:
+            validate_csrf(request.form.get('csrf_token'))
+        except ValidationError:
+            abort(403)
         # Get form data
         username = request.form.get('username', '').strip()
         email = request.form.get('email', '').strip()
@@ -96,14 +104,25 @@ def register():
         if not username or not email or not full_name or not password:
             flash('All fields are required', 'danger')
             return redirect(url_for('auth.register'))
-        
+
+        if not re.match(r'^[A-Za-z0-9_]{1,32}$', username):
+            flash('Username must be 1–32 characters and contain only letters, numbers, and underscores (no spaces or symbols).', 'danger')
+            return redirect(url_for('auth.register'))
+
         if password != confirm_password:
             flash('Passwords do not match', 'danger')
             return redirect(url_for('auth.register'))
-        
+
         # Check if user exists
         if User.query.filter_by(username=username).first():
-            flash('Username already exists', 'danger')
+            import random
+            suggestions = []
+            for _ in range(3):
+                candidate = username[:28] + str(random.randint(10, 9999))
+                while User.query.filter_by(username=candidate).first():
+                    candidate = username[:28] + str(random.randint(10, 9999))
+                suggestions.append(candidate)
+            flash(f'Username already taken. Try: {", ".join(suggestions)}', 'danger')
             return redirect(url_for('auth.register'))
         
         if User.query.filter_by(email=email).first():
@@ -127,7 +146,7 @@ def register():
             push(user.id, f'Latest update: {version}',
                  'Check out what\'s new on the platform.',
                  category='system', link='/whats-new')
-        except Exception:
+        except (ImportError, RuntimeError):
             pass
         flash('Registration successful! Please log in.', 'success')
         return redirect(url_for('auth.login'))
@@ -137,6 +156,7 @@ def register():
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@csrf.exempt
 def login():
     """
     User login.
@@ -155,6 +175,10 @@ def login():
         return redirect(url_for('challenges.list'))
     
     if request.method == 'POST':
+        try:
+            validate_csrf(request.form.get('csrf_token'))
+        except ValidationError:
+            abort(403)
         username = request.form.get('username', '').strip()
         password = request.form.get('password')
         
@@ -169,13 +193,17 @@ def login():
                 flash(f'Your account has been banned. Reason: {reason}', 'danger')
                 return redirect(url_for('auth.login'))
             remember = 'remember' in request.form
-            login_user(user, remember=remember, duration=__import__('datetime').timedelta(days=30))
+            from datetime import timedelta
+            login_user(user, remember=remember, duration=timedelta(days=30))
             log_event(actor=username, action='login_success', category='auth')
             flash('Login successful!', 'success')
             
             # Redirect to page they were trying to access, or challenges page
-            next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('challenges.list'))
+            next_page = request.args.get('next', '')
+            parsed = urlparse(next_page)
+            if next_page and not parsed.scheme and not parsed.netloc:
+                return redirect(next_page)
+            return redirect(url_for('challenges.list'))
         else:
             log_event(actor=username or '(unknown)', action='login_failed', target='bad credentials', category='auth')
             flash('Invalid username or password', 'danger')
@@ -185,6 +213,7 @@ def login():
 
 
 @auth_bp.route('/tour-done', methods=['POST'])
+@csrf.exempt
 def tour_done():
    
     if current_user.is_authenticated:

@@ -10,6 +10,7 @@
 
   <div style="background:#0d0d0d;border:2px solid #8b0000;padding:32px;">
     <form method="POST" action="{{ url_for('mail.compose') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div style="margin-bottom:20px;">
         <label style="display:block;font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin-bottom:6px;">To</label>
         <input type="text" name="to" value="{{ to_user }}" placeholder="Username"

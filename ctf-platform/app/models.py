@@ -22,7 +22,10 @@ from datetime import datetime
 @login_manager.user_loader
 def load_user(user_id):
     """Required by Flask-Login to load user from session."""
-    return User.query.get(int(user_id))
+    try:
+        return User.query.get(int(user_id))
+    except (ValueError, TypeError):
+        return None
 
 
 # ========================================
@@ -111,8 +114,6 @@ class User(UserMixin, db.Model):
     def get_score(self):
         """Calculate total score from solved challenges."""
         from sqlalchemy import func
-        from app import db
-        from app.models import UserChallengeSolve, Challenge
         result = db.session.query(func.sum(Challenge.points)).join(
             UserChallengeSolve, UserChallengeSolve.challenge_id == Challenge.id
         ).filter(UserChallengeSolve.user_id == self.id).scalar()
@@ -170,8 +171,6 @@ class Challenge(db.Model):
     
     def solve_count(self):
         """Get number of solves for this challenge."""
-        from app.models import UserChallengeSolve
-        from app import db
         return db.session.query(UserChallengeSolve).filter_by(challenge_id=self.id).count()
     
     def __repr__(self):
@@ -289,8 +288,6 @@ class CommunityPost(db.Model):
     
     def comment_count(self):
         """Get number of comments on this post."""
-        from app.models import Comment
-        from app import db
         return db.session.query(Comment).filter_by(post_id=self.id).count()
     
     def __repr__(self):
@@ -350,6 +347,8 @@ class FlagAttempt(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     challenge_id = db.Column(db.Integer, db.ForeignKey('challenges.id'), nullable=False)
     submitted_flag = db.Column(db.String(500), nullable=True)  # what the user submitted
+    solution_file_path = db.Column(db.String(500), nullable=True)  # path to uploaded tar.gz for web challenges
+    solution_file_name = db.Column(db.String(300), nullable=True)  # original filename for web challenge submissions
     correct = db.Column(db.Boolean, nullable=False)
     attempted_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -693,7 +692,8 @@ class Announcement(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def is_active(self):
+    def is_active_now(self):
+        """Return True if the announcement is currently active."""
         now = datetime.utcnow()
         return self.starts_at <= now <= self.ends_at
 

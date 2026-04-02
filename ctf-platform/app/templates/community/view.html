@@ -148,6 +148,7 @@
             🔔 <span id="post-sub-label">{% if is_subscribed %}Subscribed{% else %}Subscribe{% endif %}</span>
           </button>
         <form method="POST" action="{{ url_for('community.upvote_post', post_id=post.id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" {% if user_upvoted %}disabled{% endif %}
                   style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;background:{% if user_upvoted %}#555{% else %}#8b0000{% endif %};color:#fff;border:none;cursor:{% if user_upvoted %}default{% else %}pointer{% endif %};font-weight:700;border-radius:4px;opacity:{% if user_upvoted %}0.7{% else %}1{% endif %};">
             ▲ {{ post.upvotes }}
@@ -160,27 +161,32 @@
                   onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'">✎</button>
           {% if current_user.is_admin or current_user.is_moderator %}
           <form method="POST" action="{{ url_for('community.unpin_post' if post.is_pinned else 'community.pin_post', post_id=post.id) }}" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" title="{{ 'Unpin' if post.is_pinned else 'Pin post' }}"
                     style="background:none;border:none;cursor:pointer;padding:5px;font-size:1rem;color:{% if post.is_pinned %}#fcd34d{% else %}#aaa{% endif %};transition:color 0.15s;"
                     onmouseover="this.style.color='#fcd34d'" onmouseout="this.style.color='{% if post.is_pinned %}#fcd34d{% else %}#aaa{% endif %}'">📌</button>
           </form>
           <form method="POST" action="{{ url_for('community.toggle_comments', post_id=post.id) }}" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" title="{{ 'Enable Comments' if post.comments_disabled else 'Disable Comments' }}"
-                    style="background:none;border:none;cursor:pointer;padding:5px;font-size:1rem;color:{% if post.comments_disabled %}#fb923c{% else %}#aaa{% endif %};transition:color 0.15s;"
-                    onmouseover="this.style.color='{% if post.comments_disabled %}#fb923c{% else %}#4ade80{% endif %}'" onmouseout="this.style.color='{% if post.comments_disabled %}#fb923c{% else %}#aaa{% endif %}'">💬</button>
+                    style="background:none;border:none;cursor:pointer;padding:5px;font-size:1rem;color:{% if post.comments_disabled %}#fb923c{% else %}#aaa{% endif %};transition:color 0.15s;position:relative;"
+                    onmouseover="this.style.color='{% if post.comments_disabled %}#fb923c{% else %}#4ade80{% endif %}'" onmouseout="this.style.color='{% if post.comments_disabled %}#fb923c{% else %}#aaa{% endif %}'">💬{% if post.comments_disabled %}<span style="position:absolute;top:2px;right:2px;font-size:0.6rem;line-height:1;">⦸</span>{% endif %}</button>
           </form>
           <form method="POST" action="{{ url_for('community.toggle_reactions', post_id=post.id) }}" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" title="{{ 'Enable Reactions' if post.reactions_disabled else 'Disable Reactions' }}"
-                    style="background:none;border:none;cursor:pointer;padding:5px;font-size:1rem;color:{% if post.reactions_disabled %}#fb923c{% else %}#aaa{% endif %};transition:color 0.15s;"
-                    onmouseover="this.style.color='{% if post.reactions_disabled %}#fb923c{% else %}#a78bfa{% endif %}'" onmouseout="this.style.color='{% if post.reactions_disabled %}#fb923c{% else %}#aaa{% endif %}'">😮</button>
+                    style="background:none;border:none;cursor:pointer;padding:5px;font-size:1rem;color:{% if post.reactions_disabled %}#fb923c{% else %}#aaa{% endif %};transition:color 0.15s;position:relative;"
+                    onmouseover="this.style.color='{% if post.reactions_disabled %}#fb923c{% else %}#a78bfa{% endif %}'" onmouseout="this.style.color='{% if post.reactions_disabled %}#fb923c{% else %}#aaa{% endif %}'">😮{% if post.reactions_disabled %}<span style="position:absolute;top:2px;right:2px;font-size:0.6rem;line-height:1;">⦸</span>{% endif %}</button>
           </form>
           <form method="POST" action="{{ url_for('community.archive_post', post_id=post.id) }}" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" title="{{ 'Unarchive' if post.is_archived else 'Archive' }}"
                     style="background:none;border:none;cursor:pointer;padding:5px;font-size:1rem;color:{% if post.is_archived %}#60a5fa{% else %}#aaa{% endif %};transition:color 0.15s;"
                     onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='{% if post.is_archived %}#60a5fa{% else %}#aaa{% endif %}'">📁</button>
           </form>
           {% endif %}
           <form method="POST" action="{{ url_for('community.delete_post', post_id=post.id) }}" class="inline" onsubmit="return confirm('Delete this post? This cannot be undone.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" title="Delete post"
                     style="background:none;border:none;cursor:pointer;padding:5px;font-size:1rem;color:#aaa;transition:color 0.15s;"
                     onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#aaa'">🗑</button>
@@ -202,6 +208,7 @@
     </div>
     {% else %}
     <form method="POST" action="{{ url_for('community.add_comment', post_id=post.id) }}" class="mb-8" id="comment-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="mb-3">
         <label for="content" class="block font-semibold mb-2" style="color:#111111;">Add a Comment</label>
         <div id="comment-quill" style="background:#fff;min-height:100px;border:1px solid #d1d5db;border-radius:4px;padding:0.5rem;"></div>
@@ -241,6 +248,7 @@
               </svg>
             </button>
             <form method="POST" action="{{ url_for('community.delete_comment', comment_id=comment.id) }}" class="inline" onsubmit="return confirm('Delete this comment?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" title="Delete comment"
                       style="background:none;border:none;cursor:pointer;padding:4px;color:#888;transition:color 0.15s;"
                       onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#888'">
@@ -305,6 +313,7 @@
   <div style="background:#0d0d0d;border:1px solid rgba(139,0,0,0.5);padding:1.5rem;width:100%;max-width:520px;margin:1rem;">
     <p style="font-size:0.75rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#e5e5e5;margin-bottom:0.75rem;">Edit Comment</p>
     <form id="edit-form" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div id="edit-comment-quill" style="background:#1a1a1a;min-height:100px;border:1px solid rgba(139,0,0,0.4);border-radius:4px;padding:0.5rem;color:#f0f0f0;"></div>
       <input type="hidden" name="content" id="edit-content">
       <div style="display:flex;gap:0.5rem;margin-top:0.75rem;justify-content:flex-end;">
@@ -322,6 +331,7 @@
   <div style="background:#0d0d0d;border:1px solid rgba(139,0,0,0.5);padding:1.5rem;width:100%;max-width:680px;margin:1rem;">
     <p style="font-size:0.75rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#e5e5e5;margin-bottom:0.75rem;">Edit Post</p>
     <form id="post-edit-form" method="POST" action="{{ url_for('community.edit_post', post_id=post.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="text" name="title" id="post-edit-title" required
              style="width:100%;background:#1a1a1a;color:#f0f0f0;border:1px solid rgba(139,0,0,0.4);padding:0.6rem;font-size:0.95rem;margin-bottom:0.75rem;">
       <div id="post-edit-quill" style="background:#1a1a1a;min-height:200px;border:1px solid rgba(139,0,0,0.4);border-radius:4px;padding:0.5rem;color:#f0f0f0;"></div>

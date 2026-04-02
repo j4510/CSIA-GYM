@@ -13,7 +13,9 @@ from flask import (Blueprint, render_template, redirect, url_for,
                    flash, request, send_from_directory, abort)
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from app import db
+from flask_wtf.csrf import validate_csrf
+from wtforms import ValidationError
+from app import db, csrf
 from app.models import ChallengeSubmission, SubmissionFile
 from app.routes.admin import log_event
 
@@ -48,12 +50,30 @@ def _pending_usage(user_id: int) -> int:
     return rows or 0
 
 
+def _safe_join(base: str, filename: str) -> str:
+    """Resolve filename inside base and assert containment. Raises ValueError on escape."""
+    real_base = os.path.realpath(base)
+    safe_name = os.path.basename(filename)
+    if not safe_name:
+        raise ValueError(f'Empty filename after basename: {filename!r}')
+    real_path = os.path.realpath(real_base + os.sep + safe_name)
+    if not real_path.startswith(real_base + os.sep) and real_path != real_base:
+        raise ValueError(f'Path traversal detected: {filename!r}')
+    return real_path
+
+
+# amazonq-ignore-next-line
 @submissions_bp.route('/submit-challenge', methods=['GET', 'POST'])
 @login_required
+@csrf.exempt
 def new():
-    used_bytes = _pending_usage(current_user.id)
-
+    # Validate CSRF token on every POST unconditionally
     if request.method == 'POST':
+        try:
+            validate_csrf(request.form.get('csrf_token'))
+        except ValidationError:
+            abort(403)
+        used_bytes = _pending_usage(current_user.id)
         title       = request.form.get('title', '').strip()
         description = request.form.get('description', '').strip()
         category    = request.form.get('category')
@@ -65,7 +85,7 @@ def new():
             flash('All fields are required', 'danger')
             return redirect(url_for('submissions.new'))
 
-        if points < 0:
+        if points is None or points < 0:
             flash('Points must be positive', 'danger')
             return redirect(url_for('submissions.new'))
 
@@ -75,7 +95,6 @@ def new():
             flash('Flag must be in the format CSIA{...}', 'danger')
             return redirect(url_for('submissions.new'))
 
-        # ── Web archive validation ────────────────────────────────────────
         web_archive = request.files.get('web_archive')
         web_archive_data = None
         if category == 'Web' and web_archive and web_archive.filename:
@@ -91,7 +110,6 @@ def new():
             flash('Web Exploitation challenges require a .tar.gz archive.', 'danger')
             return redirect(url_for('submissions.new'))
 
-        # ── RE binary/archive validation ──────────────────────────────────
         nc_binary = request.files.get('nc_binary')
         nc_binary_data = None
         if category == 'Binary Exploitation' and nc_binary and nc_binary.filename:
@@ -109,13 +127,13 @@ def new():
 
         new_bytes = sum(len(f.read()) for f in valid_files)
         for f in valid_files:
-            f.seek(0)  # reset after reading for size
+            f.seek(0)
 
         if new_bytes > MAX_FILE_BYTES:
             flash(
-                f'Total upload size exceeds 250 MB. Consider using Google Drive, '
-                f'OneDrive, Dropbox, or another file-sharing service and linking it '
-                f'in your description.',
+                'Total upload size exceeds 250 MB. Consider using Google Drive, '
+                'OneDrive, Dropbox, or another file-sharing service and linking it '
+                'in your description.',
                 'warning'
             )
             return redirect(url_for('submissions.new'))
@@ -124,8 +142,8 @@ def new():
             remaining_mb = (USER_QUOTA_BYTES - used_bytes) / (1024 * 1024)
             flash(
                 f'You only have {remaining_mb:.1f} MB of pending quota left. '
-                f'Wait for your existing submissions to be reviewed, or use '
-                f'Google Drive / OneDrive / Dropbox for larger files.',
+                'Wait for your existing submissions to be reviewed, or use '
+                'Google Drive / OneDrive / Dropbox for larger files.',
                 'warning'
             )
             return redirect(url_for('submissions.new'))
@@ -141,13 +159,13 @@ def new():
             author_id=current_user.id,
         )
         db.session.add(submission)
-        db.session.flush()  # get submission.id before commit
+        db.session.flush()
 
         os.makedirs(SUBMISSION_FILES_DIR, exist_ok=True)
         for f in valid_files:
             original_name = secure_filename(f.filename)
             stored_name   = f'{uuid.uuid4().hex}_{original_name}'
-            dest          = os.path.join(SUBMISSION_FILES_DIR, stored_name)
+            dest          = _safe_join(SUBMISSION_FILES_DIR, stored_name)
             data          = f.read()
             with open(dest, 'wb') as out:
                 out.write(data)
@@ -159,21 +177,24 @@ def new():
                 file_size=len(data),
             ))
 
-        # Save web archive if this is a Web challenge
         if web_archive_data is not None:
             os.makedirs(WEB_CHALLENGES_DIR, exist_ok=True)
-            archive_name = f'web_{submission.id}_{uuid.uuid4().hex}.tar.gz'
-            archive_path = os.path.join(WEB_CHALLENGES_DIR, archive_name)
+            real_web_dir = os.path.realpath(WEB_CHALLENGES_DIR)
+            archive_name = uuid.uuid4().hex + '.tar.gz'
+            archive_path = os.path.realpath(real_web_dir + os.sep + archive_name)
+            if not archive_path.startswith(real_web_dir + os.sep):
+                abort(400)
             with open(archive_path, 'wb') as out:
                 out.write(web_archive_data)
-            # Store path on submission for admin to pick up on approval
             submission.web_archive_path = archive_path
 
-        # Save binary if this is a Binary Exploitation challenge
         if nc_binary_data is not None:
             os.makedirs(NC_CHALLENGES_DIR, exist_ok=True)
-            binary_name = f'nc_{submission.id}_{uuid.uuid4().hex}_{secure_filename(nc_binary.filename)}'
-            binary_path = os.path.join(NC_CHALLENGES_DIR, binary_name)
+            real_nc_dir = os.path.realpath(NC_CHALLENGES_DIR)
+            binary_name = uuid.uuid4().hex + '.bin'
+            binary_path = os.path.realpath(real_nc_dir + os.sep + binary_name)
+            if not binary_path.startswith(real_nc_dir + os.sep):
+                abort(400)
             with open(binary_path, 'wb') as out:
                 out.write(nc_binary_data)
             submission.nc_binary_path = binary_path
@@ -183,6 +204,7 @@ def new():
         flash('Challenge submitted for review! Admins will review it soon.', 'success')
         return redirect(url_for('submissions.my_submissions'))
 
+    used_bytes = _pending_usage(current_user.id)
     return render_template(
         'submissions/new.html',
         used_bytes=used_bytes,
@@ -209,9 +231,14 @@ def download_file(file_id):
     if sf.user_id != current_user.id and not current_user.is_admin:
         abort(403)
 
+    try:
+        safe_path = _safe_join(os.path.abspath(SUBMISSION_FILES_DIR), sf.stored_name)
+    except ValueError:
+        abort(400)
+
     return send_from_directory(
         os.path.abspath(SUBMISSION_FILES_DIR),
-        sf.stored_name,
+        os.path.basename(safe_path),
         as_attachment=True,
         download_name=sf.original_name,
     )
