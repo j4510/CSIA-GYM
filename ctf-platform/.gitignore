@@ -3,3 +3,7 @@ ssl/*
 !ssl/README.md
 nginx.conf
 .how2
+avatar_admin.webp
+
+# Instance data — never commit DB, logs, uploads, or challenge files
+instance/
