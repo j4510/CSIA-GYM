@@ -291,6 +291,7 @@ def _build_web_container(
     Extract archive into a per-user temp dir, inject flag, spin up container.
     Returns container ID.
     """
+    archive_path = os.path.realpath(archive_path)
     work_dir = os.path.join(CHALLENGES_DIR, f"web_{challenge_id}_u{user_id}")
     if os.path.exists(work_dir):
         shutil.rmtree(work_dir)
@@ -342,6 +343,7 @@ def _build_nc_container(
     Extract archive into a per-user temp dir, inject flag, wrap with socat,
     spin up container. Returns container ID.
     """
+    archive_path = os.path.realpath(archive_path)
     work_dir = os.path.join(CHALLENGES_DIR, f"nc_{challenge_id}_u{user_id}")
     if os.path.exists(work_dir):
         shutil.rmtree(work_dir)

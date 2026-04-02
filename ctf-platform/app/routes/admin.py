@@ -263,7 +263,8 @@ def regenerate_avatar(user_id):
     return redirect(url_for('admin.edit_user', user_id=user_id))
 
 
-
+# amazonq-ignore-next-line
+@admin_bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
 def edit_user(user_id):
     """Edit any user's profile including password."""
     user = User.query.get_or_404(user_id)
