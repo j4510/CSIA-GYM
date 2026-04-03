@@ -300,7 +300,9 @@ def add_solve(challenge_id):
     return jsonify(ok=True, message=f'Solve added: {user.username} → "{challenge.title}".')
 
 
-
+@challenges_bp.route('/challenges/<int:challenge_id>/submit', methods=['POST'])
+@login_required
+def submit_flag(challenge_id):
     challenge = Challenge.query.get_or_404(challenge_id)
     submitted_flag = request.form.get('flag', '').strip()
     solution_file = request.files.get('solution_file') if challenge.category == 'Web Exploitation' else None
