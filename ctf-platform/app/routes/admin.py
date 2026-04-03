@@ -131,7 +131,9 @@ def users():
 def promote_user(user_id):
     """Promote a user to admin."""
     user = User.query.get_or_404(user_id)
-    
+    if not current_user.passkeys:
+        flash('You must register a passkey before you can promote users to admin. Set one up in Settings → Passkey.', 'danger')
+        return redirect(url_for('admin.users'))
     if user.is_admin:
         flash(f'{user.username} is already an admin', 'info')
     else:
@@ -139,7 +141,6 @@ def promote_user(user_id):
         db.session.commit()
         log_action('promote_to_admin', user.username)
         flash(f'{user.username} promoted to admin!', 'success')
-    
     return redirect(url_for('admin.users'))
 
 
@@ -449,6 +450,9 @@ def delete_badge(badge_id):
 def make_moderator(user_id):
     """Assign Community Moderator role."""
     user = User.query.get_or_404(user_id)
+    if not current_user.passkeys:
+        flash('You must register a passkey before you can assign moderators. Set one up in Settings → Passkey.', 'danger')
+        return redirect(url_for('admin.users'))
     user.is_moderator = True
     db.session.commit()
     log_action('make_moderator', user.username)
