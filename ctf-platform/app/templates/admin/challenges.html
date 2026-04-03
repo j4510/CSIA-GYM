@@ -187,9 +187,7 @@
   </div>
   <div id="ch-pg" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:1rem;flex-wrap:wrap;"></div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <!-- Add Solve Modal -->
 <div id="add-solve-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;align-items:center;justify-content:center;">
   <div style="background:#0d0d0d;border:2px solid rgba(96,165,250,0.5);padding:28px 32px;max-width:440px;width:90%;position:relative;border-radius:4px;" onclick="event.stopPropagation()">
@@ -211,6 +209,10 @@
     </form>
   </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
 <script>
 var PER_PAGE = 15;
 function adminSearch(rowClass, inputId, noResultsId) {
