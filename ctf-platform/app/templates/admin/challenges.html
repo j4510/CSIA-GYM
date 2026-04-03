@@ -194,19 +194,17 @@
     <button type="button" onclick="closeAddSolve()" style="position:absolute;top:10px;right:14px;background:transparent;border:none;color:#555;font-size:1.1rem;cursor:pointer;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#555'">✕</button>
     <p style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#60a5fa;margin-bottom:6px;">Add Solve</p>
     <p id="add-solve-title" style="font-size:0.95rem;font-weight:700;color:#e5e5e5;margin-bottom:18px;"></p>
-    <form id="add-solve-form" method="POST">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <label style="display:block;font-size:0.68rem;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#666;margin-bottom:6px;">Username</label>
-      <input type="text" id="add-solve-username" name="username" required autocomplete="off" placeholder="Type to search users…"
-             style="width:100%;background:#111;border:2px solid #2a2a2a;color:#fff;padding:9px 12px;font-size:0.88rem;outline:none;margin-bottom:4px;box-sizing:border-box;"
-             onfocus="this.style.borderColor='#60a5fa'" onblur="this.style.borderColor='#2a2a2a'">
-      <div id="user-suggestions" style="display:none;background:#1a1a1a;border:1px solid #333;border-top:none;max-height:180px;overflow-y:auto;margin-bottom:12px;"></div>
-      <button type="submit"
-              style="width:100%;padding:10px;background:#60a5fa;color:#000;font-weight:900;font-size:0.82rem;text-transform:uppercase;border:none;cursor:pointer;border-radius:2px;"
-              onmouseover="this.style.background='#93c5fd'" onmouseout="this.style.background='#60a5fa'">
-        ✓ MARK AS SOLVED
-      </button>
-    </form>
+    <div id="add-solve-msg" style="display:none;margin-bottom:10px;padding:8px 12px;font-size:0.8rem;font-weight:700;border-radius:3px;"></div>
+    <label style="display:block;font-size:0.68rem;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#666;margin-bottom:6px;">Username</label>
+    <input type="text" id="add-solve-username" autocomplete="off" placeholder="Type to search users…"
+           style="width:100%;background:#111;border:2px solid #2a2a2a;color:#fff;padding:9px 12px;font-size:0.88rem;outline:none;margin-bottom:4px;box-sizing:border-box;"
+           onfocus="this.style.borderColor='#60a5fa'" onblur="this.style.borderColor='#2a2a2a'">
+    <div id="user-suggestions" style="display:none;background:#1a1a1a;border:1px solid #333;border-top:none;max-height:180px;overflow-y:auto;margin-bottom:12px;"></div>
+    <button type="button" id="add-solve-btn" onclick="submitAddSolve()"
+            style="width:100%;padding:10px;background:#60a5fa;color:#000;font-weight:900;font-size:0.82rem;text-transform:uppercase;border:none;cursor:pointer;border-radius:2px;"
+            onmouseover="this.style.background='#93c5fd'" onmouseout="this.style.background='#60a5fa'">
+      ✓ MARK AS SOLVED
+    </button>
   </div>
 </div>
 
@@ -273,12 +271,15 @@ function showChExtra() {
   var a = document.getElementById('ch-bulk-action').value;
   document.getElementById('ch-bulk-extra').innerHTML = CH_EXTRAS[a] || '';
 }
+var _addSolveChallengeId = null;
 function openAddSolve(challengeId, challengeTitle) {
+  _addSolveChallengeId = challengeId;
   document.getElementById('add-solve-title').textContent = challengeTitle;
-  document.getElementById('add-solve-form').action = '/admin/challenges/' + challengeId + '/add-solve';
   document.getElementById('add-solve-username').value = '';
   document.getElementById('user-suggestions').style.display = 'none';
   document.getElementById('user-suggestions').innerHTML = '';
+  var msg = document.getElementById('add-solve-msg');
+  msg.style.display = 'none'; msg.textContent = '';
   var m = document.getElementById('add-solve-modal');
   m.style.display = 'flex';
   setTimeout(function(){ document.getElementById('add-solve-username').focus(); }, 80);
@@ -286,6 +287,34 @@ function openAddSolve(challengeId, challengeTitle) {
 function closeAddSolve() {
   document.getElementById('add-solve-modal').style.display = 'none';
   document.getElementById('user-suggestions').style.display = 'none';
+}
+function submitAddSolve() {
+  var username = document.getElementById('add-solve-username').value.trim();
+  if (!username) return;
+  var btn = document.getElementById('add-solve-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  fetch('/admin/challenges/' + _addSolveChallengeId + '/add-solve', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username: username})
+  }).then(function(r){ return r.json(); }).then(function(data) {
+    var msg = document.getElementById('add-solve-msg');
+    msg.style.display = 'block';
+    if (data.ok) {
+      msg.style.background = 'rgba(74,222,128,0.1)'; msg.style.color = '#4ade80'; msg.style.border = '1px solid rgba(74,222,128,0.3)';
+      msg.textContent = data.message;
+      document.getElementById('add-solve-username').value = '';
+    } else {
+      msg.style.background = 'rgba(248,113,113,0.1)'; msg.style.color = '#f87171'; msg.style.border = '1px solid rgba(248,113,113,0.3)';
+      msg.textContent = data.error;
+    }
+  }).catch(function() {
+    var msg = document.getElementById('add-solve-msg');
+    msg.style.display = 'block'; msg.style.color = '#f87171';
+    msg.textContent = 'Request failed.';
+  }).finally(function() {
+    btn.disabled = false; btn.textContent = '✓ MARK AS SOLVED';
+  });
 }
 document.getElementById('add-solve-modal').addEventListener('click', function(e) {
   if (e.target === this) closeAddSolve();

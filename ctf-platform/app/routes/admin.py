@@ -761,22 +761,21 @@ def edit_challenge(challenge_id):
 
 
 @admin_bp.route('/challenges/<int:challenge_id>/add-solve', methods=['POST'])
+@csrf.exempt
 def add_solve(challenge_id):
     """Manually mark a user as having solved a challenge."""
     challenge = Challenge.query.get_or_404(challenge_id)
-    username = request.form.get('username', '').strip()
+    username = (request.get_json(silent=True) or {}).get('username') or request.form.get('username', '')
+    username = username.strip()
     user = User.query.filter_by(username=username).first()
     if not user:
-        flash(f'User "{username}" not found.', 'danger')
-        return redirect(url_for('admin.challenges'))
+        return jsonify(ok=False, error=f'User "{username}" not found.')
     if UserChallengeSolve.query.filter_by(user_id=user.id, challenge_id=challenge_id).first():
-        flash(f'{user.username} has already solved "{challenge.title}".', 'info')
-        return redirect(url_for('admin.challenges'))
+        return jsonify(ok=False, error=f'{user.username} has already solved "{challenge.title}".')
     db.session.add(UserChallengeSolve(user_id=user.id, challenge_id=challenge_id))
     db.session.commit()
     log_action('add_solve', f'{user.username} -> {challenge.title}')
-    flash(f'Solve added: {user.username} → "{challenge.title}".', 'success')
-    return redirect(url_for('admin.challenges'))
+    return jsonify(ok=True, message=f'Solve added: {user.username} → "{challenge.title}".')
 
 
 @admin_bp.route('/challenges/<int:challenge_id>/toggle-visibility', methods=['POST'])
