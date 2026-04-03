@@ -201,6 +201,37 @@ def new():
 
         db.session.commit()
         log_event(actor=current_user.username, action='challenge_submit', target=f'{title} [{category}]', category='submission')
+
+        # Auto-approve if submitted by an admin
+        if current_user.is_admin:
+            from app.models import Challenge, WebChallenge, NcChallenge
+            challenge = Challenge(
+                title=submission.title,
+                description=submission.description,
+                category=submission.category,
+                difficulty=submission.difficulty,
+                flag=submission.flag,
+                is_regex=submission.is_regex,
+                points=submission.points,
+                author_id=submission.author_id,
+            )
+            submission.status = 'approved'
+            db.session.add(challenge)
+            db.session.commit()
+            if submission.web_archive_path:
+                db.session.add(WebChallenge(challenge_id=challenge.id, archive_path=submission.web_archive_path))
+            if submission.nc_binary_path:
+                db.session.add(NcChallenge(challenge_id=challenge.id, binary_path=submission.nc_binary_path))
+            db.session.commit()
+            try:
+                from app.notifs import notify_new_challenge
+                notify_new_challenge(challenge)
+            except (ImportError, RuntimeError):
+                pass
+            log_event(actor=current_user.username, action='challenge_auto_approved', target=title, category='submission')
+            flash(f'Challenge "{title}" published immediately.', 'success')
+            return redirect(url_for('challenges.list'))
+
         flash('Challenge submitted for review! Admins will review it soon.', 'success')
         return redirect(url_for('submissions.my_submissions'))
 
