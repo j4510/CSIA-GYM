@@ -187,6 +187,27 @@
   </div>
   <div id="ch-pg" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:1rem;flex-wrap:wrap;"></div>
 </div>
+<!-- Add Solve Modal -->
+<div id="add-solve-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#0d0d0d;border:2px solid rgba(96,165,250,0.5);padding:28px 32px;max-width:420px;width:90%;position:relative;">
+    <button onclick="closeAddSolve()" style="position:absolute;top:10px;right:14px;background:transparent;border:none;color:#555;font-size:1.1rem;cursor:pointer;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#555'">✕</button>
+    <p style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#60a5fa;margin-bottom:6px;">Add Solve</p>
+    <p id="add-solve-title" style="font-size:0.95rem;font-weight:700;color:#e5e5e5;margin-bottom:18px;"></p>
+    <form id="add-solve-form" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label style="display:block;font-size:0.68rem;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#666;margin-bottom:6px;">Username</label>
+      <input type="text" name="username" required autocomplete="off" placeholder="Enter username"
+             style="width:100%;background:#111;border:2px solid #2a2a2a;color:#fff;padding:9px 12px;font-size:0.88rem;outline:none;margin-bottom:16px;"
+             onfocus="this.style.borderColor='#60a5fa'" onblur="this.style.borderColor='#2a2a2a'">
+      <button type="submit"
+              style="width:100%;padding:10px;background:#60a5fa;color:#000;font-weight:900;font-size:0.82rem;text-transform:uppercase;border:none;cursor:pointer;"
+              onmouseover="this.style.background='#93c5fd'" onmouseout="this.style.background='#60a5fa'">
+        ✓ MARK AS SOLVED
+      </button>
+    </form>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -250,5 +271,21 @@ function showChExtra() {
   var a = document.getElementById('ch-bulk-action').value;
   document.getElementById('ch-bulk-extra').innerHTML = CH_EXTRAS[a] || '';
 }
+function openAddSolve(challengeId, challengeTitle) {
+  document.getElementById('add-solve-title').textContent = challengeTitle;
+  document.getElementById('add-solve-form').action = '/admin/challenges/' + challengeId + '/add-solve';
+  document.getElementById('add-solve-form').querySelector('input[name="username"]').value = '';
+  var m = document.getElementById('add-solve-modal');
+  m.style.display = 'flex';
+  m.style.alignItems = 'center';
+  m.style.justifyContent = 'center';
+  setTimeout(function(){ m.querySelector('input[name="username"]').focus(); }, 50);
+}
+function closeAddSolve() {
+  document.getElementById('add-solve-modal').style.display = 'none';
+}
+document.getElementById('add-solve-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeAddSolve();
+});
 </script>
 {% endblock %}
