@@ -224,11 +224,16 @@ def my_submissions():
 @submissions_bp.route('/submission-file/<int:file_id>')
 @login_required
 def download_file(file_id):
-    """Download a file attached to a submission (author or admin only)."""
+    """Download a file attached to a submission.
+    Access: the file's author, any admin, or any authenticated user
+    if the submission has been approved (file is public on the challenge).
+    """
     sf = SubmissionFile.query.get_or_404(file_id)
     submission = ChallengeSubmission.query.get_or_404(sf.submission_id)
 
-    if sf.user_id != current_user.id and not current_user.is_admin:
+    is_owner = sf.user_id == current_user.id
+    is_approved = submission.status == 'approved'
+    if not is_owner and not current_user.is_admin and not is_approved:
         abort(403)
 
     try:

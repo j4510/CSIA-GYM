@@ -228,10 +228,8 @@ def _update_user_avatar(user, files, user_id):
         flash('Invalid username for avatar save.', 'danger')
         return redirect(url_for('admin.edit_user', user_id=user_id))
     with Image.open(file) as raw:
-        with raw.convert('RGB') as img:
-            img_resized = img.resize((500, 500))
-        with img_resized:
-            img_resized.save(save_path, 'WEBP', quality=85)
+        img = raw.convert('RGB').resize((500, 500))
+        img.save(save_path, 'WEBP', quality=85)
     user.profile_picture = filename
     return None
 
@@ -344,9 +342,8 @@ def create_badge():
 
     os.makedirs(BADGE_DIR, exist_ok=True)
     filename = secure_filename(f'badge_{title.lower().replace(" ", "_")}.webp')
-    with raw_img:
-        with raw_img.resize((500, 500)) as img_resized:
-            img_resized.save(os.path.join(BADGE_DIR, filename), 'WEBP', quality=85)
+    img_resized = raw_img.resize((500, 500))
+    img_resized.save(os.path.join(BADGE_DIR, filename), 'WEBP', quality=85)
 
     badge = Badge(title=title, description=description, image_filename=filename, is_limited=is_limited, limited_count=limited_count, border_style=border_style, from_event=from_event, is_unattainable=is_unattainable, display_border=('display_border' in request.form), display_shape=request.form.get('display_shape', 'square'))
     db.session.add(badge)
@@ -1310,9 +1307,8 @@ def create_milestone():
 
     os.makedirs(MILESTONE_DIR, exist_ok=True)
     filename = secure_filename(f'milestone_{title.lower().replace(" ", "_")}.webp')
-    with raw_img:
-        with raw_img.resize((500, 500)) as img_resized:
-            img_resized.save(os.path.join(MILESTONE_DIR, filename), 'WEBP', quality=85)
+    img_resized = raw_img.resize((500, 500))
+    img_resized.save(os.path.join(MILESTONE_DIR, filename), 'WEBP', quality=85)
 
     milestone = Milestone(title=title, description=description,
                           image_filename=filename, rule_type=rule_type,

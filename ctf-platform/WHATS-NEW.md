@@ -1,5 +1,9 @@
-## Here's what's new with our current version: v2.1
+## Here's what's new with our current version: v2.1.01
 
+* v2.1.01 (April 4, 2026)
+    - Fixed unviewable challenge files
+
+### Older versions:
 * v2.1 (April 4, 2026)
     - Users now have inboxes to message other users.
     - Milestones are now available.
@@ -17,7 +21,6 @@
     - Mobile overflow fixes: Content no longer spills outside the screen; images, tables, and filters are fully responsive.
     - Community & “What’s New” on mobile: All community and update pages are now fully accessible on mobile devices.
 
-### Older versions:
 * v2.0.1 (March 22, 2026)
     - Category swap: `Reverse Engineering` → `Binary Exploitation (PWN)` for nc challenges
     - Delete user bug
