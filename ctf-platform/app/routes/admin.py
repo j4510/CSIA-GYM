@@ -10,7 +10,7 @@ import csv
 import secrets
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, case
-from app import db
+from app import db, csrf
 from app.models import (
     User, Challenge, ChallengeSubmission, SubmissionFile, CommunityPost, Comment,
     Badge, UserBadge, WebChallenge, NcChallenge, Notification, NotificationRead,
@@ -263,13 +263,21 @@ def regenerate_avatar(user_id):
 
 # amazonq-ignore-next-line
 @admin_bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@csrf.exempt
 def edit_user(user_id):
     """Edit any user's profile including password."""
+    from flask_wtf.csrf import validate_csrf
+    from wtforms import ValidationError
     user = User.query.get_or_404(user_id)
     all_badges = Badge.query.all()
     user_badge_ids = {ub.badge_id for ub in user.badges}
 
     if request.method == 'POST':
+        try:
+            validate_csrf(request.form.get('csrf_token'))
+        except ValidationError:
+            abort(403)
+
         error = _update_user_profile(user, request.form)
         if error:
             flash(error, 'danger')
