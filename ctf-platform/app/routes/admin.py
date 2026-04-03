@@ -119,6 +119,21 @@ def search_users():
     return jsonify([{'id': u.id, 'username': u.username} for u in users])
 
 
+def _require_passkey_sudo():
+    """Return True if the admin has a valid passkey sudo token (within 60s). False otherwise."""
+    import time
+    from flask import session
+    if not current_user.passkeys:
+        return False
+    ts = session.get('passkey_sudo')
+    return ts is not None and (time.time() - ts) < 60
+
+
+def _passkey_sudo_missing_response(redirect_to):
+    flash('Passkey verification required. Please verify your passkey to perform this action.', 'danger')
+    return redirect(redirect_to)
+
+
 @admin_bp.route('/users')
 def users():
     """View all users."""
@@ -134,6 +149,8 @@ def promote_user(user_id):
     if not current_user.passkeys:
         flash('You must register a passkey before you can promote users to admin. Set one up in Settings → Passkey.', 'danger')
         return redirect(url_for('admin.users'))
+    if not _require_passkey_sudo():
+        return _passkey_sudo_missing_response(url_for('admin.users'))
     if user.is_admin:
         flash(f'{user.username} is already an admin', 'info')
     else:
@@ -156,6 +173,8 @@ def demote_user(user_id):
     if not current_user.passkeys:
         flash('You must register a passkey before you can demote admins. Set one up in Settings → Passkey.', 'danger')
         return redirect(url_for('admin.users'))
+    if not _require_passkey_sudo():
+        return _passkey_sudo_missing_response(url_for('admin.users'))
     
     user.is_admin = False
     db.session.commit()
@@ -178,6 +197,8 @@ def delete_user(user_id):
     if not current_user.passkeys:
         flash('You must register a passkey before you can delete users. Set one up in Settings → Passkey.', 'danger')
         return redirect(url_for('admin.users'))
+    if not _require_passkey_sudo():
+        return _passkey_sudo_missing_response(url_for('admin.users'))
     
     from sqlalchemy import text
     with db.engine.connect() as conn:
@@ -453,6 +474,8 @@ def make_moderator(user_id):
     if not current_user.passkeys:
         flash('You must register a passkey before you can assign moderators. Set one up in Settings → Passkey.', 'danger')
         return redirect(url_for('admin.users'))
+    if not _require_passkey_sudo():
+        return _passkey_sudo_missing_response(url_for('admin.users'))
     user.is_moderator = True
     db.session.commit()
     log_action('make_moderator', user.username)
@@ -467,6 +490,8 @@ def remove_moderator(user_id):
     if not current_user.passkeys:
         flash('You must register a passkey before you can remove moderators. Set one up in Settings → Passkey.', 'danger')
         return redirect(url_for('admin.users'))
+    if not _require_passkey_sudo():
+        return _passkey_sudo_missing_response(url_for('admin.users'))
     user.is_moderator = False
     db.session.commit()
     log_action('remove_moderator', user.username)

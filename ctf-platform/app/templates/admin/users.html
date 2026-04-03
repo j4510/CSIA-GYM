@@ -127,24 +127,24 @@
               </form>
               {% endif %}
               {% if not user.is_admin %}
-              <form method="POST" action="{{ url_for('admin.promote_user', user_id=user.id) }}" onsubmit="return confirm('Promote to admin?');" style="margin:0;">
+              <form method="POST" action="{{ url_for('admin.promote_user', user_id=user.id) }}" onsubmit="return passkeyGuard(this)" style="margin:0;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" style="padding:3px 9px;background:transparent;color:#facc15;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #facc15;cursor:pointer;">PROMOTE</button>
               </form>
               {% elif user.id != current_user.id %}
-              <form method="POST" action="{{ url_for('admin.demote_user', user_id=user.id) }}" onsubmit="return confirm('Demote from admin?');" style="margin:0;">
+              <form method="POST" action="{{ url_for('admin.demote_user', user_id=user.id) }}" onsubmit="return passkeyGuard(this)" style="margin:0;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" style="padding:3px 9px;background:transparent;color:#a78bfa;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #a78bfa;cursor:pointer;">DEMOTE</button>
               </form>
               {% endif %}
               {% if not user.is_admin %}
               {% if user.is_moderator %}
-              <form method="POST" action="{{ url_for('admin.remove_moderator', user_id=user.id) }}" style="margin:0;">
+              <form method="POST" action="{{ url_for('admin.remove_moderator', user_id=user.id) }}" onsubmit="return passkeyGuard(this)" style="margin:0;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" style="padding:3px 9px;background:transparent;color:#60a5fa;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #60a5fa;cursor:pointer;">-MOD</button>
               </form>
               {% else %}
-              <form method="POST" action="{{ url_for('admin.make_moderator', user_id=user.id) }}" style="margin:0;">
+              <form method="POST" action="{{ url_for('admin.make_moderator', user_id=user.id) }}" onsubmit="return passkeyGuard(this)" style="margin:0;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" style="padding:3px 9px;background:transparent;color:#38bdf8;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #38bdf8;cursor:pointer;">+MOD</button>
               </form>
@@ -169,7 +169,7 @@
               <button onclick="showTimeoutModal({{ user.id }}, '{{ user.username|e }}')"
                       style="padding:3px 9px;background:transparent;color:#f97316;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #f97316;cursor:pointer;">TIMEOUT</button>
               {% endif %}
-              <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" onsubmit="return confirm('Delete user?');" style="margin:0;">
+              <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" onsubmit="return passkeyGuard(this)" style="margin:0;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" style="padding:3px 9px;background:transparent;color:#f87171;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid #f87171;cursor:pointer;">DEL</button>
               </form>
@@ -331,6 +331,117 @@ var BULK_EXTRAS = {
 function showBulkExtra() {
   var action = document.getElementById('bulk-action-select').value;
   document.getElementById('bulk-extra').innerHTML = BULK_EXTRAS[action] || '';
+}
+</script>
+
+<!-- Passkey sudo modal -->
+<div id="passkey-sudo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#0d0d0d;border:2px solid #a78bfa;padding:28px 32px;max-width:400px;width:90%;position:relative;border-radius:4px;">
+    <p style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#a78bfa;margin-bottom:6px;">Admin Verification Required</p>
+    <p style="font-size:0.85rem;color:#e5e5e5;margin-bottom:20px;">Verify your passkey to continue with this action.</p>
+    <div id="passkey-sudo-status" style="font-size:0.78rem;color:#888;margin-bottom:14px;min-height:18px;"></div>
+    <div style="display:flex;gap:10px;">
+      <button type="button" id="passkey-sudo-btn" onclick="doSudoVerify()"
+              style="flex:1;padding:10px;background:#a78bfa;color:#000;font-weight:900;font-size:0.82rem;text-transform:uppercase;border:none;cursor:pointer;"
+              onmouseover="this.style.background='#c4b5fd'" onmouseout="this.style.background='#a78bfa'">
+        🔑 VERIFY PASSKEY
+      </button>
+      <button type="button" onclick="cancelSudo()"
+              style="padding:10px 18px;background:transparent;color:#555;font-weight:700;font-size:0.78rem;text-transform:uppercase;border:1px solid #333;cursor:pointer;">
+        CANCEL
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+var _sudoPendingForm = null;
+
+function passkeyGuard(form) {
+  // If sudo token already valid (set within last 60s by a previous verify), submit directly
+  if (window._sudoVerifiedAt && (Date.now() - window._sudoVerifiedAt) < 60000) {
+    return true;
+  }
+  // Otherwise show the passkey modal and hold the form
+  _sudoPendingForm = form;
+  var m = document.getElementById('passkey-sudo-modal');
+  m.style.display = 'flex';
+  document.getElementById('passkey-sudo-status').textContent = '';
+  document.getElementById('passkey-sudo-btn').disabled = false;
+  document.getElementById('passkey-sudo-btn').textContent = '🔑 VERIFY PASSKEY';
+  return false; // prevent immediate submit
+}
+
+function cancelSudo() {
+  document.getElementById('passkey-sudo-modal').style.display = 'none';
+  _sudoPendingForm = null;
+}
+
+async function doSudoVerify() {
+  var btn = document.getElementById('passkey-sudo-btn');
+  var status = document.getElementById('passkey-sudo-status');
+  btn.disabled = true;
+  btn.textContent = 'Verifying…';
+  status.style.color = '#888';
+  status.textContent = 'Waiting for passkey…';
+
+  function b64dec(s) {
+    s = s.replace(/-/g,'+').replace(/_/g,'/');
+    var pad = 4 - s.length % 4; if (pad !== 4) s += '='.repeat(pad);
+    var bin = atob(s), arr = new Uint8Array(bin.length);
+    for (var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    return arr;
+  }
+  function b64enc(buf) {
+    return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  }
+
+  try {
+    var res = await fetch('/passkey/sudo/begin', {method:'POST', credentials:'same-origin'});
+    var opts = await res.json();
+    if (!opts.ok) throw new Error(opts.error || 'Failed to start verification');
+
+    var cred = await navigator.credentials.get({
+      publicKey: {
+        challenge: b64dec(opts.challenge),
+        timeout: opts.timeout,
+        rpId: opts.rpId,
+        allowCredentials: opts.allowCredentials.map(function(c){ return {type:c.type, id:b64dec(c.id)}; }),
+        userVerification: opts.userVerification,
+      }
+    });
+
+    var complete = await fetch('/passkey/sudo/complete', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        id: cred.id,
+        clientDataJSON: b64enc(cred.response.clientDataJSON),
+        authenticatorData: b64enc(cred.response.authenticatorData),
+        signature: b64enc(cred.response.signature),
+      })
+    });
+    var result = await complete.json();
+    if (!result.ok) throw new Error(result.error || 'Verification failed');
+
+    // Mark verified client-side for 60s so repeated actions don't re-prompt
+    window._sudoVerifiedAt = Date.now();
+    status.style.color = '#4ade80';
+    status.textContent = '✓ Verified!';
+    document.getElementById('passkey-sudo-modal').style.display = 'none';
+
+    // Submit the pending form
+    if (_sudoPendingForm) {
+      _sudoPendingForm.submit();
+      _sudoPendingForm = null;
+    }
+  } catch(e) {
+    status.style.color = '#f87171';
+    status.textContent = e.message || 'Verification failed';
+    btn.disabled = false;
+    btn.textContent = '🔑 TRY AGAIN';
+  }
 }
 </script>
 {% endblock %}

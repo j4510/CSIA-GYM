@@ -40,9 +40,84 @@ def _random_challenge() -> str:
     return _b64url_encode(os.urandom(32))
 
 
-# ── Registration ──────────────────────────────────────────────────────────────
+@passkey_bp.route('/passkey/sudo/begin', methods=['POST'])
+@login_required
+@csrf.exempt
+def sudo_begin():
+    """Begin a passkey re-authentication challenge for sensitive admin actions."""
+    if not current_user.passkeys:
+        return jsonify(ok=False, error='No passkey registered'), 400
+    challenge = _random_challenge()
+    session['passkey_sudo_challenge'] = challenge
+    allow = [{'type': 'public-key', 'id': pk.credential_id} for pk in current_user.passkeys]
+    return jsonify(ok=True, challenge=challenge, rpId=RP_ID,
+                   allowCredentials=allow, userVerification='required', timeout=60000)
 
-@passkey_bp.route('/passkey/verify-for-add/begin', methods=['POST'])
+
+@passkey_bp.route('/passkey/sudo/complete', methods=['POST'])
+@login_required
+@csrf.exempt
+def sudo_complete():
+    """Verify passkey re-auth and stamp a short-lived sudo session token."""
+    data = request.get_json(silent=True) or {}
+    challenge = session.pop('passkey_sudo_challenge', None)
+    if not challenge:
+        return jsonify(ok=False, error='No challenge in session'), 400
+    try:
+        credential_id = data['id']
+        pk_record = UserPasskey.query.filter_by(
+            credential_id=credential_id, user_id=current_user.id
+        ).first()
+        if not pk_record:
+            return jsonify(ok=False, error='Unknown credential'), 400
+        client_data = json.loads(_b64url_decode(data['clientDataJSON']))
+        assert client_data['type'] == 'webauthn.get'
+        assert client_data['challenge'] == challenge
+        assert client_data['origin'] == ORIGIN
+        auth_data = _b64url_decode(data['authenticatorData'])
+        assert auth_data[:32] == hashlib.sha256(RP_ID.encode()).digest()
+        assert auth_data[32] & 0x01
+        sign_count = struct.unpack('>I', auth_data[33:37])[0]
+        cose_key = cbor2.loads(_b64url_decode(pk_record.public_key))
+        if 3 not in cose_key:
+            return jsonify(ok=False, error='Missing algorithm'), 400
+        alg = cose_key[3]
+        client_data_hash = hashlib.sha256(_b64url_decode(data['clientDataJSON'])).digest()
+        verification_data = auth_data + client_data_hash
+        signature = _b64url_decode(data['signature'])
+        if alg == -7:
+            from cryptography.hazmat.primitives.asymmetric.ec import (
+                EllipticCurvePublicNumbers, SECP256R1, ECDSA)
+            from cryptography.hazmat.primitives.hashes import SHA256
+            from cryptography.hazmat.backends import default_backend
+            x = int.from_bytes(cose_key[-2], 'big')
+            y = int.from_bytes(cose_key[-3], 'big')
+            pub = EllipticCurvePublicNumbers(x, y, SECP256R1()).public_key(default_backend())
+            pub.verify(signature, verification_data, ECDSA(SHA256()))
+        elif alg == -257:
+            from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
+            from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+            from cryptography.hazmat.primitives.hashes import SHA256
+            from cryptography.hazmat.backends import default_backend
+            n = int.from_bytes(cose_key[-1], 'big')
+            e = int.from_bytes(cose_key[-2], 'big')
+            pub = RSAPublicNumbers(e, n).public_key(default_backend())
+            pub.verify(signature, verification_data, PKCS1v15(), SHA256())
+        else:
+            return jsonify(ok=False, error='Unsupported algorithm'), 400
+        if sign_count != 0 and sign_count <= pk_record.sign_count:
+            return jsonify(ok=False, error='Replay detected'), 400
+        pk_record.sign_count = sign_count
+        db.session.commit()
+        import time
+        session['passkey_sudo'] = time.time()
+        return jsonify(ok=True)
+    except (KeyError, ValueError, AssertionError):
+        db.session.rollback()
+        return jsonify(ok=False, error='Passkey verification failed'), 400
+
+
+# ── Registration ──────────────────────────────────────────────────────────────
 @login_required
 @csrf.exempt
 def verify_for_add_begin():
