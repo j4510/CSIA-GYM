@@ -721,6 +721,9 @@ def add_solve(challenge_id):
     log_action('add_solve', f'{user.username} -> {challenge.title}')
     flash(f'Solve added: {user.username} → "{challenge.title}".', 'success')
     return redirect(url_for('admin.challenges'))
+
+
+@admin_bp.route('/challenges/<int:challenge_id>/toggle-visibility', methods=['POST'])
 def toggle_challenge_visibility(challenge_id):
     """Hide or unhide a live challenge from players."""
     challenge = Challenge.query.get_or_404(challenge_id)
