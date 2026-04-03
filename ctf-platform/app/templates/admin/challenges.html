@@ -189,9 +189,10 @@
 </div>
 {% endblock %}
 
-<!-- Add Solve Modal — outside block content to avoid stacking context issues -->
+{% block extra_js %}
+<!-- Add Solve Modal -->
 <div id="add-solve-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;align-items:center;justify-content:center;">
-  <div style="background:#0d0d0d;border:2px solid rgba(96,165,250,0.5);padding:28px 32px;max-width:440px;width:90%;position:relative;border-radius:4px;">
+  <div style="background:#0d0d0d;border:2px solid rgba(96,165,250,0.5);padding:28px 32px;max-width:440px;width:90%;position:relative;border-radius:4px;" onclick="event.stopPropagation()">
     <button type="button" onclick="closeAddSolve()" style="position:absolute;top:10px;right:14px;background:transparent;border:none;color:#555;font-size:1.1rem;cursor:pointer;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#555'">✕</button>
     <p style="font-size:0.7rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;color:#60a5fa;margin-bottom:6px;">Add Solve</p>
     <p id="add-solve-title" style="font-size:0.95rem;font-weight:700;color:#e5e5e5;margin-bottom:18px;"></p>
@@ -200,8 +201,7 @@
       <label style="display:block;font-size:0.68rem;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#666;margin-bottom:6px;">Username</label>
       <input type="text" id="add-solve-username" name="username" required autocomplete="off" placeholder="Type to search users…"
              style="width:100%;background:#111;border:2px solid #2a2a2a;color:#fff;padding:9px 12px;font-size:0.88rem;outline:none;margin-bottom:4px;box-sizing:border-box;"
-             onfocus="this.style.borderColor='#60a5fa'" onblur="setTimeout(hideUserSuggestions,150)"
-             oninput="searchUsers(this.value)">
+             onfocus="this.style.borderColor='#60a5fa'" onblur="this.style.borderColor='#2a2a2a'">
       <div id="user-suggestions" style="display:none;background:#1a1a1a;border:1px solid #333;border-top:none;max-height:180px;overflow-y:auto;margin-bottom:12px;"></div>
       <button type="submit"
               style="width:100%;padding:10px;background:#60a5fa;color:#000;font-weight:900;font-size:0.82rem;text-transform:uppercase;border:none;cursor:pointer;border-radius:2px;"
@@ -211,8 +211,6 @@
     </form>
   </div>
 </div>
-
-{% block extra_js %}
 <script>
 var PER_PAGE = 15;
 function adminSearch(rowClass, inputId, noResultsId) {
@@ -277,43 +275,49 @@ function openAddSolve(challengeId, challengeTitle) {
   document.getElementById('add-solve-title').textContent = challengeTitle;
   document.getElementById('add-solve-form').action = '/admin/challenges/' + challengeId + '/add-solve';
   document.getElementById('add-solve-username').value = '';
-  hideUserSuggestions();
+  document.getElementById('user-suggestions').style.display = 'none';
+  document.getElementById('user-suggestions').innerHTML = '';
   var m = document.getElementById('add-solve-modal');
   m.style.display = 'flex';
-  setTimeout(function(){ document.getElementById('add-solve-username').focus(); }, 50);
+  setTimeout(function(){ document.getElementById('add-solve-username').focus(); }, 80);
 }
 function closeAddSolve() {
   document.getElementById('add-solve-modal').style.display = 'none';
-  hideUserSuggestions();
+  document.getElementById('user-suggestions').style.display = 'none';
 }
 document.getElementById('add-solve-modal').addEventListener('click', function(e) {
   if (e.target === this) closeAddSolve();
+});
+document.getElementById('add-solve-username').addEventListener('input', function() {
+  searchUsers(this.value);
 });
 function hideUserSuggestions() {
   document.getElementById('user-suggestions').style.display = 'none';
 }
 function searchUsers(q) {
   var box = document.getElementById('user-suggestions');
-  if (!q || q.length < 1) { box.style.display = 'none'; return; }
+  if (!q) { box.style.display = 'none'; return; }
   fetch('/admin/users/search?q=' + encodeURIComponent(q))
     .then(function(r){ return r.json(); })
     .then(function(users) {
-      if (!users.length) { box.style.display = 'none'; return; }
       box.innerHTML = '';
+      if (!users.length) { box.style.display = 'none'; return; }
       users.forEach(function(u) {
         var item = document.createElement('div');
         item.textContent = u.username;
         item.style.cssText = 'padding:8px 12px;font-size:0.85rem;color:#e5e5e5;cursor:pointer;border-bottom:1px solid #222;';
-        item.onmouseenter = function(){ this.style.background='rgba(96,165,250,0.15)'; };
-        item.onmouseleave = function(){ this.style.background=''; };
-        item.onmousedown = function() {
+        item.addEventListener('mouseenter', function(){ this.style.background='rgba(96,165,250,0.15)'; });
+        item.addEventListener('mouseleave', function(){ this.style.background=''; });
+        item.addEventListener('mousedown', function(e) {
+          e.preventDefault(); // prevent input blur before click registers
           document.getElementById('add-solve-username').value = u.username;
-          hideUserSuggestions();
-        };
+          box.style.display = 'none';
+        });
         box.appendChild(item);
       });
       box.style.display = 'block';
-    });
+    })
+    .catch(function(){ box.style.display = 'none'; });
 }
 </script>
 {% endblock %}
