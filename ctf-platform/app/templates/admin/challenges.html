@@ -161,7 +161,7 @@
                 <a href="{{ url_for('admin.edit_challenge', challenge_id=ch.id) }}"
                    style="padding:4px 12px;background:rgba(139,0,0,0.15);color:#e5e5e5;font-size:0.72rem;font-weight:700;text-transform:uppercase;text-decoration:none;border:1px solid rgba(139,0,0,0.3);border-radius:3px;"
                    onmouseover="this.style.background='rgba(139,0,0,0.3)'" onmouseout="this.style.background='rgba(139,0,0,0.15)'">Edit</a>
-                <button type="button" onclick="openAddSolve({{ ch.id }}, {{ ch.title|tojson }})"
+                <button type="button" onclick="openAddSolve({{ ch.id }}, {{ ch.title|tojson|e }})"
                         style="padding:4px 12px;background:rgba(96,165,250,0.1);color:#60a5fa;font-size:0.72rem;font-weight:700;text-transform:uppercase;border:1px solid rgba(96,165,250,0.3);border-radius:3px;cursor:pointer;"
                         onmouseover="this.style.background='rgba(96,165,250,0.2)'" onmouseout="this.style.background='rgba(96,165,250,0.1)'">+ Solve</button>
                 <form method="POST" action="{{ url_for('admin.toggle_challenge_visibility', challenge_id=ch.id) }}" style="margin:0;">
