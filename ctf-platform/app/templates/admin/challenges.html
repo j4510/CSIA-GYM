@@ -293,7 +293,7 @@ function submitAddSolve() {
   if (!username) return;
   var btn = document.getElementById('add-solve-btn');
   btn.disabled = true; btn.textContent = 'Saving…';
-  fetch('/admin/challenges/' + _addSolveChallengeId + '/add-solve', {
+  fetch('/challenges/' + _addSolveChallengeId + '/add-solve', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({username: username})

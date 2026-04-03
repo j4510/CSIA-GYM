@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 from sqlalchemy import func
 from app import db, csrf
 from app.models import Challenge, UserChallengeSolve, User, ChallengeSubmission, FlagAttempt, WebChallenge, NcChallenge, DynamicFlag, ChallengeVote, BadgeRule, BadgeClaim, UserBadge, ChallengeBookmark, ChallengeSubscription, ChallengeOpen
-from app.routes.admin import log_event
+from app.routes.admin import log_event, log_action
 from app.ranking import check_auto_badges
 from app.notifs import notify_challenge_solve, notify_challenge_subscribers, notify_first_blood
 
@@ -281,9 +281,26 @@ def _record_correct_solve(challenge, user_id):
         notify_first_blood(user_id, challenge)
 
 
-@challenges_bp.route('/challenges/<int:challenge_id>/submit', methods=['POST'])
-@login_required
-def submit_flag(challenge_id):
+@challenges_bp.route('/challenges/<int:challenge_id>/add-solve', methods=['POST'])
+@csrf.exempt
+def add_solve(challenge_id):
+    if not current_user.is_authenticated or not current_user.is_admin:
+        return jsonify(ok=False, error='Unauthorized'), 403
+    challenge = Challenge.query.get_or_404(challenge_id)
+    data = request.get_json(silent=True) or {}
+    username = (data.get('username') or request.form.get('username', '')).strip()
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify(ok=False, error=f'User "{username}" not found.')
+    if UserChallengeSolve.query.filter_by(user_id=user.id, challenge_id=challenge_id).first():
+        return jsonify(ok=False, error=f'{user.username} has already solved "{challenge.title}".')
+    db.session.add(UserChallengeSolve(user_id=user.id, challenge_id=challenge_id))
+    db.session.commit()
+    log_action('add_solve', f'{user.username} -> {challenge.title}')
+    return jsonify(ok=True, message=f'Solve added: {user.username} → "{challenge.title}".')
+
+
+
     challenge = Challenge.query.get_or_404(challenge_id)
     submitted_flag = request.form.get('flag', '').strip()
     solution_file = request.files.get('solution_file') if challenge.category == 'Web Exploitation' else None
