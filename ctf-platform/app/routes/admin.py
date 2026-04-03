@@ -76,8 +76,11 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin', template_folder='..
 
 
 @admin_bp.before_request
-@login_required
 def restrict_to_admins():
+    from flask_login import current_user
+    from flask import redirect, url_for
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
     if not current_user.is_admin:
         abort(403)
 
