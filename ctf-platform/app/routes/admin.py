@@ -107,6 +107,18 @@ def dashboard():
 # USER MANAGEMENT
 # ========================================
 
+@admin_bp.route('/users/search')
+def search_users():
+    """JSON endpoint for username autocomplete in Add Solve modal."""
+    q = request.args.get('q', '').strip()
+    if not q:
+        return jsonify([])
+    users = User.query.filter(
+        User.username.ilike(f'%{q}%')
+    ).order_by(User.username).limit(10).all()
+    return jsonify([{'id': u.id, 'username': u.username} for u in users])
+
+
 @admin_bp.route('/users')
 def users():
     """View all users."""
@@ -135,9 +147,13 @@ def promote_user(user_id):
 def demote_user(user_id):
     """Remove admin privileges from a user."""
     user = User.query.get_or_404(user_id)
-    
+
     if user.id == current_user.id:
         flash('You cannot demote yourself!', 'danger')
+        return redirect(url_for('admin.users'))
+
+    if not current_user.passkeys:
+        flash('You must register a passkey before you can demote admins. Set one up in Settings → Passkey.', 'danger')
         return redirect(url_for('admin.users'))
     
     user.is_admin = False
@@ -152,9 +168,14 @@ def demote_user(user_id):
 def delete_user(user_id):
     """Delete a user account."""
     user = User.query.get_or_404(user_id)
-    
+
     if user.id == current_user.id:
         flash('You cannot delete your own account!', 'danger')
+        return redirect(url_for('admin.users'))
+
+    # Admins must have a passkey registered to perform destructive actions
+    if not current_user.passkeys:
+        flash('You must register a passkey before you can delete users. Set one up in Settings → Passkey.', 'danger')
         return redirect(url_for('admin.users'))
     
     from sqlalchemy import text
@@ -439,6 +460,9 @@ def make_moderator(user_id):
 def remove_moderator(user_id):
     """Remove Community Moderator role."""
     user = User.query.get_or_404(user_id)
+    if not current_user.passkeys:
+        flash('You must register a passkey before you can remove moderators. Set one up in Settings → Passkey.', 'danger')
+        return redirect(url_for('admin.users'))
     user.is_moderator = False
     db.session.commit()
     log_action('remove_moderator', user.username)

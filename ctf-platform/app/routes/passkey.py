@@ -42,10 +42,103 @@ def _random_challenge() -> str:
 
 # ── Registration ──────────────────────────────────────────────────────────────
 
+@passkey_bp.route('/passkey/verify-for-add/begin', methods=['POST'])
+@login_required
+@csrf.exempt
+def verify_for_add_begin():
+    """
+    When a user already has passkeys and wants to add a new one,
+    they must first authenticate with an existing passkey.
+    This begins that authentication challenge.
+    """
+    if not current_user.passkeys:
+        # No existing passkeys — no verification needed, mark directly
+        session['passkey_add_verified'] = True
+        return jsonify(ok=True, skip=True)
+
+    challenge = _random_challenge()
+    session['passkey_verify_add_challenge'] = challenge
+    allow = [{'type': 'public-key', 'id': pk.credential_id} for pk in current_user.passkeys]
+    return jsonify(ok=True, skip=False, challenge=challenge, rpId=RP_ID,
+                   allowCredentials=allow, userVerification='required', timeout=60000)
+
+
+@passkey_bp.route('/passkey/verify-for-add/complete', methods=['POST'])
+@login_required
+@csrf.exempt
+def verify_for_add_complete():
+    """Verify the existing passkey signature before allowing a new passkey to be added."""
+    data = request.get_json(silent=True) or {}
+    challenge = session.pop('passkey_verify_add_challenge', None)
+    if not challenge:
+        return jsonify(ok=False, error='No challenge in session'), 400
+
+    try:
+        credential_id = data['id']
+        pk_record = UserPasskey.query.filter_by(
+            credential_id=credential_id, user_id=current_user.id
+        ).first()
+        if not pk_record:
+            return jsonify(ok=False, error='Unknown credential'), 400
+
+        client_data = json.loads(_b64url_decode(data['clientDataJSON']))
+        assert client_data['type'] == 'webauthn.get'
+        assert client_data['challenge'] == challenge
+        assert client_data['origin'] == ORIGIN
+
+        auth_data = _b64url_decode(data['authenticatorData'])
+        assert auth_data[:32] == hashlib.sha256(RP_ID.encode()).digest()
+        assert auth_data[32] & 0x01  # UP flag
+        sign_count = struct.unpack('>I', auth_data[33:37])[0]
+
+        cose_key = cbor2.loads(_b64url_decode(pk_record.public_key))
+        if 3 not in cose_key:
+            return jsonify(ok=False, error='Missing algorithm'), 400
+        alg = cose_key[3]
+        client_data_hash = hashlib.sha256(_b64url_decode(data['clientDataJSON'])).digest()
+        verification_data = auth_data + client_data_hash
+        signature = _b64url_decode(data['signature'])
+
+        if alg == -7:
+            from cryptography.hazmat.primitives.asymmetric.ec import (
+                EllipticCurvePublicNumbers, SECP256R1, ECDSA)
+            from cryptography.hazmat.primitives.hashes import SHA256
+            from cryptography.hazmat.backends import default_backend
+            x = int.from_bytes(cose_key[-2], 'big')
+            y = int.from_bytes(cose_key[-3], 'big')
+            pub = EllipticCurvePublicNumbers(x, y, SECP256R1()).public_key(default_backend())
+            pub.verify(signature, verification_data, ECDSA(SHA256()))
+        elif alg == -257:
+            from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
+            from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+            from cryptography.hazmat.primitives.hashes import SHA256
+            from cryptography.hazmat.backends import default_backend
+            n = int.from_bytes(cose_key[-1], 'big')
+            e = int.from_bytes(cose_key[-2], 'big')
+            pub = RSAPublicNumbers(e, n).public_key(default_backend())
+            pub.verify(signature, verification_data, PKCS1v15(), SHA256())
+        else:
+            return jsonify(ok=False, error='Unsupported algorithm'), 400
+
+        if sign_count != 0 and sign_count <= pk_record.sign_count:
+            return jsonify(ok=False, error='Replay detected'), 400
+        pk_record.sign_count = sign_count
+        db.session.commit()
+
+        session['passkey_add_verified'] = True
+        return jsonify(ok=True)
+    except (KeyError, ValueError, AssertionError):
+        db.session.rollback()
+        return jsonify(ok=False, error='Verification failed'), 400
+
+
 @passkey_bp.route('/passkey/register/begin', methods=['POST'])
 @login_required
 @csrf.exempt
 def register_begin():
+    # If user already has passkeys, they must verify with one first
+    if current_user.passkeys and not session.pop('passkey_add_verified', False):
+        return jsonify(ok=False, error='Must verify existing passkey first'), 403
     challenge = _random_challenge()
     session['passkey_reg_challenge'] = challenge
     return jsonify({

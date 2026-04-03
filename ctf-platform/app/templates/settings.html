@@ -313,6 +313,9 @@ async function addPasskeyFromSettings() {
   var btn = document.getElementById('add-passkey-btn');
   var status = document.getElementById('passkey-settings-status');
   btn.disabled = true;
+  status.style.color = '#888';
+  status.textContent = '';
+
   function b64dec(s) {
     s = s.replace(/-/g,'+').replace(/_/g,'/');
     var pad = 4 - s.length % 4; if (pad !== 4) s += '='.repeat(pad);
@@ -323,9 +326,44 @@ async function addPasskeyFromSettings() {
   function b64enc(buf) {
     return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
   }
+
   try {
+    // Step 1: check if we need to verify an existing passkey first
+    var verifyRes = await fetch('/passkey/verify-for-add/begin', {method:'POST', credentials:'same-origin'});
+    var verifyOpts = await verifyRes.json();
+    if (!verifyOpts.ok) throw new Error(verifyOpts.error || 'Failed to start verification');
+
+    if (!verifyOpts.skip) {
+      // User has existing passkeys — must authenticate with one first
+      status.textContent = 'Verifying existing passkey…';
+      var getOpts = {
+        publicKey: {
+          challenge: b64dec(verifyOpts.challenge),
+          timeout: verifyOpts.timeout,
+          rpId: verifyOpts.rpId,
+          allowCredentials: verifyOpts.allowCredentials.map(function(c){ return {type:c.type, id:b64dec(c.id)}; }),
+          userVerification: verifyOpts.userVerification,
+        }
+      };
+      var existingCred = await navigator.credentials.get(getOpts);
+      var completeVerify = await fetch('/passkey/verify-for-add/complete', {
+        method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin',
+        body: JSON.stringify({
+          id: existingCred.id,
+          clientDataJSON: b64enc(existingCred.response.clientDataJSON),
+          authenticatorData: b64enc(existingCred.response.authenticatorData),
+          signature: b64enc(existingCred.response.signature),
+        })
+      });
+      var verifyResult = await completeVerify.json();
+      if (!verifyResult.ok) throw new Error(verifyResult.error || 'Existing passkey verification failed');
+    }
+
+    // Step 2: register the new passkey
+    status.textContent = 'Registering new passkey…';
     var res = await fetch('/passkey/register/begin', {method:'POST', credentials:'same-origin'});
     var opts = await res.json();
+    if (opts.ok === false) throw new Error(opts.error || 'Registration failed');
     var cred = await navigator.credentials.create({
       publicKey: {
         rp: opts.rp,
@@ -347,11 +385,17 @@ async function addPasskeyFromSettings() {
       })
     });
     var result = await completeRes.json();
-    if (result.ok) { status.style.color='#4ade80'; status.textContent='✓ Passkey added!'; setTimeout(()=>location.reload(),1200); }
-    else throw new Error(result.error);
+    if (result.ok) {
+      status.style.color = '#4ade80';
+      status.textContent = '✓ Passkey added!';
+      setTimeout(function(){ location.reload(); }, 1200);
+    } else {
+      throw new Error(result.error || 'Registration failed');
+    }
   } catch(e) {
-    status.style.color='#f87171'; status.textContent=e.message||'Failed';
-    btn.disabled=false;
+    status.style.color = '#f87171';
+    status.textContent = e.message || 'Failed';
+    btn.disabled = false;
   }
 }
 async function removePasskey(id, btn) {
