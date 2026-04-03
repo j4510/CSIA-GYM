@@ -25,14 +25,6 @@
                 {% endif %}
                 <input type="file" name="avatar" accept="image/*" class="text-sm text-white">
             </div>
-            <form method="POST" action="{{ url_for('admin.regenerate_avatar', user_id=user.id) }}" style="margin-top:0.5rem;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit"
-                        style="padding:7px 18px;background:#1a1a1a;color:#aaa;font-weight:700;font-size:0.78rem;text-transform:uppercase;border:1px solid #444;cursor:pointer;"
-                        onclick="return confirm('Regenerate identicon avatar for {{ user.username }}?')">
-                    🔄 Regenerate Identicon
-                </button>
-            </form>
         </div>
 
         <!-- Core Info -->
@@ -121,6 +113,16 @@
                 CANCEL
             </a>
         </div>
+    </form>
+
+    <!-- Regenerate avatar — separate form to avoid nesting -->
+    <form method="POST" action="{{ url_for('admin.regenerate_avatar', user_id=user.id) }}" style="margin-top:1rem;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit"
+                style="padding:7px 18px;background:#1a1a1a;color:#aaa;font-weight:700;font-size:0.78rem;text-transform:uppercase;border:1px solid #444;cursor:pointer;"
+                onclick="return confirm('Regenerate identicon avatar for {{ user.username }}?')">
+            🔄 Regenerate Identicon
+        </button>
     </form>
 
     <!-- Legendary Rank Assignment (separate form, admin-assignable only) -->

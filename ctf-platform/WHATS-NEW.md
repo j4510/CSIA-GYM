@@ -1,9 +1,12 @@
-## Here's what's new with our current version: v2.1.01
+## Here's what's new with our current version: v2.1.02
 
+* v2.1.02 (April 4, 2026)
+    - Fixed administrator actions
+
+### Older versions:
 * v2.1.01 (April 4, 2026)
     - Fixed unviewable challenge files
 
-### Older versions:
 * v2.1 (April 4, 2026)
     - Users now have inboxes to message other users.
     - Milestones are now available.
